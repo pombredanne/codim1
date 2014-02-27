@@ -1,5 +1,12 @@
 To get setup:
-1. Install vagrant. Go here and follow the directions: http://docs.vagrantup.com/v2/installation/index.html
-2. type "vagrant up"
-3. type "vagrant ssh"
-4. You are now at a bash prompt within the Ubuntu 12.04 x86_64 instance created. Play!
+Install vagrant. Go here and follow the directions: http://docs.vagrantup.com/v2/installation/index.html
+
+Run the commands:
+    vagrant up
+    vagrant ssh
+
+You are now at a bash prompt within the Ubuntu 12.04 x86_64 instance created. Play!
+
+The directory structure for the project is at "/vagrant" so to run the code:
+    cd /vagrant
+    ipython source/filename.py
