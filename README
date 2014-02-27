@@ -1,12 +1,43 @@
 To get setup:
-Install vagrant. Go here and follow the directions: http://docs.vagrantup.com/v2/installation/index.html
 
-Run the commands:
+Get the code
+    git clone https://github.com/tbenthompson/codim1.git
+
+Install virtualbox. 
+    Go here and follow the directions: https://www.virtualbox.org/
+
+Install ansible, preferably through pip: 
+    http://docs.ansible.com/intro_installation.html#latest-releases-via-pip
+
+Install vagrant. Go here and follow the directions: 
+    http://docs.vagrantup.com/v2/installation/index.html
+
+Run the commands (the first command may take quite a while, and may ask for
+your password at some point):
     vagrant up
     vagrant ssh
 
 You are now at a bash prompt within the Ubuntu 12.04 x86_64 instance created. Play!
+--It is currently configured to use 1GB of RAM and allowed access to 2 cores.
+--You can check to make sure that the machine is configured correctly by
+running the "source/test_speed.py" script. It should run the same speed inside
+and outside the virtual machine.
 
 The directory structure for the project is at "/vagrant" so to run the code:
     cd /vagrant
-    ipython source/filename.py
+    ipython -i source/filename.py
+
+When you're done, there are multiple options for dealing with the Vagrant 
+instance:
+1. If you don't mind using a bit of disk space, you can just suspend the 
+machine with "vagrant suspend". This will store all the RAM to disk. This is 
+basically just like a suspend with your normal OS.
+2. Otherwise, "vagrant halt" will perform a shut down. 
+3. Finally, "vagrant destroy" will completely delete the virtual machine. The
+next time you use the machine will require re-running the "vagrant up" command
+and waiting for it to finish again.
+
+The next time you update the code, to update the virtual machine configuration,
+either "destroy" and "up" again (slow) or "vagrant reload" (fast).
+
+

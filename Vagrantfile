@@ -1,6 +1,9 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
+# Ben says: This Vagrantfile was just copied as the default and modified from
+# there.
+
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
@@ -61,6 +64,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     vb.name = "codim1"
   end
 
+  # Setup ansible provisioning.
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "./deploy/vagrant_ansible_inventory_default"
     ansible.playbook = "./deploy/ansible_playbook.yml"
