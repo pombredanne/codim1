@@ -1,0 +1,9 @@
+Flask -- simple python web hosting framework
+
+Vagrant -- builds virtual machines for development
+http://hplgit.github.io/vagrantbox/doc/pub/._vagrant_box001.html
+
+Docker -- an interesting linux only alternative to a virtual machine
+
+Ansible -- server provisioning tool, can also be used for provisioning of 
+vagrant instances

@@ -1,0 +1,44 @@
+---
+-   hosts: all
+    vars:
+        home_dir: /home/vagrant
+        system_packages:
+        - python-pip
+        - python-dev
+        - python-dev
+        - build-essential
+        - libfreetype6
+        - libfreetype6-dev
+        - libatlas-base-dev 
+        - gfortran
+        - libc6
+        - libfreetype6
+        - libgcc1
+        - libgdk-pixbuf2.0-0
+        - libglib2.0-0
+        - libgtk2.0-0
+        - libpng12-0
+        - libpng12-dev
+        - libstdc++6
+        python_packages:
+        - pip
+        - distribute
+        - ipython
+        - ipdb
+        - matplotlib
+        - numpy 
+        - scipy
+    tasks:
+        -   name: Install required system packages.
+            apt: pkg={{ item }} state=installed update-cache=yes
+            with_items: system_packages
+            sudo: yes
+
+        -   name: Install required Python packages.
+            pip: name={{ item }} state=latest
+            with_items: python_packages
+            sudo: yes
+
+        -   name: Copy the alias file
+            copy: src=./aliases dest={{ home_dir }}/.bash_aliases
+

@@ -1,0 +1,9 @@
+data
+figures
+archive
+software
+*.pyc
+*.swp
+*.swo
+*nohup.out
+.vagrant

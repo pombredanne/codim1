@@ -1,0 +1,5 @@
+To get setup:
+1. Install vagrant. Go here and follow the directions: http://docs.vagrantup.com/v2/installation/index.html
+2. type "vagrant up"
+3. type "vagrant ssh"
+4. You are now at a bash prompt within the Ubuntu 12.04 x86_64 instance created. Play!

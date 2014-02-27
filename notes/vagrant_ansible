@@ -1,0 +1,9 @@
+these pages are useful references on making ansible playbooks:
+https://gist.github.com/marktheunissen/2979474
+http://www.stavros.io/posts/example-provisioning-and-deployment-ansible/
+http://lextoumbourou.com/blog/posts/getting-started-with-ansible/
+also the ansible docs are obviously useful:
+http://docs.ansible.com/
+
+The vagrant documentation is quite useful as well:
+http://docs.vagrantup.com/v2/getting-started
