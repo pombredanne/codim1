@@ -1,25 +1,23 @@
 import numpy as np
+from basis_funcs import BasisFunctions
+from quadrature import gaussxw
+from mesh import Mesh
 
+# Number of elements
 n_elements = 10
 
-# Generate the mesh
-# node_pos contains the position of each node in tuple form (x, y)
-n_nodes = n_elements + 1
-node_pos = np.zeros(n_nodes)
-for i in range(0, n_nodes):
-    node_pos.append((float(i), 0.0))
+# Degree of the polynomial basis to use. For example, 1 is a linear basis
+element_deg = 1
 
-# Element to node contains pairs of indices referring the (x, y) values in
-# node_pos
-element_to_node = []
-for i in range(0, n_elements):
-    element_to_node.append((i, i + 1))
+x, w = gaussxw(element_deg + 1)
+bf = BasisFunctions(x)
+mesh = Mesh.simple_line_mesh(n_elements)
 
-# Calculate the center of each element
-element_centroid = [
-    (0.5 * (node_pos[e[0]][0] + node_pos[e[1]][0]),
-     0.5 * (node_pos[e[0]][1] + node_pos[e[1]][1]))
-    for e in element_to_node]
+# element_deg + 1 degrees of freedom per element
+total_dofs = n_elements * (element_deg + 1)
+# Making a dof_map in 1D is super simple! Its just a folded over list of all
+# the dofs
+dof_map = np.arange(total_dofs).reshape(n_elements, element_deg + 1)
 
 # Set input stresses
 sigma_n = np.ones(n_elements)
