@@ -28,6 +28,7 @@
         - matplotlib
         - numpy 
         - scipy
+        - pytest
     tasks:
         -   name: Install required system packages.
             apt: pkg={{ item }} state=installed update-cache=yes
@@ -38,7 +39,6 @@
             pip: name={{ item }} state=latest
             with_items: python_packages
             sudo: yes
-
-        -   name: Copy the alias file
-            copy: src=./aliases dest={{ home_dir }}/.bash_aliases
+        # -   name: Copy the alias file
+        #     copy: src=./aliases dest={{ home_dir }}/.bash_aliases
 

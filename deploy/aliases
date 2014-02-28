@@ -1,2 +1,0 @@
-alias python="python"
-alias ipy="python -c 'import IPython; IPython.terminal.ipapp.launch_new_instance()'"
