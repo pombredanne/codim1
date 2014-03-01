@@ -20,6 +20,9 @@
         - libpng12-0
         - libpng12-dev
         - libstdc++6
+        - python-tk
+        - tk
+        - tk-dev
         python_packages:
         - pip
         - distribute
