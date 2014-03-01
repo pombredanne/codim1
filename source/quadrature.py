@@ -9,11 +9,11 @@ it works. Maybe one day, it would be nice to export to some files.
 class QuadGauss(object):
     """
     Simple wrapper of gaussian quadrature. Returns points and weights for
-    quadrature on [0, 1].
+    quadrature on [a, b]. Default is a = 0, b = 1.0
     """
-    def __init__(self, N):
+    def __init__(self, N, a = 0.0, b = 1.0):
         self.N = N
-        self.x, self.w = gaussian_quad.gaussxwab(self.N, 0.0, 1.0)
+        self.x, self.w = gaussian_quad.gaussxwab(self.N, a, b)
 
 class QuadGaussLog(object):
     """
@@ -221,6 +221,60 @@ class QuadGaussLogR(object):
         self.w /= np.log(np.abs(self.x - self.x0)) / self.q;
 
 
+
+class QuadGaussOneOverR(object):
+    """
+    Quadrature points and weights for integrating a function with form
+    f(x) / (x - x0)
+    on the interval [0, 1]
+    Uses the 2N point gauss rule derived in Piessens (1970) Almost certainly
+    suboptimal, but it's very simple and it works.
+    """
+    def __init__(self, N, x0):
+        self.N = N
+        self.x0 = x0
+
+        proper_length = 1 - (2 * x0)
+        pv_length = 2 * x0
+        if x0 < 0.5:
+            pv_start = 0.0
+            proper_start = 2 * x0
+        else:
+            pv_start = 1 - 2 * x0
+            proper_start = 0.0
+
+        # the interval without the singularity
+        qg = QuadGauss(N)
+        self.x = qg.x * proper_length + proper_start
+        self.w = qg.w * proper_length
+
+        # The interval with the singularity
+        qg = QuadGauss(N, -1.0, 1.0)
+
+        # Setup the special gauss quad points
+        x_1 = copy.copy(qg.x)
+        x_2 = -x_1
+        w_1 = qg.w / x_1
+        w_2 = -w_1
+        self.x_sing = x_1
+        self.x_sing = np.append(self.x_sing, x_2)
+        self.w_sing = w_1
+        self.w_sing = np.append(self.w_sing, w_2)
+
+        # Transform to [0, 1]
+        self.x_sing = (self.x_sing + 1) / 2.0
+        self.w_sing /= 2.0
+
+        # We don't factor out the 1 / (x - x0) of the quadratured function,
+        # so we must account for it here.
+        self.w_sing *= (self.x_sing - x0)
+
+        # Finished!
+        self.x = np.append(self.x, self.x_sing)
+        self.w = np.append(self.w, self.w_sing)
+
+
+
 def test_QuadGauss():
     f = lambda x: 3 * x ** 2
     F = lambda x: x ** 3
@@ -248,6 +302,7 @@ def test_QuadGaussLog2():
 def test_QuadGaussLog3():
     f = lambda x: x
     exact = -0.75
+    # True means we integrate against log(1-x) instead of log(x)
     q = QuadGaussLog(2, True)
     est = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est)
@@ -259,5 +314,30 @@ def test_QuadGaussLogR():
     est = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est)
 
+def test_QuadOneOverR_1():
+    f = lambda x: 1 / (x - 0.4)
+    exact = np.log(3.0 / 2.0)
+    q = QuadGaussOneOverR(4, 0.4)
+    est_sing = np.sum([w_val * f(x_val) for (w_val, x_val)
+                       in zip(q.w_sing, q.x_sing)])
+    est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
+    np.testing.assert_almost_equal(0.0, est_sing)
+    np.testing.assert_almost_equal(exact, est_total)
 
+def test_QuadOneOverR_2():
+    # Example 1 from Piessens
+    g = lambda x: np.exp(x) / x
+    f = lambda x: 2 * g((2 * x) - 1)
+    exact = 2.11450175
+    q = QuadGaussOneOverR(4, 0.5)
+    est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
+    np.testing.assert_almost_equal(exact, est_total)
 
+def test_QuadOneOverR_3():
+    # Example 2 from Piessens
+    g = lambda x: np.exp(x) / (np.sin(x) - np.cos(x))
+    f = lambda x: np.pi / 2.0 * g(np.pi / 2.0 * x)
+    exact = 2.61398312
+    q = QuadGaussOneOverR(6, 0.5)
+    est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
+    np.testing.assert_almost_equal(exact, est_total)
