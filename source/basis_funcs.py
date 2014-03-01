@@ -5,7 +5,7 @@ import copy
 class BasisFunctions(object):
     """
         This class handles interactions with Lagrange polynomials defined on
-        the unit reference interval [-1, 1].
+        the unit reference interval [0, 1].
     """
 
     @classmethod
@@ -13,7 +13,7 @@ class BasisFunctions(object):
         """
             Create an equispaced nodal basis.
         """
-        nodes = np.linspace(-1.0, 1.0, element_deg + 1)
+        nodes = np.linspace(0.0, 1.0, element_deg + 1)
         return cls(nodes)
 
     def __init__(self, nodes):
@@ -57,8 +57,8 @@ class BasisFunctions(object):
 
 def test_from_degree():
     bf = BasisFunctions.from_degree(2)
-    assert(bf.nodes[0] == -1.0)
-    assert(bf.nodes[1] == 0.0)
+    assert(bf.nodes[0] == 0.0)
+    assert(bf.nodes[1] == 0.5)
     assert(bf.nodes[2] == 1.0)
 
 def test_basis():
