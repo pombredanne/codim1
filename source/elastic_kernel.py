@@ -12,7 +12,7 @@ class ElastostaticKernel(object):
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
 
-    def displacement_kernel(self, r):
+    def displacement_kernel(self, r, n):
         """
         Return the displacement kernel corresponding to a
         separation of (r[0], r[1])
@@ -86,7 +86,7 @@ def test_displacement():
     y -= 0.0
     r = np.vstack((x, y)).T
 
-    U = np.array([kernel.displacement_kernel(r_val) for r_val in r])
+    U = np.array([kernel.displacement_kernel(r_val, 0.0) for r_val in r])
 
     # import matplotlib.pyplot as plt
     # plt.plot(x, U[:, 0, 1])

@@ -67,27 +67,47 @@ class Assembler(object):
                 self.quad_logr[i][j] = self.quad_logr[j][i]
                 self.quad_oneoverr[i][j] = self.quad_oneoverr[j][i]
 
-    def get_quadrature(self, GH, k, l, i, j):
-        if k == l:
-            if GH == 'G':
-                x = self.quad_oneoverr[i][j].x
-                w = self.quad_oneoverr[i][j].w
-            else:
-                x = self.quad_logr[i][j].x
-                w = self.quad_logr[i][j].w
-        else:
+    def get_quadrature(self, GHM, k, l, i, j):
+        if k != l or GHM == 'M':
             x = self.quad_nonsingular.x
             w = self.quad_nonsingular.w
+            return (x, w)
+        if GHM == 'G':
+            x = self.quad_oneoverr[i][j].x
+            w = self.quad_oneoverr[i][j].w
+        elif GHM == 'H':
+            x = self.quad_logr[i][j].x
+            w = self.quad_logr[i][j].w
         return (x, w)
 
     def assemble():
+        total_dofs = 2 * self.mesh.n_elements * self.basis_funcs.num_fncs
+        G = np.empty(total_dofs, total_dofs)
+        H = np.empty(total_dofs, total_dofs)
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
                 assemble_G_row(k, i)
                 assemble_H_row(k, i)
 
-    def assemble_H_row():
-        pass
+    def assemble_H_row(self, k, i):
+        """
+        Assemble one row of the H matrix.
+        """
+        H_row_x = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
+        H_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
+        for l in range(self.mesh.n_elements):
+            for j in range(self.basis_funcs.num_fncs):
+                src_dof_x = self.dof_map[0, l, j]
+                src_dof_y = self.dof_map[1, l, j]
+
+                H_local = self.assemble_H_one_interaction(k, i, l, j)
+                # Add the local interactions to the global matrix in
+                # the proper locations
+                H_row_x[src_dof_x] += H_local[0, 0]
+                H_row_x[src_dof_y] += H_local[0, 1]
+                H_row_y[src_dof_x] += H_local[1, 0]
+                H_row_y[src_dof_y] += H_local[1, 1]
+        return H_row_x, H_row_y
 
 
     def assemble_G_row(self, k, i):
@@ -98,16 +118,78 @@ class Assembler(object):
         G_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
         for l in range(self.mesh.n_elements):
             for j in range(self.basis_funcs.num_fncs):
+                src_dof_x = self.dof_map[0, l, j]
+                src_dof_y = self.dof_map[1, l, j]
+
+                if k == l:
+                    M_local = self.assemble_M_one_interaction(k, i, j)
+                    # M_local is only applied on the block diagonal
+                    G_row_x[src_dof_x] += M_local
+                    G_row_y[src_dof_y] += M_local
+
                 G_local = self.assemble_G_one_interaction(k, i, l, j)
                 # Add the local interactions to the global matrix in
                 # the proper locations
-                src_dof_x = self.dof_map[0, l, j]
-                src_dof_y = self.dof_map[1, l, j]
                 G_row_x[src_dof_x] += G_local[0, 0]
                 G_row_x[src_dof_y] += G_local[0, 1]
                 G_row_y[src_dof_x] += G_local[1, 0]
                 G_row_y[src_dof_y] += G_local[1, 1]
         return G_row_x, G_row_y
+
+    def assemble_H_one_interaction(self, k, i, l, j):
+        """
+        Compute one pair of element interactions for the H matrix.
+        """
+        soln_dof_x = self.dof_map[0, k, i]
+        soln_dof_y = self.dof_map[1, k, i]
+        soln_normal = self.mesh.normals[k]
+        soln_jacobian = self.mesh.get_element_jacobian(k)
+
+        src_dof_x = self.dof_map[0, l, j]
+        src_dof_y = self.dof_map[1, l, j]
+        src_jacobian = self.mesh.get_element_jacobian(l)
+        q_pts, w = self.get_quadrature('H', k, l, i, j)
+
+        for (q_pt_soln, w_soln) in zip(q_pts, w):
+            phys_soln_pt = self.mesh.get_physical_points(k, q_pt_soln)
+            # The basis functions should be evaluated on reference
+            # coordinates
+            soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_soln)
+            for (q_pt_src, w_src) in zip(q_pts, w):
+                src_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_src)
+
+                # Separation of the two quadrature points, use real,
+                # physical coordinates!
+                phys_src_pt = self.mesh.get_physical_points(l, q_pt_src)
+                r = phys_soln_pt - phys_src_pt
+
+                U = self.kernel.displacement_kernel(r, soln_normal)
+
+                # Actually perform the quadrature
+                H_local = U * src_basis_fnc * soln_basis_fnc *\
+                              soln_jacobian * src_jacobian *\
+                              w_soln * w_src
+        return H_local
+
+    def assemble_M_one_interaction(self, k, i, j):
+        """
+        Compute one local mass matrix interaction.
+        """
+        soln_dof_x = self.dof_map[0, k, i]
+        soln_dof_y = self.dof_map[1, k, i]
+        src_dof_x = self.dof_map[0, k, j]
+        src_dof_y = self.dof_map[1, k, j]
+        jacobian = self.mesh.get_element_jacobian(k)
+        q_pts, w = self.get_quadrature('M', k, k, i, j)
+        M_local = 0
+        for (q_pt, w) in zip(q_pts, w):
+            # The basis functions should be evaluated on reference
+            # coordinates
+            soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
+            src_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt)
+            M_local += soln_basis_fnc * src_basis_fnc * jacobian * w
+        # Multiply by -0.5 to account for the boundary effect
+        return -0.5 * M_local
 
     def assemble_G_one_interaction(self, k, i, l, j):
         """
@@ -142,8 +224,6 @@ class Assembler(object):
                 G_local = T * src_basis_fnc * soln_basis_fnc *\
                               soln_jacobian * src_jacobian *\
                               w_soln * w_src
-                import ipdb;ipdb.set_trace()
-
         return G_local
 
 
@@ -162,16 +242,20 @@ class TestKernel(object):
     The normal kernels are too complex to make testing easy.
     """
 
-    def displacement_kernel(self, r):
+    def displacement_kernel(self, r, n):
         return np.ones((2, 2))
     def traction_kernel(self, r, n):
         return np.ones((2, 2))
 
-def simple_assembler(degree = 0, logr_pts = 2, oneoverr_pts = 2):
-    dof_map = np.arange(4 * (degree + 1)).reshape(2, 2, degree + 1)
+def simple_assembler(degree = 0,
+                     logr_pts = 2,
+                     oneoverr_pts = 2,
+                     n_elements = 2):
+    dof_map = np.arange(2 * n_elements * (degree + 1)).\
+              reshape(2, n_elements, degree + 1)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
     k = TestKernel()
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = mesh.Mesh.simple_line_mesh(n_elements)
     assembler = Assembler(msh, bf, k, dof_map, 1, logr_pts, oneoverr_pts)
     return assembler
 
@@ -197,23 +281,24 @@ def test_build_quadrature_list():
 
 def test_get_quadrature():
     a = simple_assembler(degree = 2)
-    x, w = a.get_quadrature('G', 1, 1, 1, 2)
-    assert(len(x) == 6)
+    x1, w = a.get_quadrature('G', 1, 1, 1, 2)
+    assert(len(x1) == 6)
 
-    q = a.get_quadrature('H', 1, 1, 2, 2)
-    assert(len(x) == 6)
+    x2, w = a.get_quadrature('H', 0, 0, 0, 1)
+    assert(len(x2) == 8)
+
+    x3, w = a.get_quadrature('M', 1, 1, 2, 2)
+    assert(len(x3) == 1)
 
 def test_assemble_G_one_element_off_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
     G_local = a.assemble_G_one_interaction(0, 0, 1, 0)
-    print "\n" + str(G_local)
     assert((G_local == np.array([[1.0, 1.0], [1.0, 1.0]])).all())
 
 def test_assemble_G_one_element_on_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
     G_local = a.assemble_G_one_interaction(0, 0, 0, 0)
-    print "\n" + str(G_local)
-    assert((G_local == np.array([[1.0, 1.0], [1.0, 1.0]])).all())
+    assert((G_local == np.array([[0.0, 0.0], [0.0, 0.0]])).all())
 
 def test_assemble_G_row_test_kernel():
     a = simple_assembler(oneoverr_pts = 4)
@@ -221,9 +306,28 @@ def test_assemble_G_row_test_kernel():
     # The row functions should return one vector for each dimension.
     G_row_x, G_row_y = a.assemble_G_row(0, 0)
 
+    assert((G_row_x == np.array([-0.5, 1.0, 0.0, 1.0])).all())
+    assert((G_row_y == np.array([0, 1.0, -0.5, 1.0])).all())
 
-    assert(G_row_x == np.array([0.5, 1.0]))
-    assert(G_row_y == np.array([1.0, 0.5]))
+
+def test_assemble_H_one_element_off_diagonal():
+    a = simple_assembler(logr_pts = 10)
+    H_local = a.assemble_H_one_interaction(0, 0, 1, 0)
+    assert((H_local == np.array([[1.0, 1.0], [1.0, 1.0]])).all())
+
+def test_assemble_H_one_element_on_diagonal():
+    a = simple_assembler(logr_pts = 11)
+    H_local = a.assemble_H_one_interaction(0, 0, 0, 0)
+    assert((H_local == np.array([[0.0, 0.0], [0.0, 0.0]])).all())
+
+def test_assemble_H_row_test_kernel():
+    a = simple_assembler(logr_pts = 10)
+
+    # The row functions should return one vector for each dimension.
+    H_row_x, H_row_y = a.assemble_H_row(0, 0)
+
+    assert((H_row_x == np.array([-0.5, 1.0, 0.0, 1.0])).all())
+    assert((H_row_y == np.array([0, 1.0, -0.5, 1.0])).all())
 
 
 

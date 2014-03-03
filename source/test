@@ -1,1 +1,0 @@
-py.test -s --tb=short quadrature.py

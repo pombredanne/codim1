@@ -18,11 +18,11 @@ bf = BasisFunctions(q.x)
 mesh = Mesh.simple_line_mesh(n_elements)
 
 # element_deg + 1 degrees of freedom per element
-total_dofs = n_elements * (element_deg + 1)
+total_dofs = 2 * n_elements * (element_deg + 1)
 
 # Making a dof_map in 1D is super simple! Its just a folded over list of all
 # the dofs
-dof_map = np.arange(total_dofs).reshape(n_elements, element_deg + 1)
+dof_map = np.arange(total_dofs).reshape(2, n_elements, element_deg + 1)
 
 # Specify which boundary conditions we have for each element
 # Traction for every element with t_x = 0, t_y = 1.0
