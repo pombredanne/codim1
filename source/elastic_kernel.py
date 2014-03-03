@@ -43,6 +43,8 @@ class ElastostaticKernel(object):
     def traction_kernel(self, r, n):
         """
         Return the traction kernels.
+        The normal (n) provided should be the normal to the observation point
+        surface, NOT the source point surface.
         """
         mu = self.shear_modulus
         pr = self.poisson_ratio
@@ -73,7 +75,9 @@ class ElastostaticKernel(object):
 
 # How to test these kernels? Bugs *will* be caught in higher level tests
 # but it would be nice to be able to know where the problem is...
-
+# Idea 1: Numerically differentiate the displacement kernel to get a
+# stress kernel. Compare. Yuck!
+# Idea 2:
 def test_displacement():
     kernel = ElastostaticKernel(30e9, 0.25)
 
@@ -84,9 +88,9 @@ def test_displacement():
 
     U = np.array([kernel.displacement_kernel(r_val) for r_val in r])
 
-    import matplotlib.pyplot as plt
-    plt.plot(x, U[:, 0, 1])
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.plot(x, U[:, 0, 1])
+    # plt.show()
 
 
 def test_traction():
@@ -101,10 +105,10 @@ def test_traction():
     T = np.array([kernel.traction_kernel(r_val, np.array([0, 1.0]))
         for r_val in r])
 
-    import matplotlib.pyplot as plt
-    plt.plot(x, T[:, 0, 0])
-    plt.plot(x, T[:, 0, 1] - 4.0)
-    plt.plot(x, T[:, 1, 0] - 8.0)
-    plt.plot(x, T[:, 1, 1] - 12.0)
-    plt.ylim(-15.0, 5.0)
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # plt.plot(x, T[:, 0, 0])
+    # plt.plot(x, T[:, 0, 1] - 4.0)
+    # plt.plot(x, T[:, 1, 0] - 8.0)
+    # plt.plot(x, T[:, 1, 1] - 12.0)
+    # plt.ylim(-15.0, 5.0)
+    # plt.show()

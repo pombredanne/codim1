@@ -13,7 +13,10 @@ class BasisFunctions(object):
         """
             Create an equispaced nodal basis.
         """
-        nodes = np.linspace(0.0, 1.0, element_deg + 1)
+        if element_deg == 0:
+            nodes = np.array([0.5])
+        else:
+            nodes = np.linspace(0.0, 1.0, element_deg + 1)
         return cls(nodes)
 
     def __init__(self, nodes):
@@ -23,6 +26,7 @@ class BasisFunctions(object):
         """
         self.fncs = []
         self.nodes = copy.copy(nodes)
+        self.num_fncs = len(nodes)
         for (i, n) in enumerate(nodes):
             w = np.zeros_like(nodes)
             w[i] = 1.0
@@ -51,9 +55,19 @@ class BasisFunctions(object):
         """
         return C * np.array([f(x) for f in self.fncs])
 
+
 ################################################################################
 # TESTS                                                                        #
 ################################################################################
+
+def test_degree_zero():
+    bf = BasisFunctions.from_degree(0)
+    assert(bf.nodes[0] == 0.5)
+    assert(len(bf.nodes) == 1)
+    for x in np.linspace(0.0, 1.0, 10):
+        np.testing.assert_almost_equal(bf.evaluate_basis(0, x), 1.0)
+        np.testing.assert_almost_equal(bf.evaluate_basis_derivative(0, x), 0.0)
+
 
 def test_from_degree():
     bf = BasisFunctions.from_degree(2)

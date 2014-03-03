@@ -232,6 +232,9 @@ class QuadGaussOneOverR(object):
     """
     def __init__(self, N, x0):
         self.N = N
+        if self.N == 3:
+            raise Exception('QuadGaussOneOverR is not implemented for N = 3.' +
+                            'Use N = 2 or N = 4')
         self.x0 = x0
 
         proper_length = 1 - (2 * x0)
@@ -262,8 +265,8 @@ class QuadGaussOneOverR(object):
         self.w_sing = np.append(self.w_sing, w_2)
 
         # Transform to [0, 1]
-        self.x_sing = (self.x_sing + 1) / 2.0
-        self.w_sing /= 2.0
+        self.x_sing = pv_start + pv_length * (self.x_sing + 1) / 2.0
+        self.w_sing *= pv_length / 2.0
 
         # We don't factor out the 1 / (x - x0) of the quadratured function,
         # so we must account for it here.
@@ -273,6 +276,9 @@ class QuadGaussOneOverR(object):
         self.x = np.append(self.x, self.x_sing)
         self.w = np.append(self.w, self.w_sing)
 
+################################################################################
+# TESTS                                                                        #
+################################################################################
 
 
 def test_QuadGauss():
@@ -317,7 +323,7 @@ def test_QuadGaussLogR():
 def test_QuadOneOverR_1():
     f = lambda x: 1 / (x - 0.4)
     exact = np.log(3.0 / 2.0)
-    q = QuadGaussOneOverR(4, 0.4)
+    q = QuadGaussOneOverR(2, 0.4)
     est_sing = np.sum([w_val * f(x_val) for (w_val, x_val)
                        in zip(q.w_sing, q.x_sing)])
     est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
@@ -329,7 +335,7 @@ def test_QuadOneOverR_2():
     g = lambda x: np.exp(x) / x
     f = lambda x: 2 * g((2 * x) - 1)
     exact = 2.11450175
-    q = QuadGaussOneOverR(4, 0.5)
+    q = QuadGaussOneOverR(2, 0.5)
     est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est_total)
 
@@ -338,6 +344,13 @@ def test_QuadOneOverR_3():
     g = lambda x: np.exp(x) / (np.sin(x) - np.cos(x))
     f = lambda x: np.pi / 2.0 * g(np.pi / 2.0 * x)
     exact = 2.61398312
-    q = QuadGaussOneOverR(6, 0.5)
+    q = QuadGaussOneOverR(2, 0.5)
+    est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
+    np.testing.assert_almost_equal(exact, est_total)
+
+def test_QuadOneOverR_4():
+    f = lambda x: np.exp(x) / (x - 0.2)
+    exact = 3.1390626072
+    q = QuadGaussOneOverR(8, 0.2)
     est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est_total)

@@ -14,4 +14,4 @@ def time_fnc():
 t0 = time.time()
 time_fnc()
 t1 = time.time()
-print(t1 - t0)
+print("Required: " + str(t1 - t0) + " seconds.")

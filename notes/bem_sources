@@ -9,6 +9,7 @@ crouch/starfield and sauter/schwab
 Sauter, schwab quadrature methods look exciting!
 The implementation in BEM++ using the borrowed HYENA code looks promising. 
 Porting that would provide the necessary routines.
+Definitely what I should do for 3D
 
 www.boundaryelements.com has many examples and tutorials including for 
 elasticity specifically
@@ -25,7 +26,6 @@ EPSBEM -- super high order approximations using matlab (p > 10000!!!!)
        -- http://apfel.mathematik.uni-ulm.de/~mbantle/epsBEM/index.html
 BEMLIB -- http://dehesa.freeshell.org/BEMLIB/
 
-
 Other notes:
 
 The MIT OCW 16.920 has some good notes on boundary element methods.
@@ -35,11 +35,15 @@ I haven't yet obtained the accompanying 2D paper -- Rizzo 1967
 
 Add info on dense matrix compression techniques 
 -- H-matrices, FMM, Panel clustering, Barnes-Hut
+-- AHMED, HLIB, hmmvp (Andrew Bradley) -- h matrix implementations
 
 Fast multipole boundary element method -- http://urbana.mie.uc.edu/yliu/Software/
 
 Add info on dense parallelizable matrix solvers.
 
 Add info on the sparse parallel approximate preconditioner
+
+MAGMA, PLASMA from Univ. Tennessee look like interesting multi-architecture
+linear algebra packages.
 
 Eventually I will add some notes on BEM to this directory.
