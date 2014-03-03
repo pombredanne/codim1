@@ -12,16 +12,8 @@ class ElastostaticKernel(object):
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
 
-    def displacement_kernel(self, r, n):
-        """
-        Return the displacement kernel corresponding to a
-        separation of (r[0], r[1])
-        This is the effect that is produced $r$ away from a unit point
-        force in a full space.
-        Goes by many names...
-            Green's function
-            Kelvin's solution
-        """
+    def displacement_singular(self, r, n):
+        """The singular (log(r)) part of the displacement kernel"""
         mu = self.shear_modulus
         pr = self.poisson_ratio
         dx = r[0]
@@ -32,13 +24,48 @@ class ElastostaticKernel(object):
         outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
 
         U = np.empty((2, 2))
-        U[0, 0] = (-(3 - 4 * pr) * np.log(dist)) + ((dx ** 2) / dist_squared)
-        U[1, 1] = -(3 - 4 * pr) * np.log(dist) + ((dy ** 2) / dist_squared)
+        U[0, 0] = (-(3 - 4 * pr) * np.log(dist))# + ((dx ** 2) / dist_squared)
+        U[1, 1] = -(3 - 4 * pr) * np.log(dist)# + ((dy ** 2) / dist_squared)
+        U[1, 0] = 0.0
+        U[0, 1] = 0.0
+        # U[1, 0] = (dx * dy) / dist_squared
+        # U[0, 1] = U[1, 0]
+        U *= outer_factor
+
+        return U
+
+    def displacement_nonsingular(self, r, n):
+        """The nonsingular part of the displacement kernel"""
+        mu = self.shear_modulus
+        pr = self.poisson_ratio
+        dx = r[0]
+        dy = r[1]
+        dist_squared = dx ** 2 + dy ** 2
+        dist = np.sqrt(dist_squared)
+
+        outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
+
+        U = np.empty((2, 2))
+        U[0, 0] = ((dx ** 2) / dist_squared)
+        U[1, 1] = ((dy ** 2) / dist_squared)
         U[1, 0] = (dx * dy) / dist_squared
         U[0, 1] = U[1, 0]
         U *= outer_factor
 
         return U
+
+    def displacement_kernel(self, r, n):
+        """
+        Return the displacement kernel corresponding to a
+        separation of (r[0], r[1])
+        This is the effect that is produced $r$ away from a unit point
+        force in a full space.
+        Goes by many names...
+            Green's function
+            Kelvin's solution
+        """
+        return self.displacement_singular(r, n) \
+            + self.displacement_nonsingular(r, n)
 
     def traction_kernel(self, r, n):
         """

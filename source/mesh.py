@@ -99,6 +99,7 @@ def test_get_phys_pts():
     np.testing.assert_almost_equal(pts[0][0], 0.0)
     np.testing.assert_almost_equal(pts[1][0], 0.25)
     np.testing.assert_almost_equal(pts[2][0], 0.5)
+    np.testing.assert_almost_equal(pts[2][1], 0.0)
 
 def test_jacobian():
     m = Mesh.simple_line_mesh(4)
