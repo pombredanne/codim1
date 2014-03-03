@@ -19,14 +19,14 @@ class Assembler(object):
                  mesh,
                  basis_funcs,
                  kernel,
-                 dof_map,
+                 dof_handler,
                  quad_points_nonsingular,
                  quad_points_logr,
                  quad_points_oneoverr):
         self.mesh = mesh
         self.basis_funcs = basis_funcs
         self.kernel = kernel
-        self.dof_map = dof_map
+        self.dof_handler = dof_handler
         self.quad_points_nonsingular = quad_points_nonsingular
         self.quad_points_logr = quad_points_logr
         self.quad_points_oneoverr = quad_points_oneoverr
@@ -37,51 +37,20 @@ class Assembler(object):
         """
         The quadrature rules can be defined once on the reference element
         and then a change of variables allows integration on any element.
-
-        We need (element_deg) * (element_deg + 1) different quadrature
-        rules for the singular case. Two for each pair of reference element distances.
-        One for the 1/(log r) case and one for the 1/r case.
         """
         self.quad_nonsingular = quadrature.QuadGauss(self.quad_points_nonsingular)
         self.quad_logr = []
         self.quad_oneoverr = []
-        for i in range(self.basis_funcs.num_fncs):
-            inside_logr = [0] * self.basis_funcs.num_fncs
-            inside_oneoverr = [0] * self.basis_funcs.num_fncs
-            # The set of distances is symmetric so only loop from
-            # i to n_fncs
-            for j in range(i, self.basis_funcs.num_fncs):
-                x1 = self.basis_funcs.nodes[i]
-                x2 = self.basis_funcs.nodes[j]
-                r = x2 - x1
-                logr = quadrature.QuadGaussLogR(self.quad_points_logr, 1.0, r)
-                oneoverr = quadrature.QuadGaussOneOverR(
-                                                        self.quad_points_oneoverr, r)
-                inside_logr[j] = logr
-                inside_oneoverr[j] = oneoverr
-            self.quad_logr.append(inside_logr)
-            self.quad_oneoverr.append(inside_oneoverr)
-        # Make the set of quadrature formulas symmetric
-        for i in range(self.basis_funcs.num_fncs):
-            for j in range(i):
-                self.quad_logr[i][j] = self.quad_logr[j][i]
-                self.quad_oneoverr[i][j] = self.quad_oneoverr[j][i]
-
-    def get_quadrature(self, GHM, k, l, i, j):
-        if k != l or GHM == 'nonsingular':
-            x = self.quad_nonsingular.x
-            w = self.quad_nonsingular.w
-            return (x, w)
-        if GHM == 'oneoverr':
-            x = self.quad_oneoverr[i][j].x
-            w = self.quad_oneoverr[i][j].w
-        elif GHM == 'logr':
-            x = self.quad_logr[i][j].x
-            w = self.quad_logr[i][j].w
-        return (x, w)
+        for singular_pt in self.quad_nonsingular.x:
+            logr = quadrature.QuadGaussLogR(self.quad_points_logr,
+                                            1.0, singular_pt)
+            oneoverr = quadrature.QuadGaussOneOverR(self.quad_points_oneoverr,
+                                                    singular_pt)
+            self.quad_logr.append(logr)
+            self.quad_oneoverr.append(oneoverr)
 
     def assemble():
-        total_dofs = 2 * self.mesh.n_elements * self.basis_funcs.num_fncs
+        total_dofs = self.dof_handler.total_dofs
         G = np.empty(total_dofs, total_dofs)
         H = np.empty(total_dofs, total_dofs)
         for k in range(self.mesh.n_elements):
@@ -97,8 +66,8 @@ class Assembler(object):
         H_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
         for l in range(self.mesh.n_elements):
             for j in range(self.basis_funcs.num_fncs):
-                src_dof_x = self.dof_map[0, l, j]
-                src_dof_y = self.dof_map[1, l, j]
+                src_dof_x = self.dof_handler.dof_map[0, l, j]
+                src_dof_y = self.dof_handler.dof_map[1, l, j]
 
                 H_local = self.assemble_H_one_interaction(k, i, l, j)
                 # Add the local interactions to the global matrix in
@@ -118,8 +87,8 @@ class Assembler(object):
         G_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
         for l in range(self.mesh.n_elements):
             for j in range(self.basis_funcs.num_fncs):
-                src_dof_x = self.dof_map[0, l, j]
-                src_dof_y = self.dof_map[1, l, j]
+                src_dof_x = self.dof_handler.dof_map[0, l, j]
+                src_dof_y = self.dof_handler.dof_map[1, l, j]
 
                 if k == l:
                     M_local = self.assemble_M_one_interaction(k, i, j)
@@ -140,21 +109,16 @@ class Assembler(object):
         """
         Compute one pair of element interactions for the H matrix.
         """
-        q_pts, w = self.get_quadrature('logr', k, l, i, j)
         H_sing = np.zeros((2, 2))
-        import ipdb; ipdb.set_trace()
         H_sing = self.double_integral(self.kernel.displacement_singular,
                              H_sing,
-                             q_pts,
-                             w,
+                             True, self.quad_logr,
                              k, i, l, j)
 
-        q_pts, w = self.get_quadrature('nonsingular', k, l, i, j)
         H_nonsing = np.zeros((2, 2))
         H_nonsing = self.double_integral(self.kernel.displacement_nonsingular,
                              H_nonsing,
-                             q_pts,
-                             w,
+                             False, self.quad_nonsingular,
                              k, i, l, j)
         return H_sing + H_nonsing
 
@@ -162,25 +126,21 @@ class Assembler(object):
         """
         Compute one local mass matrix interaction.
         """
-        q_pts, w = self.get_quadrature('nonsingular', k, k, i, j)
-        M_local = self.single_integral(lambda x: 1.0, 0.0, q_pts, w,
-                             k, i, j)
+        M_local = self.single_integral(lambda x: 1.0, 0.0, k, i, j)
         return -0.5 * M_local
 
     def assemble_G_one_interaction(self, k, i, l, j):
         """
         Compute one pair of element interactions for the G matrix.
         """
-        q_pts, w = self.get_quadrature('oneoverr', k, l, i, j)
         G_local = np.zeros((2, 2))
         G_local = self.double_integral(self.kernel.traction_kernel,
                              G_local,
-                             q_pts,
-                             w,
+                             True, self.quad_oneoverr,
                              k, i, l, j)
         return G_local
 
-    def single_integral(self, kernel, result, q_pts, w, k, i, j):
+    def single_integral(self, kernel, result, k, i, j):
         """
         Performs a single integral over the element specified by k
         with the basis functions specified by i and j. q_pts and w
@@ -188,6 +148,8 @@ class Assembler(object):
         can be evaluated at all point within the element
         """
         jacobian = self.mesh.get_element_jacobian(k)
+        q_pts = self.quad_nonsingular.x
+        w = self.quad_nonsingular.w
         for (q_pt, w) in zip(q_pts, w):
             # The basis functions should be evaluated on reference
             # coordinates
@@ -198,7 +160,7 @@ class Assembler(object):
                 soln_basis_fnc * src_basis_fnc * jacobian * w
         return result
 
-    def double_integral(self, kernel, result, q_pts, w, k, i, l, j):
+    def double_integral(self, kernel, result, singular, q_src, k, i, l, j):
         """
         Performs a double integral over a pair of elements with the
         provided quadrature rule.
@@ -210,12 +172,22 @@ class Assembler(object):
         # The normal is the one on the soln integration element, because
         # this is the
         normal = self.mesh.normals[k]
-        for (q_pt_soln, w_soln) in zip(q_pts[0], w[0]):
+        q_pts = self.quad_nonsingular.x
+        w = self.quad_nonsingular.w
+        for (q_soln_pt_index, (q_pt_soln, w_soln)) in enumerate(zip(q_pts, w)):
             phys_soln_pt = self.mesh.get_physical_points(k, q_pt_soln)[0]
             # The basis functions should be evaluated on reference
             # coordinates
             soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_soln)
-            for (q_pt_src, w_src) in zip(q_pts[1], w[1]):
+
+            if singular:
+                q_src_pts = q_src[q_soln_pt_index].x
+                q_src_w = q_src[q_soln_pt_index].w
+            else:
+                q_src_pts = q_src.x
+                q_src_w = q_src.w
+
+            for (q_pt_src, w_src) in zip(q_src_pts, q_src_w):
                 src_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_src)
 
                 # Separation of the two quadrature points, use real,
@@ -240,6 +212,7 @@ class Assembler(object):
 import basis_funcs
 import elastic_kernel
 import mesh
+import dof_handler
 
 class TestKernel(object):
     """
@@ -261,54 +234,38 @@ class TestKernel(object):
         return np.ones((2, 2))
 
 def simple_assembler(degree = 0,
-                     nonsing_pts = 1
+                     nonsing_pts = 2,
                      logr_pts = 2,
                      oneoverr_pts = 2,
                      n_elements = 2):
-    dof_map = np.arange(2 * n_elements * (degree + 1)).\
-              reshape(2, n_elements, degree + 1)
+    dh = dof_handler.DOFHandler(2, n_elements, degree)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
     k = TestKernel()
     msh = mesh.Mesh.simple_line_mesh(n_elements)
-    assembler = Assembler(msh, bf, k, dof_map,
+    assembler = Assembler(msh, bf, k, dh,
                           nonsing_pts, logr_pts, oneoverr_pts)
     return assembler
 
 def test_build_quadrature_list():
     a = simple_assembler(degree = 2)
 
-    assert(a.quad_nonsingular.N == 1)
+    assert(a.quad_nonsingular.N == 2)
 
-    assert(len(a.quad_logr) == 3)
-    assert(len(a.quad_oneoverr) == 3)
-    assert(len(a.quad_logr[0]) == 3)
-    assert(len(a.quad_oneoverr[0]) == 3)
+    assert(len(a.quad_logr) == 2)
+    assert(len(a.quad_oneoverr) == 2)
 
-    assert(a.quad_logr[0][0].N == 2)
-    assert(a.quad_oneoverr[0][0].N == 2)
+    assert(a.quad_logr[0].N == 2)
+    assert(a.quad_oneoverr[0].N == 2)
 
-    assert(a.quad_logr[0][0].x0 == 0)
-    assert(a.quad_logr[1][0].x0 == 0.5)
-    assert(a.quad_logr[2][0].x0 == 1.0)
-    assert(a.quad_oneoverr[0][0].x0 == 0)
-    assert(a.quad_oneoverr[1][0].x0 == 0.5)
-    assert(a.quad_oneoverr[2][0].x0 == 1.0)
-
-def test_get_quadrature():
-    a = simple_assembler(degree = 2)
-    x1, w = a.get_quadrature('oneoverr', 1, 1, 1, 2)
-    assert(len(x1) == 6)
-
-    x2, w = a.get_quadrature('logr', 0, 0, 0, 1)
-    assert(len(x2) == 8)
-
-    x3, w = a.get_quadrature('nonsingular', 1, 1, 2, 2)
-    assert(len(x3) == 1)
+    assert(a.quad_logr[0].x0 == a.quad_nonsingular.x[0])
+    assert(a.quad_logr[1].x0 == a.quad_nonsingular.x[1])
+    assert(a.quad_oneoverr[0].x0 == a.quad_nonsingular.x[0])
+    assert(a.quad_oneoverr[1].x0 == a.quad_nonsingular.x[1])
 
 def test_assemble_G_one_element_off_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
     G_local = a.assemble_G_one_interaction(0, 0, 1, 0)
-    assert((G_local == np.ones((2, 2))).all())
+    np.testing.assert_almost_equal(G_local, np.ones((2,2)))
 
 def test_assemble_G_one_element_on_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
