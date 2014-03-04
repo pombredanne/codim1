@@ -41,6 +41,10 @@ class ElastostaticKernel(object):
         dx = r[0]
         dy = r[1]
         dist_squared = dx ** 2 + dy ** 2
+        if dist_squared == 0:
+            # These kernels are well behaved at r = 0, but the computer will still
+            # scream if you divide by zero. So, we just return zero.
+            return np.ones((2, 2))
         dist = np.sqrt(dist_squared)
 
         outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
@@ -118,6 +122,11 @@ def test_displacement():
     # import matplotlib.pyplot as plt
     # plt.plot(x, U[:, 0, 1])
     # plt.show()
+
+def test_displacement_nonsingular_for_r_equal_to_0():
+    kernel = ElastostaticKernel(30e9, 0.25)
+    u_nonsing = kernel.displacement_nonsingular(np.array([0.0, 0.0]), 0.0)
+    assert(not np.isnan(np.sum(u_nonsing)))
 
 
 def test_traction():

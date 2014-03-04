@@ -14,8 +14,8 @@ class Mesh(object):
     def __init__(self, vertices, element_to_vertex):
         # vertices contains the position of each vertex in tuple form (x, y)
         self.vertices = vertices
-        # element_to_vertex contains pairs of indices referring the (x, y) values in
-        # vertices
+        # element_to_vertex contains pairs of indices referring the (x, y)
+        # values in vertices
         self.element_to_vertex = element_to_vertex
 
         self.n_vertices = vertices.shape[0]
@@ -26,8 +26,8 @@ class Mesh(object):
     @classmethod
     def simple_line_mesh(cls, n_elements):
         """
-        Create a mesh consisting of a line of elements starting at -1 and extending to
-        +1 in x coordinate, y = 0.
+        Create a mesh consisting of a line of elements starting at -1 and
+        extending to +1 in x coordinate, y = 0.
         """
         n_vertices = n_elements + 1
         vertices = np.zeros((n_vertices, 2))

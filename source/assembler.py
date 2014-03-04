@@ -38,7 +38,8 @@ class Assembler(object):
         The quadrature rules can be defined once on the reference element
         and then a change of variables allows integration on any element.
         """
-        self.quad_nonsingular = quadrature.QuadGauss(self.quad_points_nonsingular)
+        self.quad_nonsingular = quadrature.QuadGauss(
+                self.quad_points_nonsingular)
         self.quad_logr = []
         self.quad_oneoverr = []
         for singular_pt in self.quad_nonsingular.x:
@@ -49,14 +50,27 @@ class Assembler(object):
             self.quad_logr.append(logr)
             self.quad_oneoverr.append(oneoverr)
 
-    def assemble():
+    def assemble(self):
+        """
+        Produces the G and H matrices as described in the class description.
+        Return (G, H)
+        """
         total_dofs = self.dof_handler.total_dofs
-        G = np.empty(total_dofs, total_dofs)
-        H = np.empty(total_dofs, total_dofs)
+        G = np.empty((total_dofs, total_dofs))
+        H = np.empty((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
-                assemble_G_row(k, i)
-                assemble_H_row(k, i)
+                G_row_x, G_row_y = self.assemble_G_row(k, i)
+                H_row_x, H_row_y = self.assemble_H_row(k, i)
+
+                dof_x = self.dof_handler.dof_map[0, k, i]
+                dof_y = self.dof_handler.dof_map[1, k, i]
+
+                G[dof_x, :] = G_row_x
+                G[dof_y, :] = G_row_y
+                H[dof_x, :] = H_row_x
+                H[dof_y, :] = H_row_y
+        return G, H
 
     def assemble_H_row(self, k, i):
         """
@@ -204,6 +218,8 @@ class Assembler(object):
                 r = phys_soln_pt - phys_src_pt
 
                 k_val = kernel(r, normal)
+                assert(not np.isnan(np.sum(k_val))), \
+                       "nan kernel value for R = " + str(np.linalg.norm(r))
 
                 # Actually perform the quadrature
                 result += k_val * src_basis_fnc * soln_basis_fnc *\
@@ -316,5 +332,33 @@ def test_assemble_H_row_test_kernel():
     np.testing.assert_almost_equal(H_row_y, H_row_yact, 4)
 
 
+def test_assemble():
+    a = simple_assembler()
+    G, H = a.assemble()
+    assert(G.shape[0] == a.dof_handler.total_dofs)
+    assert(G.shape[1] == a.dof_handler.total_dofs)
+    assert(H.shape[0] == a.dof_handler.total_dofs)
+    assert(H.shape[1] == a.dof_handler.total_dofs)
+    assert(not np.isnan(np.sum(G)))
+    assert(not np.isnan(np.sum(H)))
 
-
+def test_realistic():
+    n_elements = 10
+    element_deg = 0
+    dim = 2
+    shear_modulus = 30e9
+    poisson_ratio = 0.25
+    quad_points_nonsingular = 5
+    quad_points_logr = 5
+    quad_points_oneoverr = 5
+    bf = basis_funcs.BasisFunctions.from_degree(element_deg)
+    msh = mesh.Mesh.simple_line_mesh(n_elements)
+    kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
+    dh = dof_handler.DOFHandler(2, n_elements, element_deg)
+    assembler = Assembler(msh, bf, kernel, dh,
+                          quad_points_nonsingular,
+                          quad_points_logr,
+                          quad_points_oneoverr)
+    G, H = assembler.assemble()
+    assert(not np.isnan(np.sum(G)))
+    assert(not np.isnan(np.sum(H)))
