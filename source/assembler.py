@@ -110,9 +110,13 @@ class Assembler(object):
         Compute one pair of element interactions for the H matrix.
         """
         H_sing = np.zeros((2, 2))
+        quad = self.quad_nonsingular
+        singular = False
+        if k == l:
+            quad = self.quad_logr
+            singular = True
         H_sing = self.double_integral(self.kernel.displacement_singular,
-                             H_sing,
-                             True, self.quad_logr,
+                             H_sing, singular, quad,
                              k, i, l, j)
 
         H_nonsing = np.zeros((2, 2))
@@ -134,9 +138,13 @@ class Assembler(object):
         Compute one pair of element interactions for the G matrix.
         """
         G_local = np.zeros((2, 2))
+        quad = self.quad_nonsingular
+        singular = False
+        if k == l:
+            quad = self.quad_oneoverr
+            singular = True
         G_local = self.double_integral(self.kernel.traction_kernel,
-                             G_local,
-                             True, self.quad_oneoverr,
+                             G_local, singular, quad,
                              k, i, l, j)
         return G_local
 
@@ -195,10 +203,10 @@ class Assembler(object):
                 phys_src_pt = self.mesh.get_physical_points(l, q_pt_src)[0]
                 r = phys_soln_pt - phys_src_pt
 
-                T = kernel(r, normal)
+                k_val = kernel(r, normal)
 
                 # Actually perform the quadrature
-                result += T * src_basis_fnc * soln_basis_fnc *\
+                result += k_val * src_basis_fnc * soln_basis_fnc *\
                               soln_jacobian * src_jacobian *\
                               w_soln * w_src
         return result
@@ -282,23 +290,30 @@ def test_assemble_G_row_test_kernel():
     np.testing.assert_almost_equal(G_row_y, np.array([1.0, 1.0, 0.5, 1.0]))
 
 def test_assemble_H_one_element_off_diagonal():
-    a = simple_assembler(logr_pts = 2)
+    a = simple_assembler(nonsing_pts = 10, logr_pts = 2)
     H_local = a.assemble_H_one_interaction(0, 0, 1, 0)
-    assert((H_local == np.array([[1.0, 1.0], [1.0, 1.0]])).all())
+    H_exact = np.array([[1.0 - 1.5 + np.log(4), 1.0],
+                        [1.0, 1.0 - 1.5 + np.log(4)]])
+    np.testing.assert_almost_equal(H_local, H_exact, 4)
 
 def test_assemble_H_one_element_on_diagonal():
-    a = simple_assembler(logr_pts = 2)
+    a = simple_assembler(nonsing_pts = 8, logr_pts = 4)
     H_local = a.assemble_H_one_interaction(0, 0, 0, 0)
-    assert((H_local == np.array([[0.0, 0.0], [0.0, 0.0]])).all())
+    H_exact = np.array([[1.0 - 1.5, 1.0],
+                        [1.0, 1.0 - 1.5]])
+    np.testing.assert_almost_equal(H_local, H_exact, 4)
 
 def test_assemble_H_row_test_kernel():
-    a = simple_assembler(logr_pts = 2)
+    a = simple_assembler(nonsing_pts = 10, logr_pts = 4)
 
     # The row functions should return one vector for each dimension.
     H_row_x, H_row_y = a.assemble_H_row(0, 0)
+    # Haha, I made a pun.
+    H_row_xact = np.array([-0.5, 1.0 - 1.5 + np.log(4), 1.0, 1.0])
+    H_row_yact = np.array([1.0, 1.0, -0.5, 1.0 - 1.5 + np.log(4)])
 
-    assert((H_row_x == np.array([-0.5, 1.0, 0.0, 1.0])).all())
-    assert((H_row_y == np.array([0, 1.0, -0.5, 1.0])).all())
+    np.testing.assert_almost_equal(H_row_x, H_row_xact, 4)
+    np.testing.assert_almost_equal(H_row_y, H_row_yact, 4)
 
 
 
