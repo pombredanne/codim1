@@ -32,7 +32,7 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
             dof_x = dof_handler.dof_map[0, k, i]
             dof_y = dof_handler.dof_map[1, k, i]
             ref_pt = basis_funcs.nodes[i]
-            node_pt = mesh.get_physical_points(k, ref_pt)[0]
+            node_pt = mesh.get_physical_points(k, ref_pt)
             f_val = fnc(node_pt)
             result[dof_x] = f_val[0]
             result[dof_y] = f_val[1]
@@ -53,7 +53,7 @@ def evaluate_boundary_solution(points_per_element, soln,
     y = []
     for k in range(dof_handler.n_elements):
         for pt in np.linspace(0.0, 1.0, points_per_element):
-            x.append(mesh.get_physical_points(k, pt)[0])
+            x.append(mesh.get_physical_points(k, pt))
             ux = 0
             uy = 0
             for i in range(dof_handler.element_deg + 1):

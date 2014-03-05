@@ -60,6 +60,8 @@ class Mesh(object):
         pt2 = self.vertices[vertex_list[1]]
         pt2_minus_pt1 = pt2 - pt1
         physical_pts = pt1 + np.outer(reference_pts, pt2_minus_pt1)
+        if physical_pts.shape[0] == 1:
+            return physical_pts[0]
         return physical_pts
 
     def get_element_jacobian(self, element_id):
@@ -100,6 +102,12 @@ def test_get_phys_pts():
     np.testing.assert_almost_equal(pts[1][0], 0.25)
     np.testing.assert_almost_equal(pts[2][0], 0.5)
     np.testing.assert_almost_equal(pts[2][1], 0.0)
+
+def test_get_one_phys_pts():
+    m = Mesh.simple_line_mesh(4)
+    # Element 2 should lie from 0 to 0.5
+    pts = m.get_physical_points(2, np.array([0.5]))
+    np.testing.assert_almost_equal(pts[0], 0.25)
 
 def test_jacobian():
     m = Mesh.simple_line_mesh(4)

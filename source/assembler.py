@@ -135,8 +135,7 @@ class Assembler(object):
 
         H_nonsing = np.zeros((2, 2))
         H_nonsing = self.double_integral(self.kernel.displacement_nonsingular,
-                             H_nonsing,
-                             False, self.quad_nonsingular,
+                             H_nonsing, False, self.quad_nonsingular,
                              k, i, l, j)
         return H_sing + H_nonsing
 
@@ -191,13 +190,17 @@ class Assembler(object):
         """
         soln_jacobian = self.mesh.get_element_jacobian(k)
         src_jacobian = self.mesh.get_element_jacobian(l)
-        # The normal is the one on the soln integration element, because
-        # this is the
+
+        # The normal is the one on the soln integration element.
+        # This is clear if you remember the source is actually a point
+        # and thus has no defined normal. We are integrating over many point
+        # sources.
         normal = self.mesh.normals[k]
+
         q_pts = self.quad_nonsingular.x
         w = self.quad_nonsingular.w
         for (q_soln_pt_index, (q_pt_soln, w_soln)) in enumerate(zip(q_pts, w)):
-            phys_soln_pt = self.mesh.get_physical_points(k, q_pt_soln)[0]
+            phys_soln_pt = self.mesh.get_physical_points(k, q_pt_soln)
             # The basis functions should be evaluated on reference
             # coordinates
             soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_soln)
@@ -214,7 +217,7 @@ class Assembler(object):
 
                 # Separation of the two quadrature points, use real,
                 # physical coordinates!
-                phys_src_pt = self.mesh.get_physical_points(l, q_pt_src)[0]
+                phys_src_pt = self.mesh.get_physical_points(l, q_pt_src)
                 r = phys_soln_pt - phys_src_pt
 
                 k_val = kernel(r, normal)
@@ -284,6 +287,24 @@ def test_build_quadrature_list():
     assert(a.quad_logr[1].x0 == a.quad_nonsingular.x[1])
     assert(a.quad_oneoverr[0].x0 == a.quad_nonsingular.x[0])
     assert(a.quad_oneoverr[1].x0 == a.quad_nonsingular.x[1])
+
+def test_assemble_M_same_dof():
+    a = simple_assembler(degree = 1)
+    M_local = a.assemble_M_one_interaction(0, 0, 0)
+    # -0.5 * integral of (1-x)^2 from 0 to 1
+    np.testing.assert_almost_equal(M_local, -(1.0 / 6.0))
+
+def test_assemble_M_same_dof_with_jacobian():
+    a = simple_assembler(degree = 1, n_elements = 4)
+    M_local = a.assemble_M_one_interaction(0, 0, 0)
+    # Element size divided by two so the M value should be divided by two
+    np.testing.assert_almost_equal(M_local, -(1.0 / 12.0))
+
+def test_assemble_M_diff_dof():
+    a = simple_assembler(degree = 1)
+    M_local = a.assemble_M_one_interaction(0, 0, 1)
+    # -0.5 * integral of (1-x)*x from 0 to 1
+    np.testing.assert_almost_equal(M_local, -(1.0 / 12.0))
 
 def test_assemble_G_one_element_off_diagonal():
     a = simple_assembler(oneoverr_pts = 2)

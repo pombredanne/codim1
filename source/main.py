@@ -9,10 +9,10 @@ import tools
 
 def main():
     # Number of elements
-    n_elements = 30
+    n_elements = 10
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
-    element_deg = 0
+    element_deg = 1
 
     # Dimension of problem
     dim = 2
@@ -22,9 +22,9 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 4
-    quad_points_logr = 6
-    quad_points_oneoverr = 6
+    quad_points_nonsingular = 11
+    quad_points_logr = 11
+    quad_points_oneoverr = 11
 
 
     bf = BasisFunctions.from_degree(element_deg)
@@ -49,8 +49,7 @@ def main():
     rhs = np.dot(H, tractions)
     soln = np.linalg.solve(G, rhs)
 
-
-    x, u = tools.evaluate_boundary_solution(3, soln, dh, bf, mesh)
+    x, u = tools.evaluate_boundary_solution(5, soln, dh, bf, mesh)
 
     plt.figure()
     plt.plot(x[:, 0], u[:, 0])
