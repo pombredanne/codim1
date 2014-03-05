@@ -83,6 +83,8 @@ class ElastostaticKernel(object):
         dy = r[1]
         nx = n[0]
         ny = n[1]
+        assert(nx ** 2 + ny ** 2 == 1.0)
+
         dist_squared = dx ** 2 + dy ** 2
         dist = np.sqrt(dist_squared)
         drdn = r.dot(n) / dist
@@ -94,8 +96,9 @@ class ElastostaticKernel(object):
         T[1, 1] = ((1 - 2 * pr) + 2 * (dy ** 2) / dist_squared) * drdn
         T[0, 1] = ((2 * dx * dy) / dist_squared) * drdn - \
                   (1 - 2 * pr) * ((dx / dist) * ny - (dy / dist) * nx)
-        T[1, 0] = ((2 * dx * dy) / dist_squared) * drdn - \
-                  (1 - 2 * pr) * ((dy / dist) * nx - (dx / dist) * ny)
+        T[1, 0] = -T[0, 1]
+        # T[1, 0] = ((2 * dx * dy) / dist_squared) * drdn - \
+        #           (1 - 2 * pr) * ((dy / dist) * nx - (dx / dist) * ny)
 
         T *= outer_factor
         return T
@@ -137,7 +140,8 @@ def test_displacement_symmetric():
 def test_traction_symmetric():
     kernel = ElastostaticKernel(1.0, 0.25)
     a = kernel.traction_kernel(np.array([1.0, 0.5]), np.array([1.0, 0.0]))
-    b = kernel.traction_kernel(np.array([-1.0, -0.5]), np.array([-1.0, 0.0]))
+    # Only symmetric if we reverse the normal vector too!
+    b = kernel.traction_kernel(np.array([-1.0, -0.5]), np.array([1.0, 0.0]))
     np.testing.assert_almost_equal(a, b)
 
 def test_traction():

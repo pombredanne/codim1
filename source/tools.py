@@ -102,18 +102,18 @@ def test_evaluate_boundary_solution_easy():
     assert(soln[-2][1] == 0.0)
 
 
-def test_evaluate_boundary_solution_hard():
+def test_interpolate_evaluate_hard():
     n_elements = 5
-    # Second order elements should exactly interpolate a quadratic function.
-    element_deg = 2
+    # Sixth order elements should exactly interpolate a sixth order polynomial.
+    element_deg = 6
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
     dh = DOFHandler(2, n_elements, element_deg)
-    fnc = lambda x: (x[0] * x[0], 0)
+    fnc = lambda x: (x[0] ** 6, 0)
     solution = interpolate(fnc, dh, bf, msh)
     x, soln = evaluate_boundary_solution(5, solution, dh, bf, msh)
     assert(x[-2][0] == 0.9)
-    assert(soln[-2][0] == 0.81)
+    np.testing.assert_almost_equal(soln[-2][0], (0.9 ** 6))
 
 
 

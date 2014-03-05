@@ -60,14 +60,14 @@ class Assembler(object):
         H = np.empty((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
-                G_row_x, G_row_y = self.assemble_G_row(k, i)
-                H_row_x, H_row_y = self.assemble_H_row(k, i)
-
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
 
+                G_row_x, G_row_y = self.assemble_G_row(k, i)
                 G[dof_x, :] = G_row_x
                 G[dof_y, :] = G_row_y
+
+                H_row_x, H_row_y = self.assemble_H_row(k, i)
                 H[dof_x, :] = H_row_x
                 H[dof_y, :] = H_row_y
         return G, H
@@ -86,10 +86,10 @@ class Assembler(object):
                 H_local = self.assemble_H_one_interaction(k, i, l, j)
                 # Add the local interactions to the global matrix in
                 # the proper locations
-                H_row_x[src_dof_x] += H_local[0, 0]
-                H_row_x[src_dof_y] += H_local[0, 1]
-                H_row_y[src_dof_x] += H_local[1, 0]
-                H_row_y[src_dof_y] += H_local[1, 1]
+                H_row_x[src_dof_x] = H_local[0, 0]
+                H_row_x[src_dof_y] = H_local[0, 1]
+                H_row_y[src_dof_x] = H_local[1, 0]
+                H_row_y[src_dof_y] = H_local[1, 1]
         return H_row_x, H_row_y
 
 
@@ -104,19 +104,20 @@ class Assembler(object):
                 src_dof_x = self.dof_handler.dof_map[0, l, j]
                 src_dof_y = self.dof_handler.dof_map[1, l, j]
 
+                G_local = self.assemble_G_one_interaction(k, i, l, j)
+
                 if k == l:
                     M_local = self.assemble_M_one_interaction(k, i, j)
                     # M_local is only applied on the block diagonal
-                    G_row_x[src_dof_x] += M_local
-                    G_row_y[src_dof_y] += M_local
+                    G_local[0, 0] += M_local
+                    G_local[1, 1] += M_local
 
-                G_local = self.assemble_G_one_interaction(k, i, l, j)
                 # Add the local interactions to the global matrix in
                 # the proper locations
-                G_row_x[src_dof_x] += G_local[0, 0]
-                G_row_x[src_dof_y] += G_local[0, 1]
-                G_row_y[src_dof_x] += G_local[1, 0]
-                G_row_y[src_dof_y] += G_local[1, 1]
+                G_row_x[src_dof_x] = G_local[0, 0]
+                G_row_x[src_dof_y] = G_local[0, 1]
+                G_row_y[src_dof_x] = G_local[1, 0]
+                G_row_y[src_dof_y] = G_local[1, 1]
         return G_row_x, G_row_y
 
     def assemble_H_one_interaction(self, k, i, l, j):
@@ -351,7 +352,6 @@ def test_assemble_H_row_test_kernel():
     np.testing.assert_almost_equal(H_row_x, H_row_xact, 4)
     np.testing.assert_almost_equal(H_row_y, H_row_yact, 4)
 
-
 def test_assemble():
     a = simple_assembler()
     G, H = a.assemble()
@@ -362,8 +362,10 @@ def test_assemble():
     assert(not np.isnan(np.sum(G)))
     assert(not np.isnan(np.sum(H)))
 
-def realistic_assembler():
-    n_elements = 10
+##
+## Some more realistic assembly tests.
+##
+def realistic_assembler(n_elements = 10):
     element_deg = 0
     dim = 2
     shear_modulus = 1.0
@@ -392,3 +394,14 @@ def test_realistic_symmetric():
     G, H = a.assemble()
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
     np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+
+def test_reciprocal_effects():
+    a = realistic_assembler(n_elements = 2)
+    G, H = a.assemble()
+    # The influence of u_x(0) on u_y(1) should be the same as the
+    # effect of u_x(1) on u_y(0), where the parenthesis indicate which element
+    np.testing.assert_almost_equal(G[0,3], G[1,2])
+    # The influence of u_y(0) on u_x(1) should be the same as the
+    # effect of u_y(1) on u_x(0), where the parenthesis indicate which element
+    # Really just the symmetric part of the above...
+    np.testing.assert_almost_equal(G[2,1], G[3,0])

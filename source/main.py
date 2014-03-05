@@ -9,10 +9,10 @@ import tools
 
 def main():
     # Number of elements
-    n_elements = 10
+    n_elements = 2
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
-    element_deg = 1
+    element_deg = 0
 
     # Dimension of problem
     dim = 2
@@ -46,6 +46,7 @@ def main():
     tractions = tools.interpolate(fnc, dh, bf, mesh)
     # bc_list = [('traction', fnc) for i in range(n_elements)]
 
+    import ipdb; ipdb.set_trace()
     rhs = np.dot(H, tractions)
     soln = np.linalg.solve(G, rhs)
 
