@@ -5,14 +5,14 @@ from basis_funcs import BasisFunctions
 from mesh import Mesh
 from assembler import Assembler
 from elastic_kernel import ElastostaticKernel
-from tools import interpolate
+import tools
 
 def main():
     # Number of elements
-    n_elements = 20
+    n_elements = 30
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
-    element_deg = 1
+    element_deg = 0
 
     # Dimension of problem
     dim = 2
@@ -22,9 +22,9 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 10
-    quad_points_logr = 11
-    quad_points_oneoverr = 10
+    quad_points_nonsingular = 4
+    quad_points_logr = 6
+    quad_points_oneoverr = 6
 
 
     bf = BasisFunctions.from_degree(element_deg)
@@ -36,41 +36,31 @@ def main():
                           quad_points_logr,
                           quad_points_oneoverr)
     G, H = assembler.assemble()
-    # print G
-    # print H
+    tools.plot_matrix(G, 'G', show = False)
+    tools.plot_matrix(H, 'H')
+
+    import ipdb; ipdb.set_trace()
 
     # Specify which boundary conditions we have for each element
     # Traction for every element with t_x = 0, t_y = 1.0
     fnc = lambda x: (0.0, 1.0)
-    tractions = interpolate(fnc, dh, bf, mesh)
+    tractions = tools.interpolate(fnc, dh, bf, mesh)
     # bc_list = [('traction', fnc) for i in range(n_elements)]
-
-    # print tractions
 
     rhs = np.dot(H, tractions)
     soln = np.linalg.solve(G, rhs)
 
-    # print soln
 
-    pts_per_element = 10
-    pt_index = 0
-    total_pts = pts_per_element * n_elements
-    center_pt = np.zeros(total_pts)
-    ux = np.zeros(total_pts)
-    uy = np.zeros(total_pts)
-    for k in range(n_elements):
-        for pt in np.linspace(0.0, 1.0, pts_per_element):
-            center_pt[pt_index] = mesh.get_physical_points(k, pt)[0][0]
-            for i in range(element_deg + 1):
-                coeff = dh.dof_map[:, k, i]
-                ux[pt_index] += soln[coeff[0]] * bf.evaluate_basis(i, pt)
-                uy[pt_index] += soln[coeff[1]] * bf.evaluate_basis(i, pt)
-            pt_index += 1
+    x, u = tools.evaluate_boundary_solution(1, soln, dh, bf, mesh)
 
     plt.figure()
-    plt.plot(center_pt, ux)
+    plt.plot(x[:, 0], u[:, 0])
+    plt.xlabel(r'X')
+    plt.ylabel(r'$u_x$', fontsize = 18)
     plt.figure()
-    plt.plot(center_pt, uy)
+    plt.plot(x[:, 0], u[:, 1])
+    plt.xlabel(r'X')
+    plt.ylabel(r'$u_y$', fontsize = 18)
     plt.show()
 
 
@@ -79,10 +69,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-def interpolate(self, element_id, fnc):
-    """
-    Interpolate a function of (x, y) onto
-    """
-    pass
