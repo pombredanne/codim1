@@ -128,6 +128,17 @@ def test_displacement_nonsingular_for_r_equal_to_0():
     u_nonsing = kernel.displacement_nonsingular(np.array([0.0, 0.0]), 0.0)
     assert(not np.isnan(np.sum(u_nonsing)))
 
+def test_displacement_symmetric():
+    kernel = ElastostaticKernel(1.0, 0.25)
+    a = kernel.displacement_kernel([1.0, 0.5], 0.0)
+    b = kernel.displacement_kernel([-1.0, -0.5], 0.0)
+    np.testing.assert_almost_equal(a, b)
+
+def test_traction_symmetric():
+    kernel = ElastostaticKernel(1.0, 0.25)
+    a = kernel.traction_kernel(np.array([1.0, 0.5]), np.array([1.0, 0.0]))
+    b = kernel.traction_kernel(np.array([-1.0, -0.5]), np.array([-1.0, 0.0]))
+    np.testing.assert_almost_equal(a, b)
 
 def test_traction():
     kernel = ElastostaticKernel(30e9, 0.25)

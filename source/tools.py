@@ -12,7 +12,7 @@ def plot_matrix(M, title, show = True):
     plt.colorbar()
 
     plt.figure()
-    plt.imshow(M - M.T)
+    plt.imshow((M - M.T) / (M + M.T))
     plt.title(title)
     plt.colorbar()
 

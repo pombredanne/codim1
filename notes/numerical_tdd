@@ -1,0 +1,10 @@
+Test driven development is so much faster:
+http://en.wikipedia.org/wiki/Test-driven_development
+
+Lots of testing types: 
+http://en.wikipedia.org/wiki/Software_testing#Testing_Types
+
+Testing numerics can be a bit harder. Sometimes, the correct answer isn't known exactly:
+http://stackoverflow.com/questions/1463632/how-to-use-tdd-correctly-to-implement-a-numerical-method
+http://scicomp.stackexchange.com/questions/4688/regression-testing-of-chaotic-numerical-models
+http://scicomp.stackexchange.com/questions/206/is-it-worthwhile-to-write-unit-tests-for-scientific-research-codes?rq=1

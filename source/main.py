@@ -36,10 +36,9 @@ def main():
                           quad_points_logr,
                           quad_points_oneoverr)
     G, H = assembler.assemble()
-    tools.plot_matrix(G, 'G', show = False)
-    tools.plot_matrix(H, 'H')
+    # tools.plot_matrix(G, 'G', show = False)
+    # tools.plot_matrix(H, 'H')
 
-    import ipdb; ipdb.set_trace()
 
     # Specify which boundary conditions we have for each element
     # Traction for every element with t_x = 0, t_y = 1.0
@@ -51,7 +50,7 @@ def main():
     soln = np.linalg.solve(G, rhs)
 
 
-    x, u = tools.evaluate_boundary_solution(1, soln, dh, bf, mesh)
+    x, u = tools.evaluate_boundary_solution(3, soln, dh, bf, mesh)
 
     plt.figure()
     plt.plot(x[:, 0], u[:, 0])

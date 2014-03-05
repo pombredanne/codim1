@@ -341,11 +341,11 @@ def test_assemble():
     assert(not np.isnan(np.sum(G)))
     assert(not np.isnan(np.sum(H)))
 
-def test_realistic():
+def realistic_assembler():
     n_elements = 10
     element_deg = 0
     dim = 2
-    shear_modulus = 30e9
+    shear_modulus = 1.0
     poisson_ratio = 0.25
     quad_points_nonsingular = 5
     quad_points_logr = 5
@@ -358,6 +358,16 @@ def test_realistic():
                           quad_points_nonsingular,
                           quad_points_logr,
                           quad_points_oneoverr)
-    G, H = assembler.assemble()
+    return assembler
+
+def test_realistic_nan():
+    a = realistic_assembler()
+    G, H = a.assemble()
     assert(not np.isnan(np.sum(G)))
     assert(not np.isnan(np.sum(H)))
+
+def test_realistic_symmetric():
+    a = realistic_assembler()
+    G, H = a.assemble()
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
