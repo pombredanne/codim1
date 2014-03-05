@@ -65,6 +65,17 @@ def evaluate_boundary_solution(points_per_element, soln,
     y = np.array(y)
     return x, y
 
+def evaluate_solution_on_element(element_idx, reference_point, soln,
+                                 dof_handler, basis_funcs, mesh):
+    soln_x = 0.0
+    soln_y = 0.0
+    for i in range(basis_funcs.num_fncs):
+        dof_x = dof_handler.dof_map[0, element_idx, i]
+        dof_y = dof_handler.dof_map[1, element_idx, i]
+        soln_x += soln[dof_x] * basis_funcs.evaluate_basis(i, reference_point)
+        soln_y += soln[dof_y] * basis_funcs.evaluate_basis(i, reference_point)
+    return np.array([soln_x, soln_y])
+
 ################################################################################
 # TESTS                                                                        #
 ################################################################################
@@ -100,6 +111,19 @@ def test_evaluate_boundary_solution_easy():
     assert(x[-2][0] == 0.9)
     assert(soln[-2][0] == 0.5)
     assert(soln[-2][1] == 0.0)
+
+def test_evaluate_solution_on_element():
+    n_elements = 2
+    element_deg = 1
+    bf = BasisFunctions.from_degree(element_deg)
+    msh = Mesh.simple_line_mesh(n_elements)
+    dh = DOFHandler(2, n_elements, element_deg)
+    fnc = lambda x: (x[0], x[1])
+    solution = interpolate(fnc, dh, bf, msh)
+    eval = evaluate_solution_on_element(1, 1.0, solution,
+                                 dh, bf, msh)
+    assert(eval[0] == 1.0)
+    assert(eval[1] == 0.0)
 
 
 def test_interpolate_evaluate_hard():

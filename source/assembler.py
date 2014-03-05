@@ -240,6 +240,7 @@ import basis_funcs
 import elastic_kernel
 import mesh
 import dof_handler
+import tools
 
 class TestKernel(object):
     """
@@ -373,7 +374,7 @@ def test_simple_symmetric_linear():
 ##
 ## Some more realistic assembly tests.
 ##
-def realistic_assembler(n_elements = 10,
+def realistic_assembler(n_elements = 4,
                         element_deg = 0):
     dim = 2
     shear_modulus = 1.0
@@ -404,9 +405,20 @@ def test_realistic_symmetric_constant():
     np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
 
 def test_realistic_symmetric_linear():
-    a = realistic_assembler(element_deg = 1)
-    G, H = a.assemble()
+    a = realistic_assembler(n_elements = 1, element_deg = 1)
     import ipdb; ipdb.set_trace()
+    G, H = a.assemble()
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+
+def test_realistic_symmetric_quadratic():
+    a = realistic_assembler(n_elements = 1, element_deg = 2)
+    G, H = a.assemble()
+    # import ipdb; ipdb.set_trace()
+    # import matplotlib.pyplot as plt
+    # plt.imshow(H-H.T)
+    # plt.colorbar()
+    # plt.show()
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
     np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
 
@@ -420,3 +432,19 @@ def test_reciprocal_effects():
     # effect of u_y(1) on u_x(0), where the parenthesis indicate which element
     # Really just the symmetric part of the above...
     np.testing.assert_almost_equal(G[2,1], -G[3,0])
+    np.testing.assert_almost_equal(H[2,1], -H[3,0])
+
+def test_realistic_zero_discontinuity():
+    a = realistic_assembler(element_deg = 1)
+    G, H = a.assemble()
+    fnc = lambda x: (0.0, 1.0)
+    tractions = tools.interpolate(fnc, a.dof_handler,
+                                  a.basis_funcs, a.mesh)
+    rhs = np.dot(H, tractions)
+    soln = np.linalg.solve(G, rhs)
+    for k in range(a.mesh.n_elements - 1):
+        value_left = tools.evaluate_solution_on_element(k, 1.0, soln,
+            a.dof_handler, a.basis_funcs, a.mesh)
+        value_right = tools.evaluate_solution_on_element(k + 1, 0.0, soln,
+            a.dof_handler, a.basis_funcs, a.mesh)
+        np.testing.assert_almost_equal(value_left, value_right)

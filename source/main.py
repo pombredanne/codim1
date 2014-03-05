@@ -9,7 +9,7 @@ import tools
 
 def main():
     # Number of elements
-    n_elements = 25
+    n_elements = 40
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
     element_deg = 1
@@ -22,9 +22,9 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 10
-    quad_points_logr = 10
-    quad_points_oneoverr = 10
+    quad_points_nonsingular = 5
+    quad_points_logr = 5
+    quad_points_oneoverr = 5
 
 
     bf = BasisFunctions.from_degree(element_deg)

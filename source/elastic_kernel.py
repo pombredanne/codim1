@@ -94,10 +94,8 @@ class ElastostaticKernel(object):
         T[1, 1] = ((1 - 2 * pr) + 2 * (dy ** 2) / dist_squared) * drdn
         T[0, 1] = ((2 * dx * dy) / dist_squared) * drdn - \
                   (1 - 2 * pr) * ((dx / dist) * ny - (dy / dist) * nx)
-        T[1, 0] = -T[0, 1]
-        # T[1, 0] = ((2 * dx * dy) / dist_squared) * drdn - \
-        #           (1 - 2 * pr) * ((dy / dist) * nx - (dx / dist) * ny)
-
+        T[1, 0] = ((2 * dx * dy) / dist_squared) * drdn - \
+                  (1 - 2 * pr) * ((dy / dist) * nx - (dx / dist) * ny)
         T *= outer_factor
         return T
 
