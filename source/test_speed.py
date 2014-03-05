@@ -1,8 +1,8 @@
 # This file is simply here to make sure that everything is running just as
 # fast under the virtualbox as under the host OS. There should be no
 # performance degradation. This takes me (Ben) approximately 1.2sec outside my
-# virtual machine and appx 1.15sec inside the virtual machine. WEIRD IT IS
-# FASTER! WHY?
+# virtual machine and appx 1.15sec inside the virtual machine. WHY IT IS
+# FASTER inside the VM?! WHY?
 
 import time
 
