@@ -24,12 +24,10 @@ class ElastostaticKernel(object):
         outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
 
         U = np.empty((2, 2))
-        U[0, 0] = (-(3 - 4 * pr) * np.log(dist))# + ((dx ** 2) / dist_squared)
-        U[1, 1] = -(3 - 4 * pr) * np.log(dist)# + ((dy ** 2) / dist_squared)
+        U[0, 0] = -(3 - 4 * pr) * np.log(dist)
+        U[1, 1] = -(3 - 4 * pr) * np.log(dist)
         U[1, 0] = 0.0
         U[0, 1] = 0.0
-        # U[1, 0] = (dx * dy) / dist_squared
-        # U[0, 1] = U[1, 0]
         U *= outer_factor
 
         return U
@@ -107,24 +105,6 @@ class ElastostaticKernel(object):
 # TESTS                                                                        #
 ################################################################################
 
-# How to test these kernels? Bugs *will* be caught in higher level tests
-# but it would be nice to be able to know where the problem is...
-# Idea 1: Numerically differentiate the displacement kernel to get a
-# stress kernel. Compare. Yuck!
-# Idea 2:
-def test_displacement():
-    kernel = ElastostaticKernel(30e9, 0.25)
-
-    x = np.linspace(-15.0, 15.0, 1000)
-    y = np.zeros(1000)
-    y -= 0.0
-    r = np.vstack((x, y)).T
-
-    U = np.array([kernel.displacement_kernel(r_val, 0.0) for r_val in r])
-
-    # import matplotlib.pyplot as plt
-    # plt.plot(x, U[:, 0, 1])
-    # plt.show()
 
 def test_displacement_nonsingular_for_r_equal_to_0():
     kernel = ElastostaticKernel(30e9, 0.25)
@@ -141,8 +121,22 @@ def test_traction_symmetric():
     kernel = ElastostaticKernel(1.0, 0.25)
     a = kernel.traction_kernel(np.array([1.0, 0.5]), np.array([1.0, 0.0]))
     # Only symmetric if we reverse the normal vector too!
-    b = kernel.traction_kernel(np.array([-1.0, -0.5]), np.array([1.0, 0.0]))
+    b = kernel.traction_kernel(np.array([-1.0, -0.5]), np.array([-1.0, 0.0]))
     np.testing.assert_almost_equal(a, b)
+
+def test_displacement():
+    kernel = ElastostaticKernel(30e9, 0.25)
+
+    x = np.linspace(-15.0, 15.0, 1000)
+    y = np.zeros(1000)
+    y -= 0.0
+    r = np.vstack((x, y)).T
+
+    U = np.array([kernel.displacement_kernel(r_val, 0.0) for r_val in r])
+
+    # import matplotlib.pyplot as plt
+    # plt.plot(x, U[:, 0, 1])
+    # plt.show()
 
 def test_traction():
     kernel = ElastostaticKernel(30e9, 0.25)

@@ -9,10 +9,10 @@ import tools
 
 def main():
     # Number of elements
-    n_elements = 2
+    n_elements = 25
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
-    element_deg = 0
+    element_deg = 1
 
     # Dimension of problem
     dim = 2
@@ -22,9 +22,9 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 11
-    quad_points_logr = 11
-    quad_points_oneoverr = 11
+    quad_points_nonsingular = 10
+    quad_points_logr = 10
+    quad_points_oneoverr = 10
 
 
     bf = BasisFunctions.from_degree(element_deg)
@@ -44,11 +44,15 @@ def main():
     # Traction for every element with t_x = 0, t_y = 1.0
     fnc = lambda x: (0.0, 1.0)
     tractions = tools.interpolate(fnc, dh, bf, mesh)
+    # displacements = tools.interpolate(fnc, dh, bf, mesh)
     # bc_list = [('traction', fnc) for i in range(n_elements)]
 
+    np.set_printoptions(precision = 3)
     import ipdb; ipdb.set_trace()
     rhs = np.dot(H, tractions)
+    # rhs = np.dot(G, displacements)
     soln = np.linalg.solve(G, rhs)
+    # soln = np.linalg.solve(H, rhs)
 
     x, u = tools.evaluate_boundary_solution(5, soln, dh, bf, mesh)
 

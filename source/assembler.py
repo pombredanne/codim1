@@ -44,7 +44,7 @@ class Assembler(object):
         self.quad_oneoverr = []
         for singular_pt in self.quad_nonsingular.x:
             logr = quadrature.QuadGaussLogR(self.quad_points_logr,
-                                            1.0, singular_pt)
+                                            singular_pt)
             oneoverr = quadrature.QuadGaussOneOverR(self.quad_points_oneoverr,
                                                     singular_pt)
             self.quad_logr.append(logr)
@@ -250,6 +250,7 @@ class TestKernel(object):
     def displacement_singular(self, r, n):
         dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
         return np.array([[np.log(dist), 0.0], [0.0, np.log(dist)]])
+        # return 1.0 #np.array([[np.log(dist), 0.0], [0.0, np.log(dist)]])
 
     def displacement_nonsingular(self, r, n):
         return np.ones((2, 2))
@@ -362,11 +363,18 @@ def test_assemble():
     assert(not np.isnan(np.sum(G)))
     assert(not np.isnan(np.sum(H)))
 
+def test_simple_symmetric_linear():
+    a = simple_assembler(n_elements = 1, degree = 1,
+                         nonsing_pts = 4, logr_pts = 4)
+    G, H = a.assemble()
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+
 ##
 ## Some more realistic assembly tests.
 ##
-def realistic_assembler(n_elements = 10):
-    element_deg = 0
+def realistic_assembler(n_elements = 10,
+                        element_deg = 0):
     dim = 2
     shear_modulus = 1.0
     poisson_ratio = 0.25
@@ -389,19 +397,26 @@ def test_realistic_nan():
     assert(not np.isnan(np.sum(G)))
     assert(not np.isnan(np.sum(H)))
 
-def test_realistic_symmetric():
+def test_realistic_symmetric_constant():
     a = realistic_assembler()
     G, H = a.assemble()
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+
+def test_realistic_symmetric_linear():
+    a = realistic_assembler(element_deg = 1)
+    G, H = a.assemble()
+    import ipdb; ipdb.set_trace()
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
     np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
 
 def test_reciprocal_effects():
     a = realistic_assembler(n_elements = 2)
     G, H = a.assemble()
-    # The influence of u_x(0) on u_y(1) should be the same as the
+    # The influence of u_x(0) on u_y(1) should be the opposite of the
     # effect of u_x(1) on u_y(0), where the parenthesis indicate which element
-    np.testing.assert_almost_equal(G[0,3], G[1,2])
-    # The influence of u_y(0) on u_x(1) should be the same as the
+    np.testing.assert_almost_equal(G[0,3], -G[1,2])
+    # The influence of u_y(0) on u_x(1) should be the opposite of the
     # effect of u_y(1) on u_x(0), where the parenthesis indicate which element
     # Really just the symmetric part of the above...
-    np.testing.assert_almost_equal(G[2,1], G[3,0])
+    np.testing.assert_almost_equal(G[2,1], -G[3,0])

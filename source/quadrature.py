@@ -195,30 +195,29 @@ class QuadGaussLogR(object):
     log(|x - x0| / q)
     singularity on the interval [0, 1].
     """
-    def __init__(self, N, q, x0):
+    def __init__(self, N, x0):
         self.N = N
-        self.q = q
         self.x0 = x0
-        if self.x0 == 0 or self.x0 ==0:
+        if self.x0 == 0 or self.x0 == 1.0:
             self.split = 1.0
         else:
             self.split = self.x0
 
-        qlog = QuadGaussLog(N)
+        qlog_reverse = QuadGaussLog(N, True)
+        qlog_forward = QuadGaussLog(N, False)
         qplain = QuadGauss(N)
-        self.w = qlog.w * self.split
-        self.x = qlog.x * self.split
-        if self.split != 1.0 or self.q != 1.0:
+        self.x = qlog_reverse.x * self.split
+        self.w = qlog_reverse.w * self.split
+        if self.split != 1.0:
             self.x = np.append(self.x, qplain.x * self.split)
             self.w = np.append(self.w,
-                    -np.log(self.q / self.split) * qplain.w * self.split)
-        if self.split != 1.0:
-            self.x = np.append(self.x, qlog.x * (1 - self.split) + self.split)
-            self.w = np.append(self.w, qlog.w * (1 - self.split))
+                    -np.log(1.0 / self.split) * qplain.w * self.split)
+            self.x = np.append(self.x, qlog_forward.x * (1 - self.split) + self.split)
+            self.w = np.append(self.w, qlog_forward.w * (1 - self.split))
             self.x = np.append(self.x, qplain.x * (1 - self.split) + self.split)
-            self.w = np.append(self.w, -np.log(self.q / (1 - self.split))
+            self.w = np.append(self.w, -np.log(1.0 / (1 - self.split))
                     * qplain.w * (1 - self.split))
-        self.w /= np.log(np.abs(self.x - self.x0)) / self.q;
+        self.w /= np.log(np.abs(self.x - self.x0))
 
 
 
@@ -272,25 +271,6 @@ class QuadGaussOneOverR(object):
         self.w_sing = w_1
         self.w_sing = np.append(self.w_sing, w_2)
 
-
-        # # Setup the special gauss quad points
-        # x_1 = copy.copy(qg.x)
-        # x_2 = -x_1
-        # w_1 = qg.w / x_1
-        # import ipdb; ipdb.set_trace()
-        # w_2 = copy.copy(-w_1)
-        # self.x_sing = x_1
-        # self.x_sing = np.append(self.x_sing, x_2)
-        # # Transform to [pv_start, pv_length]
-        # self.x_sing = pv_start + pv_length * (self.x_sing + 1) / 2.0
-
-        # # We don't factor out the 1 / (x - x0) of the quadratured function,
-        # # so we must account for it here.
-        # w_1 *= pv_length / 2.0 * (self.x_sing[0:N] - x0)
-        # w_2 *= pv_length / 2.0 * (self.x_sing[0:N] - x0)
-        # self.w_sing = w_1
-        # self.w_sing = np.append(self.w_sing, w_2)
-
         # Finished!
         self.x = np.append(self.x, self.x_sing)
         self.w = np.append(self.w, self.w_sing)
@@ -333,11 +313,18 @@ def test_QuadGaussLog3():
     np.testing.assert_almost_equal(exact, est)
 
 def test_QuadGaussLogR():
-    f = lambda r: np.log(np.abs(r - 0.5))
+    f = lambda x: np.log(np.abs(x - 0.5))
     exact = -1.0 - np.log(2.0)
-    q = QuadGaussLogR(1, 1.0, 0.5)
+    q = QuadGaussLogR(1, 0.5)
     est = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est)
+
+def test_QuadGaussLogR2():
+    f = lambda x: x ** 2 * np.log(np.abs(x - 0.9))
+    exact = -0.764714
+    q = QuadGaussLogR(4, 0.9)
+    est = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
+    np.testing.assert_almost_equal(exact, est, 5)
 
 def test_QuadOneOverR_1():
     f = lambda x: 1 / (x - 0.4)
@@ -380,3 +367,16 @@ def test_QuadOneOverR_5():
     q = QuadGaussOneOverR(10, 0.2)
     est_total = np.sum([w_val * f(x_val) for (w_val, x_val) in zip(q.w, q.x)])
     np.testing.assert_almost_equal(exact, est_total)
+
+def test_anotherLogRDouble():
+    f = lambda x, y: np.log(np.abs(x - y)) * x * (1 - y)
+    exact = -5.0 / 16.0
+    q = QuadGauss(15)
+    sum = 0.0
+    for (pt, wt) in zip(q.x, q.w):
+        q_inner = QuadGaussLogR(2, pt)
+        g = lambda x: f(x, pt)
+        for (pt2, wt2) in zip(q_inner.x, q_inner.w):
+            sum += g(pt2) * wt2 * wt
+    np.testing.assert_almost_equal(exact, sum)
+
