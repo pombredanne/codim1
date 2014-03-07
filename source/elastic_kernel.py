@@ -10,49 +10,30 @@ class ElastostaticKernel(object):
 
         self.const1 = (1 - 2 * poisson_ratio);
         self.const2 = 1 / (4 * np.pi * (1 - poisson_ratio))
+        self.const3 = 1.0 / (8.0 * np.pi * shear_modulus * (1 - poisson_ratio))
+        self.const4 = (3 - 4 * poisson_ratio)
 
     def displacement_singular(self, r, n):
         """The singular (log(r)) part of the displacement kernel"""
-        mu = self.shear_modulus
-        pr = self.poisson_ratio
-        dx = r[0]
-        dy = r[1]
-        dist = np.sqrt(dx ** 2 + dy ** 2)
-
-        outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
-
-        U = np.empty((2, 2))
-        U[0, 0] = -(3 - 4 * pr) * np.log(dist)
-        U[1, 1] = -(3 - 4 * pr) * np.log(dist)
-        U[1, 0] = 0.0
-        U[0, 1] = 0.0
-        U *= outer_factor
-
+        dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
+        U = np.zeros((2, 2))
+        U[0, 0] = -self.const3 * self.const4 * np.log(dist)
+        U[1, 1] = -self.const3 * self.const4 * np.log(dist)
         return U
 
     def displacement_nonsingular(self, r, n):
         """The nonsingular part of the displacement kernel"""
-        mu = self.shear_modulus
-        pr = self.poisson_ratio
-        dx = r[0]
-        dy = r[1]
-        dist_squared = dx ** 2 + dy ** 2
+        # These kernels are well behaved at r = 0, but the computer will still
+        # scream if you divide by zero. So, we just return zero.
+        dist_squared = r[0] ** 2 + r[1] ** 2
         if dist_squared == 0:
-            # These kernels are well behaved at r = 0, but the computer will still
-            # scream if you divide by zero. So, we just return zero.
             return np.ones((2, 2))
         dist = np.sqrt(dist_squared)
-        dr = np.array([dx / dist, dy / dist])
-
-        outer_factor = 1.0 / (8.0 * np.pi * mu * (1 - pr))
-
-        U = np.empty((2, 2))
-        U[0, 0] = ((dx ** 2) / dist_squared)
-        U[1, 1] = ((dy ** 2) / dist_squared)
-        U[1, 0] = (dx * dy) / dist_squared
+        U = np.zeros((2, 2))
+        U[0, 0] = self.const3 * ((r[0] ** 2) / dist_squared)
+        U[1, 1] = self.const3 * ((r[1] ** 2) / dist_squared)
+        U[1, 0] = self.const3 * (r[0] * r[1]) / dist_squared
         U[0, 1] = U[1, 0]
-        U *= outer_factor
-
         return U
 
     def displacement_kernel(self, r, n):
@@ -74,19 +55,11 @@ class ElastostaticKernel(object):
         The normal (n) provided should be the normal to the observation point
         surface, NOT the source point surface.
         """
-        mu = self.shear_modulus
-        pr = self.poisson_ratio
-        dx = r[0]
-        dy = r[1]
-        nx = n[0]
-        ny = n[1]
-        assert(nx ** 2 + ny ** 2 == 1.0)
-
-        dist = np.sqrt(dx ** 2 + dy ** 2)
+        assert(n[0] ** 2 + n[1] ** 2 == 1.0)
+        dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
         drdn = r.dot(n) / dist
-        dr = np.array([dx / dist, dy / dist])
-
-        T = np.empty((2, 2))
+        dr = np.array([r[0] / dist, r[1] / dist])
+        T = np.zeros((2, 2))
         T[0, 0] = self.traction_kernel_element(0, 0, dist, dr, drdn, n)
         T[1, 1] = self.traction_kernel_element(1, 1, dist, dr, drdn, n)
         T[0, 1] = self.traction_kernel_element(0, 1, dist, dr, drdn, n)
@@ -97,10 +70,6 @@ class ElastostaticKernel(object):
         return 1 / dist * self.const2 *\
                 (-drdn * (self.const1 * (i == j) +  2 * (dr[i] * dr[j])) + \
                  self.const1 * (dr[i] * normal[j] - dr[j] * normal[i]))
-
-    # def traction_kernel_element(self, i, j, r, dr):
-    #     return const1*( dr(i)*dr(j) + (i==j) * ( const2*log(1/r) ) );
-
 
 ################################################################################
 # TESTS                                                                        #
