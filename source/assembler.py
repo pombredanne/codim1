@@ -9,10 +9,10 @@ class Assembler(object):
     matrices can be derived by performing integration by parts on the
     original governing equations of static elasticity.
 
-    1. G -- The traction kernel matrix represents the test tractions acting
+    1. H -- The traction kernel matrix represents the test tractions acting
     through the solution displacements at each node of each element.
 
-    2. H -- The displacement kernel matrix represents the test displacements
+    2. G -- The displacement kernel matrix represents the test displacements
     acting through the solution tractions at each node of each element.
     """
     def __init__(self,
@@ -52,93 +52,100 @@ class Assembler(object):
 
     def assemble(self):
         """
-        Produces the G and H matrices as described in the class description.
-        Return (G, H)
+        Produces the H and G matrices as described in the class description.
+        Return (H, G)
         """
         total_dofs = self.dof_handler.total_dofs
-        G = np.empty((total_dofs, total_dofs))
-        H = np.empty((total_dofs, total_dofs))
+        H = np.zeros((total_dofs, total_dofs))
+        G = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
 
-                G_row_x, G_row_y = self.assemble_G_row(k, i)
-                G[dof_x, :] = G_row_x
-                G[dof_y, :] = G_row_y
-
                 H_row_x, H_row_y = self.assemble_H_row(k, i)
-                H[dof_x, :] = H_row_x
-                H[dof_y, :] = H_row_y
-        return G, H
+                H[dof_x, :] += H_row_x
+                H[dof_y, :] += H_row_y
 
-    def assemble_H_row(self, k, i):
-        """
-        Assemble one row of the H matrix.
-        """
-        H_row_x = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
-        H_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
-        for l in range(self.mesh.n_elements):
-            for j in range(self.basis_funcs.num_fncs):
-                src_dof_x = self.dof_handler.dof_map[0, l, j]
-                src_dof_y = self.dof_handler.dof_map[1, l, j]
-
-                H_local = self.assemble_H_one_interaction(k, i, l, j)
-                # Add the local interactions to the global matrix in
-                # the proper locations
-                H_row_x[src_dof_x] = H_local[0, 0]
-                H_row_x[src_dof_y] = H_local[0, 1]
-                H_row_y[src_dof_x] = H_local[1, 0]
-                H_row_y[src_dof_y] = H_local[1, 1]
-        return H_row_x, H_row_y
-
+                G_row_x, G_row_y = self.assemble_G_row(k, i)
+                G[dof_x, :] += G_row_x
+                G[dof_y, :] += G_row_y
+        # Enforce the symmetry of G. Inefficient way of doing this, but it
+        # works. The assymetry only results from small numerical errors in the
+        # computation, so this statement shouldn't make the error any worse.
+        assert(((G - G.T) / np.max(G) < 1e-4).all())
+        G -= 0.5 * (G - G.T)
+        return H, G
 
     def assemble_G_row(self, k, i):
         """
         Assemble one row of the G matrix.
         """
-        G_row_x = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
-        G_row_y = np.zeros(2 * self.mesh.n_elements * self.basis_funcs.num_fncs)
+        G_row_x = np.zeros(self.dof_handler.total_dofs)
+        G_row_y = np.zeros(self.dof_handler.total_dofs)
         for l in range(self.mesh.n_elements):
             for j in range(self.basis_funcs.num_fncs):
-                src_dof_x = self.dof_handler.dof_map[0, l, j]
-                src_dof_y = self.dof_handler.dof_map[1, l, j]
+                soln_dof_x = self.dof_handler.dof_map[0, l, j]
+                soln_dof_y = self.dof_handler.dof_map[1, l, j]
 
                 G_local = self.assemble_G_one_interaction(k, i, l, j)
+                # Add the local interactions to the global matrix in
+                # the proper locations
+                G_row_x[soln_dof_x] += G_local[0, 0]
+                G_row_x[soln_dof_y] += G_local[0, 1]
+                G_row_y[soln_dof_x] += G_local[1, 0]
+                G_row_y[soln_dof_y] += G_local[1, 1]
+        return G_row_x, G_row_y
+
+
+    def assemble_H_row(self, k, i):
+        """
+        Assemble one row of the H matrix.
+        """
+        H_row_x = np.zeros(self.dof_handler.total_dofs)
+        H_row_y = np.zeros(self.dof_handler.total_dofs)
+        for l in range(self.mesh.n_elements):
+            for j in range(self.basis_funcs.num_fncs):
+                soln_dof_x = self.dof_handler.dof_map[0, l, j]
+                soln_dof_y = self.dof_handler.dof_map[1, l, j]
+
+                H_local = self.assemble_H_one_interaction(k, i, l, j)
+                print H_local
 
                 if k == l:
                     M_local = self.assemble_M_one_interaction(k, i, j)
                     # M_local is only applied on the block diagonal
-                    G_local[0, 0] += M_local
-                    G_local[1, 1] += M_local
+                    H_local[0, 0] += M_local
+                    H_local[1, 1] += M_local
 
+                # import ipdb; ipdb.set_trace()
                 # Add the local interactions to the global matrix in
                 # the proper locations
-                G_row_x[src_dof_x] = G_local[0, 0]
-                G_row_x[src_dof_y] = G_local[0, 1]
-                G_row_y[src_dof_x] = G_local[1, 0]
-                G_row_y[src_dof_y] = G_local[1, 1]
-        return G_row_x, G_row_y
+                H_row_x[soln_dof_x] += H_local[0, 0]
+                H_row_x[soln_dof_y] += H_local[0, 1]
+                H_row_y[soln_dof_x] += H_local[1, 0]
+                H_row_y[soln_dof_y] += H_local[1, 1]
+        return H_row_x, H_row_y
 
-    def assemble_H_one_interaction(self, k, i, l, j):
+    def assemble_G_one_interaction(self, k, i, l, j):
         """
-        Compute one pair of element interactions for the H matrix.
+        Compute one pair of element interactions for the G matrix.
         """
-        H_sing = np.zeros((2, 2))
+        G_sing = np.zeros((2, 2))
         quad = self.quad_nonsingular
         singular = False
         if k == l:
             quad = self.quad_logr
             singular = True
-        H_sing = self.double_integral(self.kernel.displacement_singular,
-                             H_sing, singular, quad,
+        G_sing = self.double_integral(self.kernel.displacement_singular,
+                             G_sing, singular, quad,
                              k, i, l, j)
 
-        H_nonsing = np.zeros((2, 2))
-        H_nonsing = self.double_integral(self.kernel.displacement_nonsingular,
-                             H_nonsing, False, self.quad_nonsingular,
+        G_nonsing = np.zeros((2, 2))
+        G_nonsing = self.double_integral(self.kernel.displacement_nonsingular,
+                             G_nonsing, False, self.quad_nonsingular,
                              k, i, l, j)
-        return H_sing + H_nonsing
+        return G_sing + G_nonsing
 
     def assemble_M_one_interaction(self, k, i, j):
         """
@@ -147,20 +154,20 @@ class Assembler(object):
         M_local = self.single_integral(lambda x: 1.0, 0.0, k, i, j)
         return -0.5 * M_local
 
-    def assemble_G_one_interaction(self, k, i, l, j):
+    def assemble_H_one_interaction(self, k, i, l, j):
         """
-        Compute one pair of element interactions for the G matrix.
+        Compute one pair of element interactions for the H matrix.
         """
-        G_local = np.zeros((2, 2))
+        H_local = np.zeros((2, 2))
         quad = self.quad_nonsingular
         singular = False
         if k == l:
             quad = self.quad_oneoverr
             singular = True
-        G_local = self.double_integral(self.kernel.traction_kernel,
-                             G_local, singular, quad,
+        H_local = self.double_integral(self.kernel.traction_kernel,
+                             H_local, singular, quad,
                              k, i, l, j)
-        return G_local
+        return H_local
 
     def single_integral(self, kernel, result, k, i, j):
         """
@@ -175,50 +182,51 @@ class Assembler(object):
         for (q_pt, w) in zip(q_pts, w):
             # The basis functions should be evaluated on reference
             # coordinates
-            soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
-            src_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt)
+            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
+            soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt)
             phys_pt = self.mesh.get_physical_points(k, q_pt)[0]
             result += kernel(phys_pt) * \
                 soln_basis_fnc * src_basis_fnc * jacobian * w
         return result
 
-    def double_integral(self, kernel, result, singular, q_src, k, i, l, j):
+    def double_integral(self, kernel, result, singular, q_soln, k, i, l, j):
         """
         Performs a double integral over a pair of elements with the
         provided quadrature rule.
 
         Warning: This function modifies the "result" input.
         """
-        soln_jacobian = self.mesh.get_element_jacobian(k)
-        src_jacobian = self.mesh.get_element_jacobian(l)
+        src_jacobian = self.mesh.get_element_jacobian(k)
+        soln_jacobian = self.mesh.get_element_jacobian(l)
 
         # The normal is the one on the soln integration element.
         # This is clear if you remember the source is actually a point
         # and thus has no defined normal. We are integrating over many point
         # sources.
-        normal = self.mesh.normals[k]
+        normal = self.mesh.normals[l]
 
         q_pts = self.quad_nonsingular.x
         w = self.quad_nonsingular.w
-        for (q_soln_pt_index, (q_pt_soln, w_soln)) in enumerate(zip(q_pts, w)):
-            phys_soln_pt = self.mesh.get_physical_points(k, q_pt_soln)
+        for (q_src_pt_index, (q_pt_src, w_src)) in enumerate(zip(q_pts, w)):
+            phys_src_pt = self.mesh.get_physical_points(k, q_pt_src)
             # The basis functions should be evaluated on reference
             # coordinates
-            soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_soln)
+            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_src)
 
             if singular:
-                q_src_pts = q_src[q_soln_pt_index].x
-                q_src_w = q_src[q_soln_pt_index].w
+                q_pts_soln = q_soln[q_src_pt_index].x
+                q_w_soln = q_soln[q_src_pt_index].w
             else:
-                q_src_pts = q_src.x
-                q_src_w = q_src.w
+                q_pts_soln = q_soln.x
+                q_w_soln = q_soln.w
 
-            for (q_pt_src, w_src) in zip(q_src_pts, q_src_w):
-                src_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_src)
+            for (q_pt_soln, w_soln) in zip(q_pts_soln, q_w_soln):
+                soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_soln)
 
                 # Separation of the two quadrature points, use real,
                 # physical coordinates!
-                phys_src_pt = self.mesh.get_physical_points(l, q_pt_src)
+                phys_soln_pt = self.mesh.get_physical_points(l, q_pt_soln)
+                # From source to solution. Is the the right direction?
                 r = phys_soln_pt - phys_src_pt
 
                 k_val = kernel(r, normal)
@@ -227,8 +235,8 @@ class Assembler(object):
 
                 # Actually perform the quadrature
                 result += k_val * src_basis_fnc * soln_basis_fnc *\
-                              soln_jacobian * src_jacobian *\
-                              w_soln * w_src
+                          src_jacobian * soln_jacobian *\
+                          w_soln * w_src
         return result
 
 
@@ -267,10 +275,10 @@ def simple_assembler(degree = 0,
                      logr_pts = 2,
                      oneoverr_pts = 2,
                      n_elements = 2):
-    dh = dof_handler.DOFHandler(2, n_elements, degree)
+    msh = mesh.Mesh.simple_line_mesh(n_elements)
+    dh = dof_handler.DiscontinuousDOFHandler(msh, degree)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
     k = TestKernel()
-    msh = mesh.Mesh.simple_line_mesh(n_elements)
     assembler = Assembler(msh, bf, k, dh,
                           nonsing_pts, logr_pts, oneoverr_pts)
     return assembler
@@ -309,138 +317,159 @@ def test_assemble_M_diff_dof():
     # -0.5 * integral of (1-x)*x from 0 to 1
     np.testing.assert_almost_equal(M_local, -(1.0 / 12.0))
 
-def test_assemble_G_one_element_off_diagonal():
+def test_assemble_H_one_element_off_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
-    G_local = a.assemble_G_one_interaction(0, 0, 1, 0)
-    np.testing.assert_almost_equal(G_local, np.ones((2,2)))
+    H_local = a.assemble_H_one_interaction(0, 0, 1, 0)
+    np.testing.assert_almost_equal(H_local, np.ones((2,2)))
 
-def test_assemble_G_one_element_on_diagonal():
+def test_assemble_H_one_element_on_diagonal():
     a = simple_assembler(oneoverr_pts = 2)
-    G_local = a.assemble_G_one_interaction(0, 0, 0, 0)
-    np.testing.assert_almost_equal(G_local, np.ones((2,2)))
+    H_local = a.assemble_H_one_interaction(0, 0, 0, 0)
+    np.testing.assert_almost_equal(H_local, np.ones((2,2)))
 
-def test_assemble_G_row_test_kernel():
+def test_assemble_H_row_test_kernel():
     a = simple_assembler(oneoverr_pts = 4)
 
     # The row functions should return one vector for each dimension.
-    G_row_x, G_row_y = a.assemble_G_row(0, 0)
+    H_row_x, H_row_y = a.assemble_H_row(0, 0)
 
-    np.testing.assert_almost_equal(G_row_x, np.array([0.5, 1.0, 1.0, 1.0]))
-    np.testing.assert_almost_equal(G_row_y, np.array([1.0, 1.0, 0.5, 1.0]))
+    np.testing.assert_almost_equal(H_row_x, np.array([0.5, 1.0, 1.0, 1.0]))
+    np.testing.assert_almost_equal(H_row_y, np.array([1.0, 1.0, 0.5, 1.0]))
 
-def test_assemble_H_one_element_off_diagonal():
+def test_assemble_G_one_element_off_diagonal():
     a = simple_assembler(nonsing_pts = 10, logr_pts = 2)
-    H_local = a.assemble_H_one_interaction(0, 0, 1, 0)
-    H_exact = np.array([[1.0 - 1.5 + np.log(4), 1.0],
+    G_local = a.assemble_G_one_interaction(0, 0, 1, 0)
+    G_exact = np.array([[1.0 - 1.5 + np.log(4), 1.0],
                         [1.0, 1.0 - 1.5 + np.log(4)]])
-    np.testing.assert_almost_equal(H_local, H_exact, 4)
+    np.testing.assert_almost_equal(G_local, G_exact, 4)
 
-def test_assemble_H_one_element_on_diagonal():
+def test_assemble_G_one_element_on_diagonal():
     a = simple_assembler(nonsing_pts = 8, logr_pts = 4)
-    H_local = a.assemble_H_one_interaction(0, 0, 0, 0)
-    H_exact = np.array([[1.0 - 1.5, 1.0],
+    G_local = a.assemble_G_one_interaction(0, 0, 0, 0)
+    G_exact = np.array([[1.0 - 1.5, 1.0],
                         [1.0, 1.0 - 1.5]])
-    np.testing.assert_almost_equal(H_local, H_exact, 4)
+    np.testing.assert_almost_equal(G_local, G_exact, 4)
 
-def test_assemble_H_row_test_kernel():
+def test_assemble_G_row_test_kernel():
     a = simple_assembler(nonsing_pts = 10, logr_pts = 4)
 
     # The row functions should return one vector for each dimension.
-    H_row_x, H_row_y = a.assemble_H_row(0, 0)
+    G_row_x, G_row_y = a.assemble_G_row(0, 0)
     # Haha, I made a pun.
-    H_row_xact = np.array([-0.5, 1.0 - 1.5 + np.log(4), 1.0, 1.0])
-    H_row_yact = np.array([1.0, 1.0, -0.5, 1.0 - 1.5 + np.log(4)])
+    G_row_xact = np.array([-0.5, 1.0 - 1.5 + np.log(4), 1.0, 1.0])
+    G_row_yact = np.array([1.0, 1.0, -0.5, 1.0 - 1.5 + np.log(4)])
 
-    np.testing.assert_almost_equal(H_row_x, H_row_xact, 4)
-    np.testing.assert_almost_equal(H_row_y, H_row_yact, 4)
+    np.testing.assert_almost_equal(G_row_x, G_row_xact, 4)
+    np.testing.assert_almost_equal(G_row_y, G_row_yact, 4)
 
 def test_assemble():
     a = simple_assembler()
-    G, H = a.assemble()
-    assert(G.shape[0] == a.dof_handler.total_dofs)
-    assert(G.shape[1] == a.dof_handler.total_dofs)
+    H, G = a.assemble()
     assert(H.shape[0] == a.dof_handler.total_dofs)
     assert(H.shape[1] == a.dof_handler.total_dofs)
-    assert(not np.isnan(np.sum(G)))
+    assert(G.shape[0] == a.dof_handler.total_dofs)
+    assert(G.shape[1] == a.dof_handler.total_dofs)
     assert(not np.isnan(np.sum(H)))
+    assert(not np.isnan(np.sum(G)))
 
 def test_simple_symmetric_linear():
     a = simple_assembler(n_elements = 1, degree = 1,
                          nonsing_pts = 4, logr_pts = 4)
-    G, H = a.assemble()
-    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    H, G = a.assemble()
     np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
 
 ##
 ## Some more realistic assembly tests.
 ##
 def realistic_assembler(n_elements = 4,
-                        element_deg = 0):
+                        element_deg = 1,
+                        quad_points_nonsingular = 5,
+                        quad_points_logr = 5,
+                        quad_points_oneoverr = 5):
     dim = 2
     shear_modulus = 1.0
     poisson_ratio = 0.25
-    quad_points_nonsingular = 5
-    quad_points_logr = 5
-    quad_points_oneoverr = 5
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
     msh = mesh.Mesh.simple_line_mesh(n_elements)
     kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
-    dh = dof_handler.DOFHandler(2, n_elements, element_deg)
+    dh = dof_handler.ContinuousDOFHandler(msh, element_deg)
     assembler = Assembler(msh, bf, kernel, dh,
                           quad_points_nonsingular,
                           quad_points_logr,
                           quad_points_oneoverr)
     return assembler
 
+def test_double_integral():
+    a = realistic_assembler(quad_points_nonsingular = 300,
+                            quad_points_oneoverr = 300,
+                            n_elements = 1)
+    H_00 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
+                      True, a.quad_oneoverr,
+                      0, 0, 0, 0)
+    H_11 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
+                      True, a.quad_oneoverr,
+                      0, 1, 0, 1)
+    np.testing.assert_almost_equal(H_00, np.zeros((2, 2)))
+    np.testing.assert_almost_equal(H_11, np.zeros((2, 2)))
+
 def test_realistic_nan():
     a = realistic_assembler()
-    G, H = a.assemble()
-    assert(not np.isnan(np.sum(G)))
+    H, G = a.assemble()
     assert(not np.isnan(np.sum(H)))
-
-def test_realistic_symmetric_constant():
-    a = realistic_assembler()
-    G, H = a.assemble()
-    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
-    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+    assert(not np.isnan(np.sum(G)))
 
 def test_realistic_symmetric_linear():
-    a = realistic_assembler(n_elements = 1, element_deg = 1)
-    import ipdb; ipdb.set_trace()
-    G, H = a.assemble()
+    a = realistic_assembler()
+    H, G = a.assemble()
+    # np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
-    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+
+def test_realistic_double_integral_symmetry():
+    a = realistic_assembler(n_elements = 2, element_deg = 1)
+    # fnc = lambda r, n: 1 / r[0]
+    fnc = a.kernel.displacement_singular
+    one = a.double_integral(fnc,
+                      np.zeros((2,2)),
+                      True,
+                      a.quad_oneoverr,
+                      1, 0, 1, 1)
+
+    two = a.double_integral(fnc,
+                      np.zeros((2,2)),
+                      True,
+                      a.quad_oneoverr,
+                      1, 1, 1, 0)
+    np.testing.assert_almost_equal(one, two)
 
 def test_realistic_symmetric_quadratic():
     a = realistic_assembler(n_elements = 1, element_deg = 2)
-    G, H = a.assemble()
-    # import ipdb; ipdb.set_trace()
-    # import matplotlib.pyplot as plt
-    # plt.imshow(H-H.T)
-    # plt.colorbar()
-    # plt.show()
+    H, G = a.assemble()
+    # print H-H.T
+    # np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
+    # Only G should be symmetric for the strongly singular u-BIE.
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
-    np.testing.assert_almost_equal((H - H.T) / np.mean(H), np.zeros_like(H))
 
 def test_reciprocal_effects():
     a = realistic_assembler(n_elements = 2)
-    G, H = a.assemble()
+    H, G = a.assemble()
     # The influence of u_x(0) on u_y(1) should be the opposite of the
     # effect of u_x(1) on u_y(0), where the parenthesis indicate which element
-    np.testing.assert_almost_equal(G[0,3], -G[1,2])
+    np.testing.assert_almost_equal(H[4,0], -H[3,1])
     # The influence of u_y(0) on u_x(1) should be the opposite of the
     # effect of u_y(1) on u_x(0), where the parenthesis indicate which element
     # Really just the symmetric part of the above...
-    np.testing.assert_almost_equal(G[2,1], -G[3,0])
-    np.testing.assert_almost_equal(H[2,1], -H[3,0])
+    np.testing.assert_almost_equal(H[5,1], -H[4,2])
+    # They should be equal for G
+    np.testing.assert_almost_equal(G[4,0], G[3,1])
 
 def test_realistic_zero_discontinuity():
     a = realistic_assembler(element_deg = 1)
-    G, H = a.assemble()
+    H, G = a.assemble()
     fnc = lambda x: (0.0, 1.0)
-    tractions = tools.interpolate(fnc, a.dof_handler,
+    displacements = tools.interpolate(fnc, a.dof_handler,
                                   a.basis_funcs, a.mesh)
-    rhs = np.dot(H, tractions)
+    rhs = np.dot(H, displacements)
     soln = np.linalg.solve(G, rhs)
     for k in range(a.mesh.n_elements - 1):
         value_left = tools.evaluate_solution_on_element(k, 1.0, soln,

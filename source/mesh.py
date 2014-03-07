@@ -22,16 +22,17 @@ class Mesh(object):
         self.n_elements = element_to_vertex.shape[0]
 
         self.compute_normals()
+        self.compute_connectivity()
 
     @classmethod
-    def simple_line_mesh(cls, n_elements):
+    def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
         """
         Create a mesh consisting of a line of elements starting at -1 and
         extending to +1 in x coordinate, y = 0.
         """
         n_vertices = n_elements + 1
         vertices = np.zeros((n_vertices, 2))
-        x_vals = np.linspace(-1.0, 1.0, n_vertices)
+        x_vals = np.linspace(left_edge, right_edge, n_vertices)
         vertices[:, 0] = x_vals
 
         element_to_vertex = np.zeros((n_elements, 2))
@@ -47,6 +48,26 @@ class Mesh(object):
         r = (all_vertices[:,1,:] - all_vertices[:,0,:])
         r_norm = np.linalg.norm(r, axis = 1)
         self.normals = np.vstack((-r[:, 1] / r_norm, r[:, 0] / r_norm)).T
+
+    def compute_connectivity(self):
+        """
+        Determine a store a representation of which elements are adjacent.
+        Simple for 2D.
+        """
+        # Create of list of which elements touch each vertex
+        # -1 if no element touches there
+        touch_vertex = -np.ones((self.n_vertices, 2))
+        for k in range(0, self.n_elements):
+            # The left vertex of an element has that element
+            # as its right neighbor and vice-versa
+            touch_vertex[self.element_to_vertex[k][0]][1] = k
+            touch_vertex[self.element_to_vertex[k][1]][0] = k
+
+        self.neighbors = np.zeros((self.n_elements, 2))
+        for k in range(0, self.n_elements):
+            self.neighbors[k][0] = touch_vertex[self.element_to_vertex[k][0]][0]
+            self.neighbors[k][1] = touch_vertex[self.element_to_vertex[k][1]][1]
+        self.neighbors = self.neighbors.astype(np.int)
 
     def get_physical_points(self, element_id, reference_pts):
         """
@@ -93,6 +114,11 @@ def test_simple_line_mesh():
     assert((m.element_to_vertex == correct_etov).all())
     assert(m.element_to_vertex.dtype.type is np.int64)
 
+def test_simple_line_mesh():
+    m = Mesh.simple_line_mesh(2, 3.0, 4.0)
+    correct_vertices = np.array([[3.0, 0.0], [3.5, 0.0], [4.0, 0.0]])
+    assert((m.vertices == correct_vertices).all())
+
 def test_get_phys_pts():
     m = Mesh.simple_line_mesh(4)
 
@@ -119,5 +145,22 @@ def test_normals():
     assert(m.normals.shape[0] == 4)
     assert((m.normals[:, 1] == [1, 1, 1, 1]).all())
 
-# Do some more tests with a more complex mesh.
+def test_connectivity():
+    m = Mesh.simple_line_mesh(4)
+    assert(m.neighbors.dtype == np.int)
+    assert(m.neighbors[0][0] == -1)
+    assert(m.neighbors[3][1] == -1)
 
+    assert(m.neighbors[2][0] == 1)
+    assert(m.neighbors[2][1] == 3)
+
+def test_connectivity_loop():
+    vertices = np.array([[0, 1], [1, 0]])
+    element_to_vertex = np.array([[0, 1], [1, 0]])
+    m = Mesh(vertices, element_to_vertex)
+
+    assert(m.neighbors.dtype == np.int)
+    assert(m.neighbors[0][0] == 1)
+    assert(m.neighbors[0][1] == 1)
+    assert(m.neighbors[1][0] == 0)
+    assert(m.neighbors[1][1] == 0)

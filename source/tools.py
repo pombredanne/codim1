@@ -27,7 +27,7 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
     basis function to be the value of fnc at the node (where phi(x) = 1).
     """
     result = np.empty(dof_handler.total_dofs)
-    for k in range(dof_handler.n_elements):
+    for k in range(mesh.n_elements):
         for i in range(basis_funcs.num_fncs):
             dof_x = dof_handler.dof_map[0, k, i]
             dof_y = dof_handler.dof_map[1, k, i]
@@ -51,7 +51,7 @@ def evaluate_boundary_solution(points_per_element, soln,
     """
     x = []
     y = []
-    for k in range(dof_handler.n_elements):
+    for k in range(mesh.n_elements):
         for pt in np.linspace(0.0, 1.0, points_per_element):
             x.append(mesh.get_physical_points(k, pt))
             ux = 0
@@ -79,7 +79,7 @@ def evaluate_solution_on_element(element_idx, reference_point, soln,
 ################################################################################
 # TESTS                                                                        #
 ################################################################################
-from dof_handler import DOFHandler
+from dof_handler import DiscontinuousDOFHandler
 from basis_funcs import BasisFunctions
 from mesh import Mesh
 
@@ -88,7 +88,7 @@ def test_interpolate():
     element_deg = 0
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
-    dh = DOFHandler(2, n_elements, element_deg)
+    dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x: (x[0], x[1])
     val = interpolate(fnc, dh, bf, msh)
 
@@ -103,7 +103,7 @@ def test_evaluate_boundary_solution_easy():
     element_deg = 0
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
-    dh = DOFHandler(2, n_elements, element_deg)
+    dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
     x, soln = evaluate_boundary_solution(11, solution, dh, bf, msh)
@@ -117,7 +117,7 @@ def test_evaluate_solution_on_element():
     element_deg = 1
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
-    dh = DOFHandler(2, n_elements, element_deg)
+    dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
     eval = evaluate_solution_on_element(1, 1.0, solution,
@@ -132,7 +132,7 @@ def test_interpolate_evaluate_hard():
     element_deg = 6
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
-    dh = DOFHandler(2, n_elements, element_deg)
+    dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x: (x[0] ** 6, 0)
     solution = interpolate(fnc, dh, bf, msh)
     x, soln = evaluate_boundary_solution(5, solution, dh, bf, msh)
