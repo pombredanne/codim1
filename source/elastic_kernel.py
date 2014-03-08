@@ -9,9 +9,9 @@ class ElastostaticKernel(object):
         self.poisson_ratio = poisson_ratio
 
         self.const1 = (1 - 2 * poisson_ratio);
-        self.const2 = 1 / (4 * np.pi * (1 - poisson_ratio))
+        self.const2 = 1.0 / (4 * np.pi * (1 - poisson_ratio))
         self.const3 = 1.0 / (8.0 * np.pi * shear_modulus * (1 - poisson_ratio))
-        self.const4 = (3 - 4 * poisson_ratio)
+        self.const4 = (3.0 - 4.0 * poisson_ratio)
 
     def displacement_singular(self, r, n):
         """The singular (log(r)) part of the displacement kernel"""
@@ -67,7 +67,7 @@ class ElastostaticKernel(object):
         return T
 
     def traction_kernel_element(self, i, j, dist, dr, drdn, normal):
-        return 1 / dist * self.const2 *\
+        return (1 / dist) * self.const2 *\
                 (-drdn * (self.const1 * (i == j) +  2 * (dr[i] * dr[j])) + \
                  self.const1 * (dr[i] * normal[j] - dr[j] * normal[i]))
 
@@ -101,13 +101,13 @@ def test_displacement_symmetry():
     a = kernel.displacement_kernel([1.0, 0.5], 0.0)
     np.testing.assert_almost_equal(a - a.T, np.zeros_like(a))
 
-def test_displacement_radial_symmetry():
+def test_displacement_mirror_symmetry():
     kernel = ElastostaticKernel(1.0, 0.25)
     a = kernel.displacement_kernel(np.array([1.0, 0.5]), 0.0)
     b = kernel.displacement_kernel(np.array([-1.0, -0.5]), 0.0)
     np.testing.assert_almost_equal(a, b)
 
-def test_traction_radial_symmety():
+def test_traction_mirror_symmety():
     kernel = ElastostaticKernel(1.0, 0.25)
     a = kernel.traction_kernel(np.array([1.0, 0.5]), np.array([1.0, 0.0]))
     # Only symmetric if we reverse the normal vector too!
@@ -115,35 +115,21 @@ def test_traction_radial_symmety():
     np.testing.assert_almost_equal(a, b)
 
 def test_displacement():
-    kernel = ElastostaticKernel(30e9, 0.25)
-
-    x = np.linspace(-15.0, 15.0, 1000)
-    y = np.zeros(1000)
-    y -= 0.0
-    r = np.vstack((x, y)).T
-
-    U = np.array([kernel.displacement_kernel(r_val, 0.0) for r_val in r])
-
-    # import matplotlib.pyplot as plt
-    # plt.plot(x, U[:, 0, 1])
-    # plt.show()
+    kernel = ElastostaticKernel(1.0, 0.25)
+    G = kernel.displacement_kernel((2.0, 0.0), 0.0)
+    np.testing.assert_almost_equal(G[0, 0],
+                                    (2 * np.log(1 / 2.0) + 1) / (6 * np.pi))
+    np.testing.assert_almost_equal(G[1, 0], 0.0)
+    np.testing.assert_almost_equal(G[0, 1], 0.0)
+    np.testing.assert_almost_equal(G[1, 1],
+                                    (2 * np.log(1 / 2.0)) / (6 * np.pi))
 
 def test_traction():
-    kernel = ElastostaticKernel(30e9, 0.25)
+    kernel = ElastostaticKernel(1.0, 0.25)
+    H = kernel.traction_kernel(np.array((2.0, 0.0)), (0, 1.0))
+    np.testing.assert_almost_equal(H[0, 1],
+                                    1 / (6 * np.pi * 2.0))
+    np.testing.assert_almost_equal(H[0, 0], 0.0)
+    np.testing.assert_almost_equal(H[1, 1], 0.0)
+    np.testing.assert_almost_equal(H[1, 0], -H[0, 1])
 
-    pts = 150
-    x = np.linspace(-5.0, 5.0, pts)
-    y = np.zeros(pts)
-    y -= 0.0
-    r = np.vstack((x, y)).T
-
-    T = np.array([kernel.traction_kernel(r_val, np.array([0, 1.0]))
-        for r_val in r])
-
-    # import matplotlib.pyplot as plt
-    # plt.plot(x, T[:, 0, 0])
-    # plt.plot(x, T[:, 0, 1] - 4.0)
-    # plt.plot(x, T[:, 1, 0] - 8.0)
-    # plt.plot(x, T[:, 1, 1] - 12.0)
-    # plt.ylim(-15.0, 5.0)
-    # plt.show()
