@@ -43,10 +43,11 @@ class Assembler(object):
         self.quad_logr = []
         self.quad_oneoverr = []
         for singular_pt in self.quad_nonsingular.x:
-            logr = quadrature.QuadGaussLogR(self.quad_points_logr,
-                                            singular_pt)
-            oneoverr = quadrature.QuadGaussOneOverR(self.quad_points_oneoverr,
-                                                    singular_pt)
+            logr = quadrature.QuadSingularTelles(self.quad_points_logr,
+                                                 singular_pt)
+            oneoverr = quadrature.QuadOneOverR(self.quad_points_oneoverr,
+                                               singular_pt,
+                                               self.quad_points_nonsingular)
             self.quad_logr.append(logr)
             self.quad_oneoverr.append(oneoverr)
 
@@ -110,7 +111,6 @@ class Assembler(object):
                 soln_dof_y = self.dof_handler.dof_map[1, l, j]
 
                 H_local = self.assemble_H_one_interaction(k, i, l, j)
-                print H_local
 
                 if k == l:
                     M_local = self.assemble_M_one_interaction(k, i, j)
@@ -137,15 +137,10 @@ class Assembler(object):
         if k == l:
             quad = self.quad_logr
             singular = True
-        G_sing = self.double_integral(self.kernel.displacement_singular,
+        G_local = self.double_integral(self.kernel.displacement_kernel,
                              G_sing, singular, quad,
                              k, i, l, j)
-
-        G_nonsing = np.zeros((2, 2))
-        G_nonsing = self.double_integral(self.kernel.displacement_nonsingular,
-                             G_nonsing, False, self.quad_nonsingular,
-                             k, i, l, j)
-        return G_sing + G_nonsing
+        return G_local
 
     def assemble_M_one_interaction(self, k, i, j):
         """
@@ -196,6 +191,8 @@ class Assembler(object):
 
         Warning: This function modifies the "result" input.
         """
+        # Jacobian determinants are necessary to scale the integral with the
+        # change of variables.
         src_jacobian = self.mesh.get_element_jacobian(k)
         soln_jacobian = self.mesh.get_element_jacobian(l)
 
@@ -205,6 +202,7 @@ class Assembler(object):
         # sources.
         normal = self.mesh.normals[l]
 
+        # The outer quadrature uses a standard nonsingular quadrature formula
         q_pts = self.quad_nonsingular.x
         w = self.quad_nonsingular.w
         for (q_src_pt_index, (q_pt_src, w_src)) in enumerate(zip(q_pts, w)):
@@ -213,6 +211,10 @@ class Assembler(object):
             # coordinates
             src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_src)
 
+            # If the integrand is singular, we need to use the appropriate
+            # inner quadrature method. Which points the inner quadrature
+            # chooses will depend on the current outer quadrature point
+            # which will be the point of singularity, assuming same element
             if singular:
                 q_pts_soln = q_soln[q_src_pt_index].x
                 q_w_soln = q_soln[q_src_pt_index].w
@@ -226,9 +228,11 @@ class Assembler(object):
                 # Separation of the two quadrature points, use real,
                 # physical coordinates!
                 phys_soln_pt = self.mesh.get_physical_points(l, q_pt_soln)
-                # From source to solution. Is the the right direction?
+
+                # From source to solution.
                 r = phys_soln_pt - phys_src_pt
 
+                # Actually evaluate the kernel.
                 k_val = kernel(r, normal)
                 assert(not np.isnan(np.sum(k_val))), \
                        "nan kernel value for R = " + str(np.linalg.norm(r))
@@ -275,6 +279,8 @@ def simple_assembler(degree = 0,
                      logr_pts = 2,
                      oneoverr_pts = 2,
                      n_elements = 2):
+    if oneoverr_pts % 2 == 1:
+        oneoverr_pts += 1
     msh = mesh.Mesh.simple_line_mesh(n_elements)
     dh = dof_handler.DiscontinuousDOFHandler(msh, degree)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
@@ -390,6 +396,8 @@ def realistic_assembler(n_elements = 4,
     dim = 2
     shear_modulus = 1.0
     poisson_ratio = 0.25
+    if quad_points_oneoverr % 2 == 1:
+        quad_points_oneoverr += 1
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
     msh = mesh.Mesh.simple_line_mesh(n_elements)
     kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
@@ -400,18 +408,60 @@ def realistic_assembler(n_elements = 4,
                           quad_points_oneoverr)
     return assembler
 
-def test_double_integral():
-    a = realistic_assembler(quad_points_nonsingular = 300,
-                            quad_points_oneoverr = 300,
+def test_exact_dbl_integrals_H():
+    a = realistic_assembler(quad_points_nonsingular = 10,
+                            quad_points_logr = 10,
+                            quad_points_oneoverr = 10,
                             n_elements = 1)
     H_00 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
                       True, a.quad_oneoverr,
                       0, 0, 0, 0)
+    np.testing.assert_almost_equal(H_00, np.zeros((2, 2)), 3)
     H_11 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
                       True, a.quad_oneoverr,
                       0, 1, 0, 1)
-    np.testing.assert_almost_equal(H_00, np.zeros((2, 2)))
-    np.testing.assert_almost_equal(H_11, np.zeros((2, 2)))
+    np.testing.assert_almost_equal(H_11, np.zeros((2, 2)), 3)
+
+    H_01 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
+                      True, a.quad_oneoverr,
+                      0, 0, 0, 1)
+    H_01_exact = np.array([[0.0, 1 / (6 * np.pi)],
+                           [-1 / (6 * np.pi), 0.0]])
+    np.testing.assert_almost_equal(H_01, H_01_exact, 3)
+
+    H_10 = a.double_integral(a.kernel.traction_kernel, np.zeros((2, 2)),
+                      True, a.quad_oneoverr,
+                      0, 1, 0, 0)
+    H_10_exact = np.array([[0.0, -1 / (6 * np.pi)],
+                           [1 / (6 * np.pi), 0.0]])
+    np.testing.assert_almost_equal(H_10, H_10_exact, 3)
+
+
+def test_exact_dbl_integrals_G():
+    a = realistic_assembler(quad_points_nonsingular = 16,
+                            quad_points_logr = 16,
+                            quad_points_oneoverr = 10,
+                            n_elements = 1)
+    G_00 = a.double_integral(a.kernel.displacement_singular, np.zeros((2, 2)),
+                      True, a.quad_logr,
+                      0, 0, 0, 0)
+    import ipdb; ipdb.set_trace()
+    np.testing.assert_almost_equal(G_00[1, 1], 7 / (24 * np.pi))
+    # G_00_sing = a.double_integral(a.kernel.displacement_singular, np.zeros((2, 2)),
+    #                   True, a.quad_logr,
+    #                   0, 0, 0, 0)
+    # G_00_nonsing = a.double_integral(a.kernel.displacement_nonsingular, np.zeros((2, 2)),
+    #                   True, a.quad_logr,
+    #                   0, 0, 0, 0)
+    # import ipdb; ipdb.set_trace()
+    # G_00_exact = np.array([[7 / (24 * np.pi) - (1 / (18 * np.pi)), 0],
+    #                        [0, 7 / (24 * np.pi)]])
+    # np.testing.assert_almost_equal(G_00, G_00_exact, 3)
+
+    G_11 = a.double_integral(a.kernel.displacement_kernel, np.zeros((2, 2)),
+                      True, a.quad_logr,
+                      0, 1, 0, 1)
+    np.testing.assert_almost_equal(G_11, np.zeros((2, 2)), 3)
 
 def test_realistic_nan():
     a = realistic_assembler()
