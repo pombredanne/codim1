@@ -218,6 +218,7 @@ class Assembler(object):
             if singular:
                 q_pts_soln = q_soln[q_src_pt_index].x
                 q_w_soln = q_soln[q_src_pt_index].w
+                assert(q_soln[q_src_pt_index].x0 == q_pt_src)
             else:
                 q_pts_soln = q_soln.x
                 q_w_soln = q_soln.w
@@ -392,14 +393,16 @@ def realistic_assembler(n_elements = 4,
                         element_deg = 1,
                         quad_points_nonsingular = 5,
                         quad_points_logr = 5,
-                        quad_points_oneoverr = 5):
+                        quad_points_oneoverr = 5,
+                        left = -1.0,
+                        right = 1.0):
     dim = 2
     shear_modulus = 1.0
     poisson_ratio = 0.25
     if quad_points_oneoverr % 2 == 1:
         quad_points_oneoverr += 1
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
-    msh = mesh.Mesh.simple_line_mesh(n_elements)
+    msh = mesh.Mesh.simple_line_mesh(n_elements, left, right)
     kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
     dh = dof_handler.ContinuousDOFHandler(msh, element_deg)
     assembler = Assembler(msh, bf, kernel, dh,
@@ -409,6 +412,10 @@ def realistic_assembler(n_elements = 4,
     return assembler
 
 def test_exact_dbl_integrals_H():
+    """
+    This is probably the best test of working the H matrix is being
+    assembled properly
+    """
     a = realistic_assembler(quad_points_nonsingular = 10,
                             quad_points_logr = 10,
                             quad_points_oneoverr = 10,
@@ -438,15 +445,22 @@ def test_exact_dbl_integrals_H():
 
 
 def test_exact_dbl_integrals_G():
-    a = realistic_assembler(quad_points_nonsingular = 16,
-                            quad_points_logr = 16,
+    """
+    This is probably the best test of working the G matrix is being
+    assembled properly
+    """
+    a = realistic_assembler(quad_points_nonsingular = 10,
+                            quad_points_logr = 10,
                             quad_points_oneoverr = 10,
-                            n_elements = 1)
+                            n_elements = 1,
+                            left = -1.0,
+                            right = 1.0)
     G_00 = a.double_integral(a.kernel.displacement_singular, np.zeros((2, 2)),
                       True, a.quad_logr,
                       0, 0, 0, 0)
     import ipdb; ipdb.set_trace()
-    np.testing.assert_almost_equal(G_00[1, 1], 7 / (24 * np.pi))
+    np.testing.assert_almost_equal(G_00[1, 1],
+        (14 - 4 * np.log(2) - np.log(16)) / (24 * np.pi))
     # G_00_sing = a.double_integral(a.kernel.displacement_singular, np.zeros((2, 2)),
     #                   True, a.quad_logr,
     #                   0, 0, 0, 0)

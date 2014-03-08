@@ -12,10 +12,10 @@ def main():
     plot = True
 
     # Number of elements
-    n_elements = 2
+    n_elements = 6
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
-    element_deg = 1
+    element_deg = 12
 
     # Dimension of problem
     dim = 2
@@ -25,21 +25,20 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 15
-    quad_points_logr = 5
-    quad_points_oneoverr = 15
+    quad_points_nonsingular = 30
+    quad_points_logr = 30
+    quad_points_oneoverr = 30
 
 
     bf = BasisFunctions.from_degree(element_deg)
     mesh = Mesh.simple_line_mesh(n_elements, 0.0, 1.0)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
-    dh = DiscontinuousDOFHandler(mesh, element_deg)
+    dh = ContinuousDOFHandler(mesh, element_deg)
     assembler = Assembler(mesh, bf, kernel, dh,
                           quad_points_nonsingular,
                           quad_points_logr,
                           quad_points_oneoverr)
     H, G = assembler.assemble()
-    import ipdb; ipdb.set_trace()
     # import ipdb; ipdb.set_trace()
     # Setting the small values to zero just makes debugging easier
     H[np.abs(H) < 1e-14] = 0.0
@@ -50,10 +49,10 @@ def main():
 
     fnc = lambda x: (0.0, 1.0)
     # Solve a dirichlet problem (specify displacement, derive traction)
-    displacements = tools.interpolate(fnc, dh, bf, mesh)
-    rhs = np.dot(H, displacements)
+    tractions = tools.interpolate(fnc, dh, bf, mesh)
+    rhs = np.dot(H, tractions)
     soln = np.linalg.solve(G, rhs)
-    x, s = tools.evaluate_boundary_solution(5, soln, dh, bf, mesh)
+    x, s = tools.evaluate_boundary_solution(20, soln, dh, bf, mesh)
 
     if plot:
         plt.figure()

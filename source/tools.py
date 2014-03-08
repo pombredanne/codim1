@@ -1,6 +1,25 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+# def plot_kernel(kernel_fnc,
+#     x = np.linspace(0.0, 1.0, 100)
+#     y = np.linspace(0.0, 1.0, 100)
+#     X, Y = np.meshgrid(x, y)
+#     a = np.zeros_like(X)
+#     b = np.zeros_like(X)
+#     for i in range(X.shape[0]):
+#         for j in range(X.shape[1]):
+#             a[i, j] = f(x[i], y[j])[1, 1]
+#             b[i, j] = ff(x[i], y[j])
+#     import matplotlib.pyplot as plt
+#     plt.figure()
+#     plt.imshow(a)
+#     plt.colorbar()
+#     plt.figure()
+#     plt.imshow(b)
+#     plt.colorbar()
+#     plt.show()
+
 def plot_matrix(M, title, show = True):
     """
     Creates and shows two plots. One of the matrix itself and

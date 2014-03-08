@@ -207,9 +207,26 @@ def test_QuadLogR2():
     est = np.sum(f(q.x) * q.w)
     np.testing.assert_almost_equal(exact, est, 4)
 
-def test_anotherLogRDouble():
-    f = lambda x, y: np.log(np.abs(x - y)) * x * (1 - y)
-    exact = -5.0 / 16.0
+def test_anotherLogRDouble_G11_from_kernel():
+    from elastic_kernel import ElastostaticKernel
+    k = ElastostaticKernel(1.0, 0.25)
+    f = lambda x, y: k.displacement_singular((x - y, 0.0), 0.0) * \
+            (1 - x) * (1 - y)
+
+    exact = 7 / (48 * np.pi)
+    q = QuadGauss(75)
+    sum = 0.0
+    for (pt, wt) in zip(q.x, q.w):
+        q_inner = QuadSingularTelles(76, pt)
+        g = lambda x: f(x, pt)
+        for (inner_pt, inner_wt) in zip(q_inner.x, q_inner.w):
+            sum += g(inner_pt)[1, 1] * inner_wt * wt
+    np.testing.assert_almost_equal(exact, sum)
+
+def test_anotherLogRDouble_G11():
+    f = lambda x, y: (1 / (3 * np.pi)) *\
+        np.log(1.0 / np.abs(x - y)) * x * y
+    exact = 7 / (48 * np.pi)
     q = QuadGauss(75)
     sum = 0.0
     for (pt, wt) in zip(q.x, q.w):
