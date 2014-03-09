@@ -1,0 +1,122 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 8.0' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       157,          7]
+NotebookDataLength[      3359,        112]
+NotebookOptionsPosition[      3015,         95]
+NotebookOutlinePosition[      3352,        110]
+CellTagsIndexPosition[      3309,        107]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell[BoxData[
+ RowBox[{"Integrate", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"4", "/", 
+      RowBox[{"(", 
+       RowBox[{"3", "*", "Pi"}], ")"}]}], ")"}], " ", "*", " ", 
+    RowBox[{"Log", "[", 
+     RowBox[{"1", "/", 
+      RowBox[{"Abs", "[", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"2", " ", "*", " ", "x"}], " ", "-", " ", "1"}], ")"}], "-", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"2", " ", "*", " ", "y"}], " ", "-", " ", "1"}], ")"}]}], 
+       "]"}]}], "]"}], "*", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", "x"}], ")"}], "*", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", "y"}], ")"}]}], ",", 
+   RowBox[{"{", 
+    RowBox[{"x", ",", " ", "0", ",", " ", "1"}], "}"}], ",", " ", 
+   RowBox[{"{", 
+    RowBox[{"y", ",", " ", "0", ",", " ", "1"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.603235637194779*^9, 3.6032357537671623`*^9}, {
+  3.6032379737874527`*^9, 3.603237975125635*^9}, {3.6032477547777357`*^9, 
+  3.603247796577639*^9}, {3.60324787122934*^9, 3.6032478982298803`*^9}}],
+
+Cell[BoxData[
+ FractionBox[
+  RowBox[{"14", "-", 
+   RowBox[{"4", " ", 
+    RowBox[{"Log", "[", "2", "]"}]}], "-", 
+   RowBox[{"Log", "[", "16", "]"}]}], 
+  RowBox[{"24", " ", "\[Pi]"}]]], "Output",
+ CellChangeTimes->{{3.603235685748373*^9, 3.603235706722394*^9}, {
+   3.603235740417779*^9, 3.603235754787022*^9}, 3.603237976419726*^9, {
+   3.603247775096135*^9, 3.603247799539329*^9}, 3.603247875562543*^9}]
+}, Closed]],
+
+Cell[BoxData[
+ RowBox[{"Integrate", "[", 
+  RowBox[{
+   RowBox[{
+    RowBox[{"(", 
+     RowBox[{"4", "/", 
+      RowBox[{"(", 
+       RowBox[{"3", "*", "Pi"}], ")"}]}], ")"}], " ", "*", " ", 
+    RowBox[{"Log", "[", 
+     RowBox[{"1", "/", 
+      RowBox[{"Abs", "[", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"2", " ", "*", " ", "x"}], " ", "-", " ", "1"}], ")"}], "-", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"2", " ", "*", " ", "y"}], " ", "-", " ", "1"}], ")"}]}], 
+       "]"}]}], "]"}], "*", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", "x"}], ")"}], "*", 
+    RowBox[{"(", 
+     RowBox[{"1", "-", "y"}], ")"}]}], ",", 
+   RowBox[{"{", 
+    RowBox[{"x", ",", " ", "0", ",", " ", "1"}], "}"}], ",", " ", 
+   RowBox[{"{", 
+    RowBox[{"y", ",", " ", "0", ",", " ", "1"}], "}"}]}], "]"}]], "Input",
+ CellChangeTimes->{
+  3.603237863632031*^9, {3.603247861370884*^9, 3.603247863487279*^9}}]
+},
+WindowSize->{740, 867},
+WindowMargins->{{230, Automatic}, {Automatic, 18}},
+FrontEndVersion->"8.0 for Linux x86 (64-bit) (October 10, 2011)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[579, 22, 1066, 29, 50, "Input"],
+Cell[1648, 53, 408, 9, 49, "Output"]
+}, Closed]],
+Cell[2071, 65, 940, 28, 44, "Input"]
+}
+]
+*)
+
+(* End of internal cache information *)
+
