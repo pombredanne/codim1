@@ -42,6 +42,21 @@ class Mesh(object):
 
         return cls(vertices, element_to_vertex)
 
+    @classmethod
+    def circular_mesh(cls, n_elements, radius):
+        n_vertices = n_elements
+        theta = np.linspace(0, 2 * np.pi, n_vertices)
+        vertices = np.zeros((n_vertices, 2))
+        vertices[:, 0] = radius * np.cos(theta)
+        vertices[:, 1] = radius * np.sin(theta)
+
+        element_to_vertex = np.zeros((n_elements, 2))
+        for i in range(0, n_elements - 1):
+            element_to_vertex[i, :] = (i, i + 1)
+        element_to_vertex[-1, :] = (n_elements - 1, 0)
+        element_to_vertex = element_to_vertex.astype(int)
+        return cls(vertices, element_to_vertex)
+
     def compute_normals(self):
         self.normals = np.empty((self.n_elements, 2))
         all_vertices = self.vertices[self.element_to_vertex]
@@ -68,6 +83,17 @@ class Mesh(object):
             self.neighbors[k][0] = touch_vertex[self.element_to_vertex[k][0]][0]
             self.neighbors[k][1] = touch_vertex[self.element_to_vertex[k][1]][1]
         self.neighbors = self.neighbors.astype(np.int)
+
+    def is_neighbor(self, k, l, direction = 'both'):
+        # Check the right side
+        if (direction is 'left' or direction is 'both') \
+            and self.neighbors[k][0] == l:
+            return True
+        # Check the left side
+        if (direction is 'right' or direction is 'both') \
+            and self.neighbors[k][1] == l:
+            return True
+        return False
 
     def get_physical_points(self, element_id, reference_pts):
         """
@@ -164,3 +190,9 @@ def test_connectivity_loop():
     assert(m.neighbors[0][1] == 1)
     assert(m.neighbors[1][0] == 0)
     assert(m.neighbors[1][1] == 0)
+
+def test_is_neighbor():
+    m = Mesh.simple_line_mesh(4)
+    assert(m.is_neighbor(2, 3, 'right') == True)
+    assert(m.is_neighbor(2, 3, 'left') == False)
+    assert(m.is_neighbor(1, 0, 'left') == True)

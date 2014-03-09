@@ -12,7 +12,7 @@ def main():
     plot = True
 
     # Number of elements
-    n_elements = 30
+    n_elements = 20
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
     element_deg = 1
@@ -31,7 +31,8 @@ def main():
 
 
     bf = BasisFunctions.from_degree(element_deg)
-    mesh = Mesh.simple_line_mesh(n_elements, -2.0, 2.0)
+    # mesh = Mesh.simple_line_mesh(n_elements, -2.0, 2.0)
+    mesh = Mesh.circular_mesh(n_elements, 1.0)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
     dh = ContinuousDOFHandler(mesh, element_deg)
     assembler = Assembler(mesh, bf, kernel, dh,

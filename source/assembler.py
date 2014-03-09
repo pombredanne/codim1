@@ -42,6 +42,10 @@ class Assembler(object):
                 self.quad_points_nonsingular)
         self.quad_logr = []
         self.quad_oneoverr = []
+        self.quad_shared_edge_left = \
+            quadrature.QuadSingularTelles(self.quad_points_logr, 0.0)
+        self.quad_shared_edge_right = \
+            quadrature.QuadSingularTelles(self.quad_points_logr, 1.0)
         for singular_pt in self.quad_nonsingular.x:
             logr = quadrature.QuadSingularTelles(self.quad_points_logr,
                                                  singular_pt)
@@ -110,11 +114,31 @@ class Assembler(object):
         """
         Compute one pair of element interactions
         """
+        # Compute quadrature strategy
+        # TODO: Maybe refactor quadrature strategy out into a separate class.
+        def make_inner(quad):
+            return [quad] * len(self.quad_nonsingular.x)
+
+        if k == l:
+            G_quad = self.quad_logr
+            H_quad = self.quad_oneoverr
+        elif self.mesh.is_neighbor(k, l, 'left'):
+            # TODO: Move towards using the distance between two neighbors!
+            G_quad = make_inner(self.quad_shared_edge_right)
+            H_quad = make_inner(self.quad_shared_edge_right)
+        elif self.mesh.is_neighbor(k, l, 'right'):
+            # TODO: Move towards using the distance between two neighbors!
+            G_quad = make_inner(self.quad_shared_edge_left)
+            H_quad = make_inner(self.quad_shared_edge_left)
+        else:
+            G_quad = make_inner(self.quad_nonsingular)
+            H_quad = make_inner(self.quad_nonsingular)
+
         G_local = self.double_integral(self.kernel.displacement_kernel,
-                self.quad_logr, k, i, l, j)
+                G_quad, k, i, l, j)
 
         H_local = self.double_integral(self.kernel.traction_kernel,
-                self.quad_oneoverr, k, i, l, j)
+                H_quad, k, i, l, j)
 
         M_local = 0.0
         if k == l:
@@ -145,7 +169,7 @@ class Assembler(object):
                 soln_basis_fnc * src_basis_fnc * jacobian * w
         return result
 
-    def double_integral(self, kernel, q_singular, k, i, l, j):
+    def double_integral(self, kernel, inner_quadrature, k, i, l, j):
         """
         Performs a double integral over a pair of elements with the
         provided quadrature rule.
@@ -155,11 +179,6 @@ class Assembler(object):
         Warning: This function modifies the "result" input.
         """
         result = np.zeros((2, 2))
-        # Is the integrand singular here?
-        q_pts_inner = [self.quad_nonsingular] * len(self.quad_nonsingular.x)
-        if k == l:
-            q_pts_inner = q_singular
-
         # Jacobian determinants are necessary to scale the integral with the
         # change of variables.
         src_jacobian = self.mesh.get_element_jacobian(k)
@@ -184,8 +203,8 @@ class Assembler(object):
             # inner quadrature method. Which points the inner quadrature
             # chooses will depend on the current outer quadrature point
             # which will be the point of singularity, assuming same element
-            q_pts_soln = q_pts_inner[q_src_pt_index].x
-            q_w_soln = q_pts_inner[q_src_pt_index].w
+            q_pts_soln = inner_quadrature[q_src_pt_index].x
+            q_w_soln = inner_quadrature[q_src_pt_index].w
 
             for (q_pt_soln, w_soln) in zip(q_pts_soln, q_w_soln):
                 soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_soln)

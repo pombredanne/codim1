@@ -17,7 +17,10 @@ class QuadSingularTelles(object):
     Use a cubic polynomial transformation to turn a 1D cauchy principal value
     integral into a easily integrable form.
     This should also be able to accurately integrate terms like
-    log(|r|) or 1/r where r = (x - y).
+    log(|r|) where r = (x - y).
+
+    This should also be able to accurately integrate terms like 1/r if
+    the singularity is outside, but near the domain of integration.
 
     See
     "A SELF-ADAPTIVE CO-ORDINATE TRANSFORMATION FOR EFFICIENT NUMERICAL
@@ -37,6 +40,7 @@ class QuadSingularTelles(object):
     def __init__(self, N, x0):
         self.N = N
         self.x0 = x0
+        #TODO: Implement the near-by singularity method from the Telles paper.
 
         # The location of the singularity in eta space
         eta_bar = 2 * x0 - 1.0
