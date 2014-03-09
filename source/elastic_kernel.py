@@ -28,7 +28,6 @@ class ElastostaticKernel(object):
         dist_squared = r[0] ** 2 + r[1] ** 2
         if dist_squared == 0:
             return np.ones((2, 2))
-        dist = np.sqrt(dist_squared)
         U = np.zeros((2, 2))
         U[0, 0] = self.const3 * ((r[0] ** 2) / dist_squared)
         U[1, 1] = self.const3 * ((r[1] ** 2) / dist_squared)
