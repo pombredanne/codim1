@@ -29,8 +29,10 @@
 from numpy import ones,copy,cos,tan,pi,linspace
 import numpy as np
 
-def gaussxw(N):
+x_set = dict()
+w_set = dict()
 
+def _compute_pts(N):
     # Initial approximation to roots of the Legendre polynomial
     a = linspace(3,4*N-1,N)/(4*N+2)
     x = cos(pi*a+1/(8*N*N*tan(a)))
@@ -50,19 +52,32 @@ def gaussxw(N):
 
     # Calculate the weights
     w = 2*(N+1)*(N+1)/(N*N*(1-x*x)*dp*dp)
+    x_set[N] = x
+    w_set[N] = w
 
-    return x,w
+def gaussxw(N):
+    if not N in x_set.keys():
+        _compute_pts(N)
+    return x_set[N], w_set[N]
 
 def gaussxwab(N,a,b):
-    x,w = gaussxw(N)
-    return 0.5*(b-a)*x+0.5*(b+a),0.5*(b-a)*w
+    x, w = gaussxw(N)
+    return 0.5 * (b - a) * x + 0.5 * (b + a), \
+           0.5 * (b - a) * w
 
 ################################################################################
 # TESTS                                                                        #
 ################################################################################
+def test_build_sets():
+    x, w = gaussxwab(3, -1.0, 1.0)
+    x2, w2 = gaussxwab(12, -1.0, 1.0)
+    np.testing.assert_almost_equal(x, x_set[3])
+    np.testing.assert_almost_equal(w, w_set[3])
+    np.testing.assert_almost_equal(x2, x_set[12])
+    np.testing.assert_almost_equal(w2, w_set[12])
 
 def test_gaussxw():
-    x, w = gaussxw(3)
+    x, w = gaussxwab(3, -1.0, 1.0)
     # Exact values retrieved from the wikipedia page on Gaussian Quadrature
     # The main function has been tested by the original author for a wide
     # range of orders. But, this is just to check everything is still working

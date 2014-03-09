@@ -12,7 +12,7 @@ def main():
     plot = True
 
     # Number of elements
-    n_elements = 10
+    n_elements = 30
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
     element_deg = 1
@@ -25,13 +25,13 @@ def main():
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
-    quad_points_nonsingular = 8
-    quad_points_logr = 8
-    quad_points_oneoverr = 8
+    quad_points_nonsingular = 12
+    quad_points_logr = 12
+    quad_points_oneoverr = 12
 
 
     bf = BasisFunctions.from_degree(element_deg)
-    mesh = Mesh.simple_line_mesh(n_elements, -1.0, 1.0)
+    mesh = Mesh.simple_line_mesh(n_elements, -2.0, 2.0)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
     dh = ContinuousDOFHandler(mesh, element_deg)
     assembler = Assembler(mesh, bf, kernel, dh,
@@ -39,7 +39,6 @@ def main():
                           quad_points_logr,
                           quad_points_oneoverr)
     H, G = assembler.assemble()
-    import ipdb; ipdb.set_trace()
     # Setting the small values to zero just makes debugging easier
     H[np.abs(H) < 1e-14] = 0.0
     G[np.abs(G) < 1e-14] = 0.0
@@ -47,7 +46,11 @@ def main():
     # tools.plot_matrix(G, 'G')
 
 
-    fnc = lambda x: (0.0, np.exp(-(x[0]**2)*3))
+    def fnc(x):
+        if np.abs(x[0]) > 1.0:
+            return (0.0, 0.0)
+        else:
+            return (0.0, np.exp(-(x[0]**2)*3))
     # Solve a dirichlet problem (specify displacement, derive traction)
     tractions = tools.interpolate(fnc, dh, bf, mesh)
     rhs = np.dot(H, tractions)
@@ -65,7 +68,7 @@ def main():
         plt.ylabel(r'$t_y$', fontsize = 18)
         plt.show()
 
-
+    import ipdb; ipdb.set_trace()
     # See section 2.7 of starfield and crouch for the standard formulas to convert
     # from plane strain to plane stress.
 

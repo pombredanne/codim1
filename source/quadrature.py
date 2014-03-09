@@ -119,6 +119,9 @@ class QuadOneOverR(object):
         self.x = qg.x
         self.w = qg.w
 
+        # Get the points for the singular part using Piessen's method
+        # Change the code to use Longman's method, but Piessen's is clearly
+        # superior.
         self.x_sing, self.w_sing = self.piessen_method(N, pv_start,
                                                 pv_length, x0)
 
