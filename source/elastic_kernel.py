@@ -54,7 +54,7 @@ class ElastostaticKernel(object):
         The normal (n) provided should be the normal to the observation point
         surface, NOT the source point surface.
         """
-        assert(n[0] ** 2 + n[1] ** 2 == 1.0)
+        # assert(n[0] ** 2 + n[1] ** 2 == 1.0)
         dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
         drdn = r.dot(n) / dist
         dr = np.array([r[0] / dist, r[1] / dist])

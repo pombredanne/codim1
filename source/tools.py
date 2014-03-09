@@ -20,6 +20,15 @@ import matplotlib.pyplot as plt
 #     plt.colorbar()
 #     plt.show()
 
+def plot_mesh(msh, show = True):
+    points = msh.vertices[msh.element_to_vertex[:, 0]]
+    import ipdb;ipdb.set_trace()
+    x = points[:, 0]
+    y = points[:, 1]
+    plt.plot(x, y)
+    if show:
+        plt.show()
+
 def plot_matrix(M, title, show = True):
     """
     Creates and shows two plots. One of the matrix itself and
@@ -101,6 +110,10 @@ def evaluate_solution_on_element(element_idx, reference_point, soln,
 from dof_handler import DiscontinuousDOFHandler
 from basis_funcs import BasisFunctions
 from mesh import Mesh
+
+# def test_plot_mesh():
+#     m = Mesh.circular_mesh(50, 1.0)
+#     plot_mesh(m)
 
 def test_interpolate():
     n_elements = 2
