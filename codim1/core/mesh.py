@@ -1,5 +1,5 @@
 import numpy as np
-from fast.get_physical_points import get_physical_points as _get_physical_points
+from codim1.fast.get_physical_points import get_physical_points as _get_physical_points
 
 class Mesh(object):
     """

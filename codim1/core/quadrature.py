@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-import gaussian_quad
+import codim1.core.gaussian_quad as gaussian_quad
 
 class QuadGauss(object):
     """

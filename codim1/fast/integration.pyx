@@ -1,10 +1,11 @@
-# cython: profile=True
+# cython: profile=False
 import numpy as np
+cimport numpy as np
 from get_physical_points cimport get_physical_points
 
 def double_integral(mesh, basis_funcs, kernel, 
                     outer_quadrature, inner_quadrature, 
-                    k, i, l, j):
+                    int k, int i, int l, int j):
     """
     Performs a double integral over a pair of elements with the
     provided quadrature rule.
@@ -13,29 +14,39 @@ def double_integral(mesh, basis_funcs, kernel,
 
     Warning: This function modifies the "result" input.
     """
-    result = np.zeros((2, 2))
+    cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
     # Jacobian determinants are necessary to scale the integral with the
     # change of variables.
-    src_jacobian = mesh.get_element_jacobian(k)
-    soln_jacobian = mesh.get_element_jacobian(l)
+    cdef double src_jacobian = mesh.get_element_jacobian(k)
+    cdef double soln_jacobian = mesh.get_element_jacobian(l)
 
     # The normal is the one on the soln integration element.
     # This is clear if you remember the source is actually a point
     # and thus has no defined normal. We are integrating over many point
     # sources.
-    normal = mesh.normals[l]
+    cdef np.ndarray[double, ndim = 2] normal = mesh.normals[l]
 
     # Just store some variables in a typed way to speed things up 
     # inside the loop
-    element_to_vertex = mesh.element_to_vertex
-    vertices = mesh.vertices
+    cdef np.ndarray[int, ndim = 2] element_to_vertex = mesh.element_to_vertex
+    cdef np.ndarray[double, ndim = 2] vertices = mesh.vertices
 
     # The outer quadrature uses a standard nonsingular quadrature formula
-    q_pts = outer_quadrature.x
-    w = outer_quadrature.w
-    for (q_src_pt_index, (q_pt_src, w_src)) in enumerate(zip(q_pts, w)):
-        phys_src_pt = mesh.get_physical_points(k, q_pt_src)
+    cdef np.ndarray[double, ndim = 1] q_pts = outer_quadrature.x
+    cdef np.ndarray[double, ndim = 1] w = outer_quadrature.w
+    cdef int q_src_pt_index, q_soln_pt_index
+    cdef double q_pt_src, w_src, q_pt_soln, w_soln
+    cdef double src_basis_fnc, soln_basis_fnc
+    cdef double phys_src_pt, phys_soln_pt
+    cdef np.ndarray[double, ndim = 1] r
+    cdef double k_val
+    for q_src_pt_index in range(q_pts.shape[0]):
+        q_pt_src = q_pts[q_src_pt_index]
+        w_src = w[q_src_pt_index]
+
+        phys_src_pt = get_physical_points(element_to_vertex, vertices,
+                                          k, q_pt_src)
         # The basis functions should be evaluated on reference
         # coordinates
         src_basis_fnc = basis_funcs.evaluate_basis(i, q_pt_src)
@@ -47,7 +58,10 @@ def double_integral(mesh, basis_funcs, kernel,
         q_pts_soln = inner_quadrature[q_src_pt_index].x
         q_w_soln = inner_quadrature[q_src_pt_index].w
 
-        for (q_pt_soln, w_soln) in zip(q_pts_soln, q_w_soln):
+        for q_soln_pt_index in range(q_pts_soln.shape[0]):
+            q_pt_soln = q_pts_soln[q_soln_pt_index]
+            w_soln = q_w_soln[q_soln_pt_index]
+
             soln_basis_fnc = basis_funcs.evaluate_basis(j, q_pt_soln)
 
             # Separation of the two quadrature points, use real,

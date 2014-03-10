@@ -1,6 +1,6 @@
-import quadrature
 import numpy as np
-import source.fast.integration
+import codim1.core.quadrature as quadrature
+import codim1.fast.integration as integration
 
 class Assembler(object):
     """
@@ -138,7 +138,7 @@ class Assembler(object):
             G_quad = make_inner(self.quad_nonsingular)
             H_quad = make_inner(self.quad_nonsingular)
 
-        G_local = fast.integration.double_integral(
+        G_local = integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
                         self.kernel.displacement_kernel,
@@ -146,7 +146,7 @@ class Assembler(object):
                         G_quad,
                         k, i, l, j)
 
-        H_local = fast.integration.double_integral(
+        H_local = integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
                         self.kernel.traction_kernel,

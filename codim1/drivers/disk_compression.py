@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from dof_handler import DiscontinuousDOFHandler, ContinuousDOFHandler
-from basis_funcs import BasisFunctions
-from mesh import Mesh
-from assembler import Assembler
-from fast.elastic_kernel import ElastostaticKernel
-import tools
+from codim1.core.dof_handler import DiscontinuousDOFHandler, ContinuousDOFHandler
+from codim1.core.basis_funcs import BasisFunctions
+from codim1.core.mesh import Mesh
+from codim1.core.assembler import Assembler
+from codim1.fast.elastic_kernel import ElastostaticKernel
+import codim1.core.tools as tools
 
 def main(deg, plot):
     # Number of elements
