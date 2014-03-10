@@ -25,6 +25,7 @@ class BasisFunctions(object):
             points specified.
         """
         self.fncs = []
+        self.derivs = []
         self.nodes = copy.copy(nodes)
         self.num_fncs = len(nodes)
         for (i, n) in enumerate(nodes):
@@ -33,19 +34,26 @@ class BasisFunctions(object):
             # scipy.interpolate.lagrange has trouble above 20 nodes, but that
             # shouldn't be an issue for this code
             poly = spi.lagrange(nodes, w)
-            self.fncs.append(poly)
+            self.fncs.append(poly.c)
+            self.derivs.append(poly.deriv().c)
 
     def evaluate_basis(self, i, x):
         """
             Evaluates the i-th lagrange polynomial at x.
         """
-        return self.fncs[i](x)
+        sum = 0.0
+        for c_idx, c  in enumerate(self.fncs[i]):
+            sum += c * x ** (self.num_fncs - 1 - c_idx)
+        return sum
 
-    def evaluate_basis_derivative(self, i, x):
-        """
-            Evaluates the derivative of the i-th lagrange polynomial at x
-        """
-        return self.fncs[i].deriv()(x)
+    # def evaluate_basis_derivative(self, i, x):
+    #     """
+    #         Evaluates the derivative of the i-th lagrange polynomial at x
+    #     """
+    #     sum = 0.0
+    #     for c_idx, c  in enumerate(self.derivs[i]):
+    #         sum += c * x ** (self.num_fncs - 1 - c_idx)
+    #     return sum
 
     def times_coeffs(self, x, C):
         """
@@ -53,7 +61,8 @@ class BasisFunctions(object):
             respective coefficients -- C.
             C should be a numpy array
         """
-        return C * np.array([f(x) for f in self.fncs])
+        return C * np.array([self.evaluate_basis(i, x) for i in
+                             range(len(self.nodes))])
 
 
 ################################################################################
@@ -101,15 +110,15 @@ def test_basis():
     exact = C * [y_exact1, y_exact2, y_exact3]
     np.testing.assert_almost_equal(exact, bf.times_coeffs(x_hat, C))
 
-def test_basis_derivative():
-    bf = BasisFunctions([-1.0, 0.0, 1.0])
-    x_hat = 0.3
-    yd_exact1 = x_hat - 0.5
-    yd_exact2 = -2 * x_hat
-    yd_exact3 = x_hat + 0.5
-    yd_est1 = bf.evaluate_basis_derivative(0, x_hat)
-    yd_est2 = bf.evaluate_basis_derivative(1, x_hat)
-    yd_est3 = bf.evaluate_basis_derivative(2, x_hat)
-    np.testing.assert_almost_equal(yd_exact1, yd_est1)
-    np.testing.assert_almost_equal(yd_exact2, yd_est2)
-    np.testing.assert_almost_equal(yd_exact3, yd_est3)
+# def test_basis_derivative():
+#     bf = BasisFunctions([-1.0, 0.0, 1.0])
+#     x_hat = 0.3
+#     yd_exact1 = x_hat - 0.5
+#     yd_exact2 = -2 * x_hat
+#     yd_exact3 = x_hat + 0.5
+#     yd_est1 = bf.evaluate_basis_derivative(0, x_hat)
+#     yd_est2 = bf.evaluate_basis_derivative(1, x_hat)
+#     yd_est3 = bf.evaluate_basis_derivative(2, x_hat)
+#     np.testing.assert_almost_equal(yd_exact1, yd_est1)
+#     np.testing.assert_almost_equal(yd_exact2, yd_est2)
+#     np.testing.assert_almost_equal(yd_exact3, yd_est3)

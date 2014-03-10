@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.collections
 
 # def plot_kernel(kernel_fnc,
 #     x = np.linspace(0.0, 1.0, 100)
@@ -21,13 +22,15 @@ import matplotlib.pyplot as plt
 #     plt.show()
 
 def plot_mesh(msh, show = True):
-    points = msh.vertices[msh.element_to_vertex[:, 0]]
-    import ipdb;ipdb.set_trace()
-    x = points[:, 0]
-    y = points[:, 1]
-    plt.plot(x, y)
+    points1 = msh.vertices[msh.element_to_vertex[:, 0]]
+    points2 = msh.vertices[msh.element_to_vertex[:, 1]]
+    lc = matplotlib.collections.LineCollection(zip(points1, points2))
+    fig, ax = plt.subplots()
+    ax.add_collection(lc)
+    ax.autoscale()
+    ax.margins(0.1)
     if show:
-        plt.show()
+        fig.show()
 
 def plot_matrix(M, title, show = True):
     """

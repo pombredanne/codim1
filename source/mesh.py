@@ -23,6 +23,7 @@ class Mesh(object):
 
         self.compute_normals()
         self.compute_connectivity()
+        self.compute_mappings()
 
     @classmethod
     def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
@@ -45,7 +46,7 @@ class Mesh(object):
     @classmethod
     def circular_mesh(cls, n_elements, radius):
         n_vertices = n_elements
-        theta = np.linspace(0, 2 * np.pi, n_vertices)
+        theta = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
         vertices = np.zeros((n_vertices, 2))
         vertices[:, 0] = radius * np.cos(theta)
         vertices[:, 1] = radius * np.sin(theta)
@@ -63,6 +64,11 @@ class Mesh(object):
         r = (all_vertices[:,1,:] - all_vertices[:,0,:])
         r_norm = np.linalg.norm(r, axis = 1)
         self.normals = np.vstack((-r[:, 1] / r_norm, r[:, 0] / r_norm)).T
+
+    # def compute_mappings(self):
+    #     pt1 = self.vertices[self.element_to_vertex[:, 0]]
+    #     pt2 = self.vertices[self.element_to_vertex[:, 1]]
+    #     self.pt2_minus_pt1 = pt2 - pt1
 
     def compute_connectivity(self):
         """

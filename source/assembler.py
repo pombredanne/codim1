@@ -64,6 +64,7 @@ class Assembler(object):
         H = np.zeros((total_dofs, total_dofs))
         G = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
+            print "Assembling element: " + str(k)
             for i in range(self.basis_funcs.num_fncs):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
@@ -74,11 +75,13 @@ class Assembler(object):
 
                 H[dof_x, :] += H_row_x
                 H[dof_y, :] += H_row_y
+
         # Enforce the symmetry of G. Inefficient way of doing this, but it
-        # works. The assymetry only results from small numerical errors in the
+        # works. The asymmetry only results from small numerical errors in the
         # computation, so this statement shouldn't make the error any worse.
         assert(((G - G.T) / np.max(G) < 1e-4).all())
         G -= 0.5 * (G - G.T)
+
         return H, G
 
     def assemble_row(self, k, i):
@@ -218,8 +221,6 @@ class Assembler(object):
 
                 # Actually evaluate the kernel.
                 k_val = kernel(r, normal)
-                assert(not np.isnan(np.sum(k_val))), \
-                       "nan kernel value for R = " + str(np.linalg.norm(r))
 
                 # Actually perform the quadrature
                 result += k_val * src_basis_fnc * soln_basis_fnc *\
