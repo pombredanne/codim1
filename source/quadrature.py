@@ -215,9 +215,9 @@ def test_QuadLogR2():
     np.testing.assert_almost_equal(exact, est, 4)
 
 def test_anotherLogRDouble_G11_from_kernel():
-    from elastic_kernel import ElastostaticKernel
+    from fast.elastic_kernel import ElastostaticKernel
     k = ElastostaticKernel(1.0, 0.25)
-    f = lambda x, y: k.displacement_singular((x - y, 0.0), 0.0) * \
+    f = lambda x, y: k.displacement_kernel(x - y, 0.0, 0.0, 0.0) * \
             (1 - x) * (1 - y)
 
     exact = 7 / (48 * np.pi)

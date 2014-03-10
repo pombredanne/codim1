@@ -4,16 +4,12 @@ from dof_handler import DiscontinuousDOFHandler, ContinuousDOFHandler
 from basis_funcs import BasisFunctions
 from mesh import Mesh
 from assembler import Assembler
-import pyximport; pyximport.install()
 from fast.elastic_kernel import ElastostaticKernel
 import tools
 
-def main(deg):
-    # Should we plot
-    plot = True
-
+def main(deg, plot):
     # Number of elements
-    n_elements = 10
+    n_elements = 20
 
     # Degree of the polynomial basis to use. For example, 1 is a linear basis
     element_deg = deg
@@ -85,6 +81,6 @@ def main(deg):
     # from plane strain to plane stress.
 
 if __name__ == "__main__":
-    main(1)
+    main(1, False)
     # main(5)
-    plt.show()
+    # plt.show()

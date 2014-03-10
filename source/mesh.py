@@ -1,4 +1,5 @@
 import numpy as np
+from fast.get_physical_points import get_physical_points as _get_physical_points
 
 class Mesh(object):
     """
@@ -23,7 +24,7 @@ class Mesh(object):
 
         self.compute_normals()
         self.compute_connectivity()
-        self.compute_mappings()
+        # self.compute_mappings()
 
     @classmethod
     def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
@@ -101,20 +102,19 @@ class Mesh(object):
             return True
         return False
 
-    def get_physical_points(self, element_id, reference_pts):
+    def get_physical_points(self, element_id, reference_pt):
         """
         Use a linear affine mapping to convert from the reference element
         back to physical coordinates. Note that the reference element is
-        1D whereas physical space is 2D. So, the reference_pts input will be
+        1D whereas physical space is 2D. So, the reference_pt input will be
         scalar and the output will be a 2 element vector.
         """
+        return _get_physical_points(self, element_id, reference_pt)
         vertex_list = self.element_to_vertex[element_id, :]
         pt1 = self.vertices[vertex_list[0]]
         pt2 = self.vertices[vertex_list[1]]
         pt2_minus_pt1 = pt2 - pt1
-        physical_pts = pt1 + np.outer(reference_pts, pt2_minus_pt1)
-        if physical_pts.shape[0] == 1:
-            return physical_pts[0]
+        physical_pts = pt1 + reference_pt * pt2_minus_pt1
         return physical_pts
 
     def get_element_jacobian(self, element_id):
@@ -155,11 +155,13 @@ def test_get_phys_pts():
     m = Mesh.simple_line_mesh(4)
 
     # Element 2 should lie from 0 to 0.5
-    pts = m.get_physical_points(2, np.array([0.0, 0.5, 1.0]))
-    np.testing.assert_almost_equal(pts[0][0], 0.0)
-    np.testing.assert_almost_equal(pts[1][0], 0.25)
-    np.testing.assert_almost_equal(pts[2][0], 0.5)
-    np.testing.assert_almost_equal(pts[2][1], 0.0)
+    pts = m.get_physical_points(2, 0.5)
+    np.testing.assert_almost_equal(pts[0], 0.25)
+    pts = m.get_physical_points(2, 0.0)
+    np.testing.assert_almost_equal(pts[0], 0.0)
+    pts = m.get_physical_points(2, 1.0)
+    np.testing.assert_almost_equal(pts[0], 0.5)
+    np.testing.assert_almost_equal(pts[1], 0.0)
 
 def test_get_one_phys_pts():
     m = Mesh.simple_line_mesh(4)

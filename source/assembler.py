@@ -220,7 +220,7 @@ class Assembler(object):
                 r = phys_soln_pt - phys_src_pt
 
                 # Actually evaluate the kernel.
-                k_val = kernel(r, normal)
+                k_val = kernel(r[0], r[1], normal[0], normal[1])
 
                 # Actually perform the quadrature
                 result += k_val * src_basis_fnc * soln_basis_fnc *\

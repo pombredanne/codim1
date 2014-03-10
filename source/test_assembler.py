@@ -1,7 +1,7 @@
 from assembler import Assembler
 import numpy as np
 import basis_funcs
-import elastic_kernel
+import fast.elastic_kernel as elastic_kernel
 import mesh
 import dof_handler
 import tools
@@ -11,11 +11,11 @@ class TestKernel(object):
     This class exists to assist with testing matrix assembly.
     The normal kernels are too complex to make testing easy.
     """
-    def displacement_kernel(self, r, n):
-        dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
+    def displacement_kernel(self, rx, ry, nx, ny):
+        dist = np.sqrt(rx ** 2 + ry ** 2)
         return np.array([[np.log(1.0 / dist), 1.0], [1.0, np.log(1.0 / dist)]])
 
-    def traction_kernel(self, r, n):
+    def traction_kernel(self, rx, ry, nx, ny):
         return np.ones((2, 2))
 
 def simple_assembler(degree = 0,
@@ -266,7 +266,7 @@ def test_realistic_symmetric_linear():
 def test_realistic_double_integral_symmetry():
     a = realistic_assembler(n_elements = 2, element_deg = 1)
     # fnc = lambda r, n: 1 / r[0]
-    fnc = a.kernel.displacement_singular
+    fnc = a.kernel.displacement_kernel
     one = a.double_integral(fnc,
                       a.quad_oneoverr,
                       1, 0, 1, 1)

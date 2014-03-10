@@ -46,14 +46,14 @@ class BasisFunctions(object):
             sum += c * x ** (self.num_fncs - 1 - c_idx)
         return sum
 
-    # def evaluate_basis_derivative(self, i, x):
-    #     """
-    #         Evaluates the derivative of the i-th lagrange polynomial at x
-    #     """
-    #     sum = 0.0
-    #     for c_idx, c  in enumerate(self.derivs[i]):
-    #         sum += c * x ** (self.num_fncs - 1 - c_idx)
-    #     return sum
+    def evaluate_basis_derivative(self, i, x):
+        """
+            Evaluates the derivative of the i-th lagrange polynomial at x
+        """
+        sum = 0.0
+        for c_idx, c  in enumerate(self.derivs[i]):
+            sum += c * x ** (self.num_fncs - 1 - c_idx)
+        return sum
 
     def times_coeffs(self, x, C):
         """
