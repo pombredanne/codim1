@@ -3,8 +3,11 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import numpy as np
 
-ext = [Extension("source.fast.elastic_kernel", sources=["./source/fast/elastic_kernel.pyx"] )]
-ext = [Extension("source.fast.get_physical_points", sources=["./source/fast/get_physical_points.pyx"] )]
+ext = [
+        Extension("source.fast.elastic_kernel", sources=["./source/fast/elastic_kernel.pyx"]),
+        Extension("source.fast.get_physical_points", sources=["./source/fast/get_physical_points.pyx"]),
+        Extension("source.fast.integration", sources=["./source/fast/integration.pyx"])
+      ]
 
 setup(
    name = "codim1",

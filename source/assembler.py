@@ -1,5 +1,6 @@
 import quadrature
 import numpy as np
+import source.fast.integration
 
 class Assembler(object):
     """
@@ -137,11 +138,21 @@ class Assembler(object):
             G_quad = make_inner(self.quad_nonsingular)
             H_quad = make_inner(self.quad_nonsingular)
 
-        G_local = self.double_integral(self.kernel.displacement_kernel,
-                G_quad, k, i, l, j)
+        G_local = fast.integration.double_integral(
+                        self.mesh,
+                        self.basis_funcs,
+                        self.kernel.displacement_kernel,
+                        self.quad_nonsingular,
+                        G_quad,
+                        k, i, l, j)
 
-        H_local = self.double_integral(self.kernel.traction_kernel,
-                H_quad, k, i, l, j)
+        H_local = fast.integration.double_integral(
+                        self.mesh,
+                        self.basis_funcs,
+                        self.kernel.traction_kernel,
+                        self.quad_nonsingular,
+                        H_quad,
+                        k, i, l, j)
 
         M_local = 0.0
         if k == l:

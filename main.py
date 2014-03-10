@@ -81,6 +81,10 @@ def main(deg, plot):
     # from plane strain to plane stress.
 
 if __name__ == "__main__":
+    import time
+    start = time.time()
     main(1, False)
+    end = time.time()
+    print("Time: " + str(end - start))
     # main(5)
     # plt.show()

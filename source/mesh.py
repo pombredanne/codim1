@@ -109,13 +109,10 @@ class Mesh(object):
         1D whereas physical space is 2D. So, the reference_pt input will be
         scalar and the output will be a 2 element vector.
         """
-        return _get_physical_points(self, element_id, reference_pt)
-        vertex_list = self.element_to_vertex[element_id, :]
-        pt1 = self.vertices[vertex_list[0]]
-        pt2 = self.vertices[vertex_list[1]]
-        pt2_minus_pt1 = pt2 - pt1
-        physical_pts = pt1 + reference_pt * pt2_minus_pt1
-        return physical_pts
+        return _get_physical_points(self.element_to_vertex,
+                                    self.vertices,
+                                    element_id,
+                                    reference_pt)
 
     def get_element_jacobian(self, element_id):
         """
