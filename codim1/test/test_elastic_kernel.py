@@ -1,4 +1,4 @@
-from fast.elastic_kernel import ElastostaticKernel
+from codim1.fast.elastic_kernel import ElastostaticKernel
 import numpy as np
 
 def test_traction_kernel_elements():

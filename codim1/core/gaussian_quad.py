@@ -65,26 +65,3 @@ def gaussxwab(N,a,b):
     return 0.5 * (b - a) * x + 0.5 * (b + a), \
            0.5 * (b - a) * w
 
-################################################################################
-# TESTS                                                                        #
-################################################################################
-def test_build_sets():
-    x, w = gaussxwab(3, -1.0, 1.0)
-    x2, w2 = gaussxwab(12, -1.0, 1.0)
-    np.testing.assert_almost_equal(x, x_set[3])
-    np.testing.assert_almost_equal(w, w_set[3])
-    np.testing.assert_almost_equal(x2, x_set[12])
-    np.testing.assert_almost_equal(w2, w_set[12])
-
-def test_gaussxw():
-    x, w = gaussxwab(3, -1.0, 1.0)
-    # Exact values retrieved from the wikipedia page on Gaussian Quadrature
-    # The main function has been tested by the original author for a wide
-    # range of orders. But, this is just to check everything is still working
-    # properly
-    np.testing.assert_almost_equal(x[0], np.sqrt(3.0 / 5.0))
-    np.testing.assert_almost_equal(x[1], 0.0)
-    np.testing.assert_almost_equal(x[2], -np.sqrt(3.0 / 5.0))
-    np.testing.assert_almost_equal(w[0], 5.0 / 9.0)
-    np.testing.assert_almost_equal(w[1], 8.0 / 9.0)
-    np.testing.assert_almost_equal(w[2], 5.0 / 9.0)

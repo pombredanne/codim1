@@ -1,7 +1,8 @@
-# cython: profile=False
+# cython: profile=True
 import numpy as np
 cimport numpy as np
 from get_physical_points cimport get_physical_points
+from basis_funcs cimport evaluate_basis
 
 def double_integral(mesh, basis_funcs, kernel, 
                     outer_quadrature, inner_quadrature, 
@@ -25,12 +26,13 @@ def double_integral(mesh, basis_funcs, kernel,
     # This is clear if you remember the source is actually a point
     # and thus has no defined normal. We are integrating over many point
     # sources.
-    cdef np.ndarray[double, ndim = 2] normal = mesh.normals[l]
+    cdef np.ndarray[double, ndim = 1] normal = mesh.normals[l]
 
     # Just store some variables in a typed way to speed things up 
     # inside the loop
-    cdef np.ndarray[int, ndim = 2] element_to_vertex = mesh.element_to_vertex
+    cdef np.ndarray[long, ndim = 2] element_to_vertex = mesh.element_to_vertex
     cdef np.ndarray[double, ndim = 2] vertices = mesh.vertices
+    cdef np.ndarray[double, ndim = 2] basis = basis_funcs.fncs
 
     # The outer quadrature uses a standard nonsingular quadrature formula
     cdef np.ndarray[double, ndim = 1] q_pts = outer_quadrature.x
@@ -38,9 +40,9 @@ def double_integral(mesh, basis_funcs, kernel,
     cdef int q_src_pt_index, q_soln_pt_index
     cdef double q_pt_src, w_src, q_pt_soln, w_soln
     cdef double src_basis_fnc, soln_basis_fnc
-    cdef double phys_src_pt, phys_soln_pt
+    cdef np.ndarray[double, ndim = 1] phys_src_pt, phys_soln_pt
     cdef np.ndarray[double, ndim = 1] r
-    cdef double k_val
+    cdef np.ndarray[double, ndim = 2] k_val
     for q_src_pt_index in range(q_pts.shape[0]):
         q_pt_src = q_pts[q_src_pt_index]
         w_src = w[q_src_pt_index]
@@ -49,7 +51,7 @@ def double_integral(mesh, basis_funcs, kernel,
                                           k, q_pt_src)
         # The basis functions should be evaluated on reference
         # coordinates
-        src_basis_fnc = basis_funcs.evaluate_basis(i, q_pt_src)
+        src_basis_fnc = evaluate_basis(basis, i, q_pt_src)
 
         # If the integrand is singular, we need to use the appropriate
         # inner quadrature method. Which points the inner quadrature
@@ -62,7 +64,7 @@ def double_integral(mesh, basis_funcs, kernel,
             q_pt_soln = q_pts_soln[q_soln_pt_index]
             w_soln = q_w_soln[q_soln_pt_index]
 
-            soln_basis_fnc = basis_funcs.evaluate_basis(j, q_pt_soln)
+            soln_basis_fnc = evaluate_basis(basis, j, q_pt_soln)
 
             # Separation of the two quadrature points, use real,
             # physical coordinates!

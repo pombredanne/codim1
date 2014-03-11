@@ -21,40 +21,13 @@ class Assembler(object):
                  basis_funcs,
                  kernel,
                  dof_handler,
-                 quad_points_nonsingular,
-                 quad_points_logr,
-                 quad_points_oneoverr):
+                 quad_strategy):
         self.mesh = mesh
         self.basis_funcs = basis_funcs
         self.kernel = kernel
         self.dof_handler = dof_handler
-        self.quad_points_nonsingular = quad_points_nonsingular
-        self.quad_points_logr = quad_points_logr
-        self.quad_points_oneoverr = quad_points_oneoverr
+        self.quad_strategy = quad_strategy
 
-        self.setup_quadrature()
-
-    def setup_quadrature(self):
-        """
-        The quadrature rules can be defined once on the reference element
-        and then a change of variables allows integration on any element.
-        """
-        self.quad_nonsingular = quadrature.QuadGauss(
-                self.quad_points_nonsingular)
-        self.quad_logr = []
-        self.quad_oneoverr = []
-        self.quad_shared_edge_left = \
-            quadrature.QuadSingularTelles(self.quad_points_logr, 0.0)
-        self.quad_shared_edge_right = \
-            quadrature.QuadSingularTelles(self.quad_points_logr, 1.0)
-        for singular_pt in self.quad_nonsingular.x:
-            logr = quadrature.QuadSingularTelles(self.quad_points_logr,
-                                                 singular_pt)
-            oneoverr = quadrature.QuadOneOverR(self.quad_points_oneoverr,
-                                               singular_pt,
-                                               self.quad_points_nonsingular)
-            self.quad_logr.append(logr)
-            self.quad_oneoverr.append(oneoverr)
 
     def assemble(self):
         """
@@ -118,40 +91,23 @@ class Assembler(object):
         """
         Compute one pair of element interactions
         """
-        # Compute quadrature strategy
-        # TODO: Maybe refactor quadrature strategy out into a separate class.
-        def make_inner(quad):
-            return [quad] * len(self.quad_nonsingular.x)
-
-        if k == l:
-            G_quad = self.quad_logr
-            H_quad = self.quad_oneoverr
-        elif self.mesh.is_neighbor(k, l, 'left'):
-            # TODO: Move towards using the distance between two neighbors!
-            G_quad = make_inner(self.quad_shared_edge_right)
-            H_quad = make_inner(self.quad_shared_edge_right)
-        elif self.mesh.is_neighbor(k, l, 'right'):
-            # TODO: Move towards using the distance between two neighbors!
-            G_quad = make_inner(self.quad_shared_edge_left)
-            H_quad = make_inner(self.quad_shared_edge_left)
-        else:
-            G_quad = make_inner(self.quad_nonsingular)
-            H_quad = make_inner(self.quad_nonsingular)
+        (G_quad_outer, G_quad_inner), \
+        (H_quad_outer, H_quad_inner) = self.quad_strategy.get_quadrature(k, l)
 
         G_local = integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
                         self.kernel.displacement_kernel,
-                        self.quad_nonsingular,
-                        G_quad,
+                        G_quad_outer,
+                        G_quad_inner,
                         k, i, l, j)
 
         H_local = integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
                         self.kernel.traction_kernel,
-                        self.quad_nonsingular,
-                        H_quad,
+                        H_quad_outer,
+                        H_quad_inner,
                         k, i, l, j)
 
         M_local = 0.0
@@ -168,9 +124,10 @@ class Assembler(object):
         can be evaluated at all point within the element and (is not
         singular!)
         """
+        quad = self.quad_strategy.get_simple()
         jacobian = self.mesh.get_element_jacobian(k)
-        q_pts = self.quad_nonsingular.x
-        w = self.quad_nonsingular.w
+        q_pts = quad.x
+        w = quad.w
         # Just perform standard gauss quadrature
         for (q_pt, w) in zip(q_pts, w):
             # The basis functions should be evaluated on reference
@@ -192,49 +149,10 @@ class Assembler(object):
 
         Warning: This function modifies the "result" input.
         """
-        result = np.zeros((2, 2))
-        # Jacobian determinants are necessary to scale the integral with the
-        # change of variables.
-        src_jacobian = self.mesh.get_element_jacobian(k)
-        soln_jacobian = self.mesh.get_element_jacobian(l)
-
-        # The normal is the one on the soln integration element.
-        # This is clear if you remember the source is actually a point
-        # and thus has no defined normal. We are integrating over many point
-        # sources.
-        normal = self.mesh.normals[l]
-
-        # The outer quadrature uses a standard nonsingular quadrature formula
-        q_pts = self.quad_nonsingular.x
-        w = self.quad_nonsingular.w
-        for (q_src_pt_index, (q_pt_src, w_src)) in enumerate(zip(q_pts, w)):
-            phys_src_pt = self.mesh.get_physical_points(k, q_pt_src)
-            # The basis functions should be evaluated on reference
-            # coordinates
-            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt_src)
-
-            # If the integrand is singular, we need to use the appropriate
-            # inner quadrature method. Which points the inner quadrature
-            # chooses will depend on the current outer quadrature point
-            # which will be the point of singularity, assuming same element
-            q_pts_soln = inner_quadrature[q_src_pt_index].x
-            q_w_soln = inner_quadrature[q_src_pt_index].w
-
-            for (q_pt_soln, w_soln) in zip(q_pts_soln, q_w_soln):
-                soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt_soln)
-
-                # Separation of the two quadrature points, use real,
-                # physical coordinates!
-                phys_soln_pt = self.mesh.get_physical_points(l, q_pt_soln)
-
-                # From source to solution.
-                r = phys_soln_pt - phys_src_pt
-
-                # Actually evaluate the kernel.
-                k_val = kernel(r[0], r[1], normal[0], normal[1])
-
-                # Actually perform the quadrature
-                result += k_val * src_basis_fnc * soln_basis_fnc *\
-                          src_jacobian * soln_jacobian *\
-                          w_soln * w_src
-        return result
+        return integration.double_integral(
+                        self.mesh,
+                        self.basis_funcs,
+                        kernel,
+                        self.quad_strategy.get_simple(),
+                        inner_quadrature,
+                        k, i, l, j)
