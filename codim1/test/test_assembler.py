@@ -27,7 +27,7 @@ def simple_assembler(degree = 0,
     if oneoverr_pts % 2 == 1:
         oneoverr_pts += 1
     msh = mesh.Mesh.simple_line_mesh(n_elements)
-    qs = quad_strategy.QuadStrategy(msh, nonsing_pts,
+    qs = quad_strategy.QuadStrategy(msh, nonsing_pts, nonsing_pts,
                      logr_pts, oneoverr_pts)
     dh = dof_handler.DiscontinuousDOFHandler(msh, degree)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
@@ -134,6 +134,7 @@ def realistic_assembler(n_elements = 4,
     kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
     dh = dof_handler.ContinuousDOFHandler(msh, element_deg)
     qs = quad_strategy.QuadStrategy(msh, quad_points_nonsingular,
+                        quad_points_nonsingular,
                         quad_points_logr, quad_points_oneoverr)
     assembler = Assembler(msh, bf, kernel, dh, qs)
     return assembler
@@ -204,7 +205,8 @@ def test_exact_dbl_integrals_G_different_element():
                             n_elements = 2,
                             left = -1.0,
                             right = 1.0)
-    q = [a.quad_strategy.quad_shared_edge_left] * len(a.quad_strategy.quad_nonsingular.x)
+    q = [a.quad_strategy.quad_shared_edge_left] * \
+            len(a.quad_strategy.get_simple().x)
     G_00 = a.double_integral(a.kernel.displacement_kernel, q, 0, 0, 1, 0)
     np.testing.assert_almost_equal(G_00, [[0.0150739, 0], [0, 0.00181103]], 4)
     G_10 = a.double_integral(a.kernel.displacement_kernel, q, 0, 1, 1, 0)

@@ -43,7 +43,8 @@ class Assembler(object):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
 
-                (G_row_x, G_row_y), (H_row_x, H_row_y) = self.assemble_row(k, i)
+                (G_row_x, G_row_y), (H_row_x, H_row_y) = \
+                    self.assemble_row(k, i)
                 G[dof_x, :] += G_row_x
                 G[dof_y, :] += G_row_y
 

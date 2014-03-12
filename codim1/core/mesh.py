@@ -1,5 +1,6 @@
 import numpy as np
 from codim1.fast.get_physical_points import get_physical_points as _get_physical_points
+from codim1.core.segment_distance import segments_distance
 
 class Mesh(object):
     """
@@ -24,6 +25,8 @@ class Mesh(object):
 
         self.compute_normals()
         self.compute_connectivity()
+        self.compute_element_distances()
+        self.compute_element_widths()
         # self.compute_mappings()
 
     @classmethod
@@ -59,7 +62,56 @@ class Mesh(object):
         element_to_vertex = element_to_vertex.astype(int)
         return cls(vertices, element_to_vertex)
 
+    def compute_element_distances(self):
+        """
+        Compute the pairwise distance between all the elements. In
+        2D, this is just the pairwise line segment distances. Moving to 3D,
+        this shouldn't be hard if the polygons are "reasonable", but handling
+        outliers may be harder. Because this distance is only used for
+        selecting the quadrature strategy, I should be conservative. Using too
+        many quadrature points is not as bad as using too few. Using a
+        bounding box method might be highly effective.
+        """
+        self.element_distances = np.zeros((self.n_elements, self.n_elements))
+        for k in range(self.n_elements):
+            o1 = self.element_to_vertex[k, 0]
+            o2 = self.element_to_vertex[k, 1]
+            outer_vertex1 = self.vertices[o1, :]
+            outer_vertex2 = self.vertices[o2, :]
+            # Only loop over the upper triangle of the matrix
+            for l in range(k, self.n_elements):
+                i1 = self.element_to_vertex[l, 0]
+                i2 = self.element_to_vertex[l, 1]
+                inner_vertex1 = self.vertices[i1, :]
+                inner_vertex2 = self.vertices[i2, :]
+                dist = segments_distance(outer_vertex1[0], outer_vertex1[1],
+                                         outer_vertex2[0], outer_vertex2[1],
+                                         inner_vertex1[0], inner_vertex1[1],
+                                         inner_vertex2[0], inner_vertex2[1])
+                self.element_distances[k, l] = dist
+        # Make it symmetric. No need to worry about doubling the diagonal
+        # because the diagonal *should* be zero!
+        self.element_distances += self.element_distances.T
+
+    def compute_element_widths(self):
+        """
+        Calculate the length of each element.
+        """
+        self.element_widths = np.empty(self.n_elements)
+        for k in range(self.n_elements):
+            v1 = self.vertices[self.element_to_vertex[k, 0], :]
+            v2 = self.vertices[self.element_to_vertex[k, 1], :]
+            length = np.sqrt((v2[1] - v1[1]) ** 2 + (v2[0] - v1[0]) ** 2)
+            self.element_widths[k] = length
+
+
     def compute_normals(self):
+        """
+        Compute normal vectors to each element. Normal vectors are such that
+        if you traverse a circle counterclockwise, the normals point inwards.
+        Is this standard? Right hand rule says... what? in 2D? In 3D the
+        convention is clearer.
+        """
         self.normals = np.empty((self.n_elements, 2))
         all_vertices = self.vertices[self.element_to_vertex]
         r = (all_vertices[:,1,:] - all_vertices[:,0,:])
@@ -67,13 +119,16 @@ class Mesh(object):
         self.normals = np.vstack((-r[:, 1] / r_norm, r[:, 0] / r_norm)).T
 
     # def compute_mappings(self):
+    #   """
+    #   Considering pre-computing all the mappings to speed things up.
+    #   """
     #     pt1 = self.vertices[self.element_to_vertex[:, 0]]
     #     pt2 = self.vertices[self.element_to_vertex[:, 1]]
     #     self.pt2_minus_pt1 = pt2 - pt1
 
     def compute_connectivity(self):
         """
-        Determine a store a representation of which elements are adjacent.
+        Determine and store a representation of which elements are adjacent.
         Simple for 2D.
         """
         # Create of list of which elements touch each vertex
@@ -129,3 +184,4 @@ class Mesh(object):
         # is the relevant jacobian for a line integral change of variables.
         j = np.sqrt(pt2_minus_pt1[0] ** 2 + pt2_minus_pt1[1] ** 2)
         return j
+
