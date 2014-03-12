@@ -136,7 +136,7 @@ class Assembler(object):
             src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
             soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt)
             # The kernel is evaluated in physical coordinates
-            phys_pt = self.mesh.get_physical_points(k, q_pt)[0]
+            phys_pt = self.mesh.get_physical_points(k, q_pt)
             result += kernel(phys_pt) * \
                 soln_basis_fnc * src_basis_fnc * jacobian * w
         return result

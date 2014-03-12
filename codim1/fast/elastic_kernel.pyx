@@ -5,13 +5,21 @@ from libc.math cimport sqrt, pow, log
 import math
 cdef double pi = math.pi
 
-cdef class ElastostaticKernel:
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+# TODO: Lots of replicated code in this file. Try to reduce that.
+
+class ElastostaticKernel:
     """
     A class to contain the elastostatic kernel calculations.
     """
-    cdef double shear_modulus
-    cdef double poisson_ratio
-    cdef double const1, const2, const3, const4
+    #cdef double shear_modulus
+    #cdef double poisson_ratio
+    #cdef double const1, const2, const3, const4
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
@@ -63,3 +71,65 @@ cdef class ElastostaticKernel:
         T[1, 0] = factor * (-drdn * (2 * dx * dy) + \
                 self.const1 * (dy * nx - dx * ny))
         return T
+
+    def hypersingular(self, double rx, double ry, double nx, double ny):
+        cdef double dist = sqrt(rx ** 2 + ry ** 2)
+        cdef double drdn = (rx * nx + ry * ny) / dist
+        cdef np.ndarray[double, ndim=1] dr = np.zeros(2)
+        dr[0] = rx / dist
+        dr[1] = ry / dist
+        cdef np.ndarray[double, ndim=1] n = np.zeros(2)
+        n[0] = nx
+        n[1] = ny
+        cdef np.ndarray[double, ndim=3] S = np.zeros((2, 2, 2))
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    S[i, j, k] = self._hypersingular(i, j, k, dist, drdn,
+                                                     dr, n)
+        return S
+
+    def _hypersingular(self, int i, int j, int k, 
+                       double r, double drdn,
+                       np.ndarray[double, ndim=1] dr, 
+                       np.ndarray[double, ndim=1] normal):
+        Skij = self.shear_modulus / \
+                (2 * pi * (1 - self.poisson_ratio)) * 1 / (r ** 2);
+        Skij = Skij * ( 2 * drdn * ( self.const1 * (i==j) * dr[k] + \
+            self.poisson_ratio * ( dr[j] * (k==i) + dr[i] * (j==k) ) - \
+            4 * dr[i] * dr[j] * dr[k] ) + \
+            2 * self.poisson_ratio * ( normal[i] * dr[j] * dr[k] + \
+            normal[j] * dr[i] * dr[k] ) + \
+            self.const1 * \
+            ( 2 * normal[k] * dr[i] * dr[j] + normal[j] * (k==i) + \
+                normal[i] * (j==k) ) \
+            - (1 - 4 * self.poisson_ratio) * normal[k] * (i==j))
+        return Skij
+
+
+    def traction_adjoint(self, double rx, double ry, double nx, double ny):
+        cdef double dist = sqrt(rx ** 2 + ry ** 2)
+        cdef double drdn = (rx * nx + ry * ny) / dist
+        cdef np.ndarray[double, ndim=1] dr = np.zeros(2)
+        dr[0] = rx / dist
+        dr[1] = ry / dist
+        cdef np.ndarray[double, ndim=1] n = np.zeros(2)
+        n[0] = nx
+        n[1] = ny
+        cdef np.ndarray[double, ndim=3] D = np.zeros((2, 2, 2))
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    D[i, j, k] = self._traction_adjoint(i, j, k, dist, drdn,
+                                                     dr, n)
+        return D
+
+    def _traction_adjoint(self, int i, int j, int k, 
+                       double r, double drdn,
+                       np.ndarray[double, ndim=1] dr, 
+                       np.ndarray[double, ndim=1] normal):
+        Dkij = self.const2 * (1 / r) * ( self.const1 * \
+                    ( -dr[k] * (i==j) + dr[j] * (k==i) + dr[i] * (j==k) ) + \
+                    2 * dr[i] * dr[j] * dr[k] )
+        return Dkij
+        

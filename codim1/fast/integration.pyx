@@ -4,6 +4,9 @@ cimport numpy as np
 from get_physical_points cimport get_physical_points
 from basis_funcs cimport evaluate_basis
 
+# TODO: I think the future direction for speeding this up more would be
+# to create an "Integrator" class that stores most of the necessary once
+# so that all the python statements in the core of the loop can be removed.
 def double_integral(mesh, basis_funcs, kernel, 
                     outer_quadrature, inner_quadrature, 
                     int k, int i, int l, int j):
