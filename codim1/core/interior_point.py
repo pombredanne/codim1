@@ -20,7 +20,7 @@ class InteriorPoint(object):
         self.quadrature = quadrature
 
     def compute_displacement(self, point, disp, trac):
-        disp = np.zeros(2)
+        result = np.zeros(2)
 
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
@@ -29,18 +29,20 @@ class InteriorPoint(object):
 
                 G_local = self.interior_integral(
                                 self.kernel.displacement_kernel,
+                                np.zeros((2, 2)),
                                 point, k, i)
 
                 H_local = self.interior_integral(
                                 self.kernel.traction_kernel,
+                                np.zeros((2, 2)),
                                 point, k, i)
 
                 for a in range(2):
                     for c in range(2):
-                        disp[a] -= disp[dofs[c]] * H_local[a, c]
-                        disp[a] += trac[dofs[c]] * G_local[a, c]
+                        result[a] -= disp[dofs[c]] * H_local[a, c]
+                        result[a] += trac[dofs[c]] * G_local[a, c]
 
-        return disp
+        return result
 
     def compute_stress(self, point, disp, trac):
         stress = np.zeros((2, 2))
@@ -51,9 +53,11 @@ class InteriorPoint(object):
                         self.dof_handler.dof_map[1, k, i]]
 
                 D_local = self.interior_integral(self.kernel.traction_adjoint,
+                                np.zeros((2, 2, 2)),
                                 point, k, i)
 
                 S_local = self.interior_integral(self.kernel.hypersingular,
+                                np.zeros((2, 2, 2)),
                                 point, k, i)
 
                 for a in range(2):
@@ -64,7 +68,7 @@ class InteriorPoint(object):
 
         return stress
 
-    def interior_integral(self, kernel, pt, k, i):
+    def interior_integral(self, kernel, result, pt, k, i):
         """
         Performs an integral over a surface element, computing the solution
         at an interior point. Basically, this is a collocation integral
@@ -74,7 +78,6 @@ class InteriorPoint(object):
         normal = self.mesh.normals[k]
         q_pts = self.quadrature.x
         w = self.quadrature.w
-        result = np.zeros((2, 2, 2))
         # Just perform standard gauss quadrature
         for (q_pt, w) in zip(q_pts, w):
             # The basis functions should be evaluated on reference

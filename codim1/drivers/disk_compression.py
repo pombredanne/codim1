@@ -46,7 +46,7 @@ def main(n_elements, element_deg, plot):
 
     def section_traction(x):
         if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
-            return (x[0], x[1])
+            return (-x[0], -x[1])
         return (0.0, 0.0)
 
     # G multiplies tractions
@@ -69,7 +69,7 @@ def main(n_elements, element_deg, plot):
                                                 dh, bf, mesh)
 
     # Compute along the y axis
-    y_vals = np.linspace(0, 0.975, 40)
+    y_vals = np.linspace(0, 1.0, 20)[:-1]
 
     ip = InteriorPoint(mesh, bf, kernel, dh, qs.get_simple())
     int_strs = np.array(
@@ -88,12 +88,14 @@ def main(n_elements, element_deg, plot):
         plt.ylabel(r'$u_y$', fontsize = 18)
         plt.figure(4)
         plt.plot(y_vals, int_strs[:, 0, 0])
-        plt.figure(5)
+        # plt.figure(5)
         plt.plot(y_vals, int_strs[:, 1, 1])
-        plt.figure(6)
-        plt.plot(y_vals, int_disp[:, 0])
-        plt.figure(7)
-        plt.plot(y_vals, int_disp[:, 1])
+        plt.xlabel('distance along y axis from origin')
+        plt.ylabel(r'$\sigma_{xx}$ and $\sigma_{yy}$')
+        # plt.figure(6)
+        # plt.plot(y_vals, int_disp[:, 0])
+        # plt.figure(7)
+        # plt.plot(y_vals, int_disp[:, 1])
         plt.show()
     import ipdb;ipdb.set_trace()
     # See section 2.7 of starfield and crouch for the standard formulas to
