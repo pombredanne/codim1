@@ -1,4 +1,5 @@
 import time
+import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import DiscontinuousDOFHandler,\
@@ -40,6 +41,12 @@ def main(n_elements, element_deg, plot):
     assembler = Assembler(mesh, bf, kernel, dh, qs)
 
     H, G = assembler.assemble()
+    with open('H.matrix') as f:
+        cPickle.dump(H, f)
+    with open('G.matrix') as f:
+        cPickle.dump(G, f)
+
+
 
     def full_surface_traction(x):
         return (x[0], x[1])
@@ -71,7 +78,7 @@ def main(n_elements, element_deg, plot):
     # Compute along the y axis
     y_vals = np.linspace(0, 1.0, 20)[:-1]
 
-    ip = InteriorPoint(mesh, bf, kernel, dh, qs.get_simple())
+    ip = InteriorPoint(mesh, bf, kernel, dh, QuadGauss(20, 0.0, 1.0))
     int_strs = np.array(
             [ip.compute_stress((0.0, y), disp, trac) for y in y_vals])
     int_disp = np.array(
@@ -103,7 +110,7 @@ def main(n_elements, element_deg, plot):
 
 if __name__ == "__main__":
     start = time.time()
-    main(200, 1, True)
+    main(100, 1, True)
 
     end = time.time()
     print("Time: " + str(end - start))
