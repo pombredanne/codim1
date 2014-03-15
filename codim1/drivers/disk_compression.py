@@ -9,10 +9,14 @@ from codim1.core.assembler import Assembler
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.fast.elastic_kernel import ElastostaticKernel
 from codim1.core.quad_strategy import QuadStrategy
+from codim1.core.quadrature import QuadGauss
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
-def main(n_elements, element_deg, plot):
+def main(n_elements, element_deg, plot, interior_quad_pts):
+    # Load from pickled matrix files.
+    load = False
+
     # Elastic parameters
     shear_modulus = 1.0
     poisson_ratio = 0.25
@@ -40,11 +44,17 @@ def main(n_elements, element_deg, plot):
     # dh = DiscontinuousDOFHandler(mesh, element_deg)
     assembler = Assembler(mesh, bf, kernel, dh, qs)
 
-    H, G = assembler.assemble()
-    with open('H.matrix') as f:
-        cPickle.dump(H, f)
-    with open('G.matrix') as f:
-        cPickle.dump(G, f)
+    if load:
+        with open('H.matrix', 'rb') as f:
+            H = cPickle.load(f)
+        with open('G.matrix', 'rb') as f:
+            G = cPickle.load(f)
+    else:
+        H, G = assembler.assemble()
+        with open('H.matrix', 'wb') as f:
+            cPickle.dump(H, f)
+        with open('G.matrix', 'wb') as f:
+            cPickle.dump(G, f)
 
 
 
@@ -78,7 +88,8 @@ def main(n_elements, element_deg, plot):
     # Compute along the y axis
     y_vals = np.linspace(0, 1.0, 20)[:-1]
 
-    ip = InteriorPoint(mesh, bf, kernel, dh, QuadGauss(20, 0.0, 1.0))
+    ip = InteriorPoint(mesh, bf, kernel, dh,
+                       QuadGauss(interior_quad_pts, 0.0, 1.0))
     int_strs = np.array(
             [ip.compute_stress((0.0, y), disp, trac) for y in y_vals])
     int_disp = np.array(
@@ -104,16 +115,22 @@ def main(n_elements, element_deg, plot):
         # plt.figure(7)
         # plt.plot(y_vals, int_disp[:, 1])
         plt.show()
-    import ipdb;ipdb.set_trace()
+    return int_strs[:, 0, 0]
     # See section 2.7 of starfield and crouch for the standard formulas to
     # convert from plane strain to plane stress.
 
 if __name__ == "__main__":
-    start = time.time()
-    main(100, 1, True)
+    # strs = []
+    # for i in range(15):
+    #     strs.append(main(100, 1, False, i + 2))
 
-    end = time.time()
-    print("Time: " + str(end - start))
+    strs = []
+
+    main(100, 1, True, 13)
+    # start = time.time()
+
+    # end = time.time()
+    # print("Time: " + str(end - start))
 
     # main(5)
     # s1 = main(10, 1, False)
