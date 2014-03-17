@@ -7,8 +7,8 @@ def test_degree_zero():
     assert(len(bf.nodes) == 1)
     for x in np.linspace(0.0, 1.0, 10):
         np.testing.assert_almost_equal(bf.evaluate_basis(0, x), 1.0)
-        np.testing.assert_almost_equal(bf.evaluate_basis_derivative(0, x), 0.0)
-
+        np.testing.assert_almost_equal(
+                bf.derivs.evaluate_basis(0, x), 0.0)
 
 def test_from_degree():
     bf = BasisFunctions.from_degree(2)
@@ -44,13 +44,14 @@ def test_basis():
 
 def test_basis_derivative():
     bf = BasisFunctions([-1.0, 0.0, 1.0])
+    derivs = bf.derivs
     x_hat = 0.3
     yd_exact1 = x_hat - 0.5
     yd_exact2 = -2 * x_hat
     yd_exact3 = x_hat + 0.5
-    yd_est1 = bf.evaluate_basis_derivative(0, x_hat)
-    # yd_est2 = bf.evaluate_basis_derivative(1, x_hat)
-    # yd_est3 = bf.evaluate_basis_derivative(2, x_hat)
+    yd_est1 = derivs.evaluate_basis(0, x_hat)
+    yd_est2 = derivs.evaluate_basis(1, x_hat)
+    yd_est3 = derivs.evaluate_basis(2, x_hat)
     np.testing.assert_almost_equal(yd_exact1, yd_est1)
-    # np.testing.assert_almost_equal(yd_exact2, yd_est2)
-    # np.testing.assert_almost_equal(yd_exact3, yd_est3)
+    np.testing.assert_almost_equal(yd_exact2, yd_est2)
+    np.testing.assert_almost_equal(yd_exact3, yd_est3)

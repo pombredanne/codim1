@@ -27,7 +27,7 @@ class BasisFunctions(object):
         """
         self.num_fncs = len(nodes)
         self.fncs = np.empty((self.num_fncs, self.num_fncs))
-        self.derivs = []
+        derivs = np.empty((self.num_fncs, self.num_fncs))
         self.nodes = copy.copy(nodes)
         for (i, n) in enumerate(nodes):
             w = np.zeros_like(nodes)
@@ -36,7 +36,8 @@ class BasisFunctions(object):
             # shouldn't be an issue for this code
             poly = spi.lagrange(nodes, w)
             self.fncs[i, :] = poly.c
-            self.derivs.append(poly.deriv().c)
+            derivs[i, 1:] = poly.deriv().c
+        self.derivs = _DerivativeBasisFunctions(self.nodes, derivs)
 
     def evaluate_basis(self, i, x):
         return _evaluate_basis(self.fncs, i, x)
@@ -60,3 +61,12 @@ class BasisFunctions(object):
         """
         return C * np.array([self.evaluate_basis(i, x) for i in
                              range(len(self.nodes))])
+
+class _DerivativeBasisFunctions(BasisFunctions):
+    """
+    Stores the derivatives of the basis functions. For internal use only.
+    """
+    def __init__(self, nodes, fncs):
+        self.num_fncs = len(fncs)
+        self.nodes = nodes
+        self.fncs = fncs
