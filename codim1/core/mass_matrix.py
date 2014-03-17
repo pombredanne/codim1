@@ -40,8 +40,8 @@ class MassMatrix(object):
                     j_dof_x = self.dof_handler.dof_map[0, k, j]
                     j_dof_y = self.dof_handler.dof_map[1, k, j]
                     M_local = self.single_integral(k, i, j)
-                    self.M[i_dof_x, j_dof_x] = M_local
-                    self.M[i_dof_y, j_dof_y] = M_local
+                    self.M[i_dof_x, j_dof_x] = M_local[0]
+                    self.M[i_dof_y, j_dof_y] = M_local[1]
         self.computed = True
 
     def single_integral(self, k, i, j):
@@ -60,9 +60,10 @@ class MassMatrix(object):
         w = self.quadrature.w
         result = 0.0
         for (q_pt, w) in zip(q_pts, w):
+            phys_pt = self.mesh.get_physical_points(k, q_pt)
             # The basis functions should be evaluated on reference
             # coordinates
-            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
-            soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt)
+            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt, phys_pt)
+            soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt, phys_pt)
             result += soln_basis_fnc * src_basis_fnc * jacobian * w
         return result

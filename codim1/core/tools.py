@@ -88,13 +88,17 @@ def evaluate_boundary_solution(points_per_element, soln,
     y = []
     for k in range(mesh.n_elements):
         for pt in np.linspace(0.0, 1.0, points_per_element):
-            x.append(mesh.get_physical_points(k, pt))
+            # TODO: This could use evaluate_solution_on_element
+            phys_pt = mesh.get_physical_points(k, pt)
+            x.append(phys_pt)
             ux = 0
             uy = 0
             for i in range(dof_handler.element_deg + 1):
                 coeff = dof_handler.dof_map[:, k, i]
-                ux += soln[coeff[0]] * basis_funcs.evaluate_basis(i, pt)
-                uy += soln[coeff[1]] * basis_funcs.evaluate_basis(i, pt)
+                ux += soln[coeff[0]] * \
+                        basis_funcs.evaluate_basis(i, pt, phys_pt)[0]
+                uy += soln[coeff[1]] * \
+                        basis_funcs.evaluate_basis(i, pt, phys_pt)[1]
             y.append([ux, uy])
     x = np.array(x)
     y = np.array(y)
@@ -102,12 +106,15 @@ def evaluate_boundary_solution(points_per_element, soln,
 
 def evaluate_solution_on_element(element_idx, reference_point, soln,
                                  dof_handler, basis_funcs, mesh):
+    phys_pt = mesh.get_physical_points(element_idx, reference_point)
     soln_x = 0.0
     soln_y = 0.0
     for i in range(basis_funcs.num_fncs):
         dof_x = dof_handler.dof_map[0, element_idx, i]
         dof_y = dof_handler.dof_map[1, element_idx, i]
-        soln_x += soln[dof_x] * basis_funcs.evaluate_basis(i, reference_point)
-        soln_y += soln[dof_y] * basis_funcs.evaluate_basis(i, reference_point)
+        soln_x += soln[dof_x] * \
+                basis_funcs.evaluate_basis(i, reference_point, phys_pt)[0]
+        soln_y += soln[dof_y] * \
+                basis_funcs.evaluate_basis(i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 

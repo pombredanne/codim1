@@ -3,11 +3,21 @@ import scipy.interpolate as spi
 import copy
 from codim1.fast.basis_funcs import evaluate_basis as _evaluate_basis
 
+class Function(object):
+    def __init__(self, f):
+        self.f = f
+
+    def evaluate_basis(self, i, x_hat, x):
+        return self.f(x)
+
 class BasisFunctions(object):
     """
         This class handles interactions with Lagrange polynomials defined on
         the unit reference interval [0, 1].
     """
+    @classmethod
+    def from_function(cls, f):
+        return Function(f)
 
     @classmethod
     def from_degree(cls, element_deg):
@@ -40,28 +50,8 @@ class BasisFunctions(object):
             derivs[i, 1:] = poly.deriv().c
         self.derivs = _DerivativeBasisFunctions(self.nodes, derivs)
 
-    def evaluate_basis(self, i, x):
-        return _evaluate_basis(self.fncs, i, x)
-
-    def evaluate_basis_derivative(self, i, x):
-        """
-            Evaluates the derivative of the i-th lagrange polynomial at x
-        """
-        if self.num_fncs == 1:
-            return 0.0
-        retval = 0.0
-        for c_idx, c  in enumerate(self.derivs[i]):
-            retval += c * x ** (self.num_fncs - 2 - c_idx)
-        return retval
-
-    def times_coeffs(self, x, C):
-        """
-            Evaluates the sum of the lagrange polynomials times their
-            respective coefficients -- C.
-            C should be a numpy array
-        """
-        return C * np.array([self.evaluate_basis(i, x) for i in
-                             range(len(self.nodes))])
+    def evaluate_basis(self, i, x_hat, x):
+        return _evaluate_basis(self.fncs, i, x_hat)
 
 class _DerivativeBasisFunctions(BasisFunctions):
     """

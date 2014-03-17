@@ -12,4 +12,4 @@ cpdef evaluate_basis(np.ndarray[double, ndim = 2] basis, long i, double x):
     for c_idx in range(order):
         retval += basis[i][c_idx] * \
                   x ** (order - 1 - c_idx)
-    return retval
+    return np.array([retval, retval])

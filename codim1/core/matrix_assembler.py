@@ -1,5 +1,4 @@
 import numpy as np
-import codim1.core.quadrature as quadrature
 import codim1.fast.integration as integration
 
 class MatrixAssembler(object):
@@ -100,8 +99,9 @@ class MatrixAssembler(object):
                                             kernel.singularity_type, k, l)
         G_local = integration.double_integral(
                         self.mesh,
-                        self.basis_funcs,
                         kernel,
+                        self.basis_funcs,
+                        self.basis_funcs,
                         G_quad_outer,
                         G_quad_inner,
                         k, i, l, j)
@@ -111,8 +111,9 @@ class MatrixAssembler(object):
         """Thin wrapper around the integration.double_integral method"""
         return integration.double_integral(
                         self.mesh,
-                        self.basis_funcs,
                         kernel,
+                        self.basis_funcs,
+                        self.basis_funcs,
                         self.quad_strategy.get_simple(),
                         inner_quadrature,
                         k, i, l, j)
