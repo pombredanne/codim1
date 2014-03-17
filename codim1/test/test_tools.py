@@ -21,7 +21,7 @@ def test_interpolate():
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
     dh = DiscontinuousDOFHandler(msh, element_deg)
-    fnc = lambda x: (x[0], x[1])
+    fnc = lambda x, n: (x[0], x[1])
     val = interpolate(fnc, dh, bf, msh)
 
     # The second half should be zero, because simple_line_mesh is
@@ -36,7 +36,7 @@ def test_evaluate_boundary_solution_easy():
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
     dh = DiscontinuousDOFHandler(msh, element_deg)
-    fnc = lambda x: (x[0], x[1])
+    fnc = lambda x, n: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
     x, soln = evaluate_boundary_solution(11, solution, dh, bf, msh)
     # Constant basis, so it should be 0.5 everywhere on the element [0,1]
@@ -50,7 +50,7 @@ def test_evaluate_solution_on_element():
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
     dh = DiscontinuousDOFHandler(msh, element_deg)
-    fnc = lambda x: (x[0], x[1])
+    fnc = lambda x, n: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
     eval = evaluate_solution_on_element(1, 1.0, solution,
                                  dh, bf, msh)
@@ -65,11 +65,22 @@ def test_interpolate_evaluate_hard():
     bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
     dh = DiscontinuousDOFHandler(msh, element_deg)
-    fnc = lambda x: (x[0] ** 6, 0)
+    fnc = lambda x, n: (x[0] ** 6, 0)
     solution = interpolate(fnc, dh, bf, msh)
     x, soln = evaluate_boundary_solution(5, solution, dh, bf, msh)
     assert(x[-2][0] == 0.9)
     np.testing.assert_almost_equal(soln[-2][0], (0.9 ** 6))
 
+def test_interpolate_normal():
+    n_elements = 2
+    element_deg = 0
+    bf = BasisFunctions.from_degree(element_deg)
+    msh = Mesh.simple_line_mesh(n_elements)
+    dh = DiscontinuousDOFHandler(msh, element_deg)
+    fnc = lambda x, n: (x[0] * n[0], x[1])
+    val = interpolate(fnc, dh, bf, msh)
+
+    # All zero!
+    assert((val[:] == 0).all())
 
 

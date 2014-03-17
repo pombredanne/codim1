@@ -1,4 +1,5 @@
 import time
+
 import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,7 +14,7 @@ from codim1.core.quadrature import QuadGauss
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
-def main(n_elements, element_deg, plot, interior_quad_pts):
+def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
     # Load from pickled matrix files.
     load = False
 
@@ -40,8 +41,11 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
     # tools.plot_mesh(mesh)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
 
-    # dh = ContinuousDOFHandler(mesh, element_deg)
-    dh = DiscontinuousDOFHandler(mesh, element_deg)
+    if dof_type == 'Disc':
+        dh = DiscontinuousDOFHandler(mesh, element_deg)
+    elif dof_type == 'Cont':
+        dh = ContinuousDOFHandler(mesh, element_deg)
+
     assembler = Assembler(mesh, bf, kernel, dh, qs)
 
     if load:
@@ -58,17 +62,17 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
 
 
 
-    def full_surface_traction(x):
-        return (x[0], x[1])
+    def full_surface_traction(x, n):
+        return (n[0], n[1])
 
-    def section_traction(x):
+    def section_traction(x, n):
         if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
-            return (-x[0], -x[1])
+            print n
+            return (n[0], n[1])
         return (0.0, 0.0)
 
     # G multiplies tractions
     # H mutliplies displacements
-    #TODO: Add the normal vector to the interpolation function
     def solve_traction_problem(fnc):
         displacements = tools.interpolate(fnc, dh, bf, mesh)
         rhs = np.dot(H, displacments)
@@ -122,8 +126,8 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
 
 if __name__ == "__main__":
     # 13 Quadrature points seems like enough for interior computations
-    main(100, 0, True, 13)
-    # main(200, 0, True, 13)
+    # main(100, 0, True, 13, 'Disc')
+    main(100, 1, True, 13, 'Cont')
     plt.show()
     # strs = []
     # for i in range(5):

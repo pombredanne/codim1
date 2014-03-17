@@ -269,7 +269,7 @@ def test_reciprocal_effects():
 def test_realistic_zero_discontinuity():
     a = realistic_assembler(element_deg = 1)
     H, G = a.assemble()
-    fnc = lambda x: (0.0, 1.0)
+    fnc = lambda x, n: (0.0, 1.0)
     displacements = tools.interpolate(fnc, a.dof_handler,
                                   a.basis_funcs, a.mesh)
     rhs = np.dot(H, displacements)
