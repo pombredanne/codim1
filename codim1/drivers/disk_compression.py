@@ -40,8 +40,8 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
     # tools.plot_mesh(mesh)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
 
-    dh = ContinuousDOFHandler(mesh, element_deg)
-    # dh = DiscontinuousDOFHandler(mesh, element_deg)
+    # dh = ContinuousDOFHandler(mesh, element_deg)
+    dh = DiscontinuousDOFHandler(mesh, element_deg)
     assembler = Assembler(mesh, bf, kernel, dh, qs)
 
     if load:
@@ -68,6 +68,7 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
 
     # G multiplies tractions
     # H mutliplies displacements
+    #TODO: Add the normal vector to the interpolation function
     def solve_traction_problem(fnc):
         displacements = tools.interpolate(fnc, dh, bf, mesh)
         rhs = np.dot(H, displacments)
@@ -114,19 +115,26 @@ def main(n_elements, element_deg, plot, interior_quad_pts):
         # plt.plot(y_vals, int_disp[:, 0])
         # plt.figure(7)
         # plt.plot(y_vals, int_disp[:, 1])
-        plt.show()
+        # plt.show()
     return int_strs[:, 0, 0]
     # See section 2.7 of starfield and crouch for the standard formulas to
     # convert from plane strain to plane stress.
 
 if __name__ == "__main__":
+    # 13 Quadrature points seems like enough for interior computations
+    main(100, 0, True, 13)
+    # main(200, 0, True, 13)
+    plt.show()
     # strs = []
-    # for i in range(15):
-    #     strs.append(main(100, 1, False, i + 2))
+    # for i in range(5):
+    #     strs.append(main(400, 1, False, i + 13))
+    # import ipdb; ipdb.set_trace()
 
-    strs = []
+    # strs = []
+    # for i in range(4):
+    #     strs.append(main((i + 1) * 100, 1, False, 13))
+    # import ipdb; ipdb.set_trace()
 
-    main(100, 1, True, 13)
     # start = time.time()
 
     # end = time.time()

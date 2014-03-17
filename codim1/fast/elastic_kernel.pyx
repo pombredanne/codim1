@@ -28,6 +28,7 @@ class ElastostaticKernel:
         self.const2 = 1.0 / (4 * pi * (1 - poisson_ratio))
         self.const3 = 1.0 / (8.0 * pi * shear_modulus * (1 - poisson_ratio))
         self.const4 = (3.0 - 4.0 * poisson_ratio)
+        self.const5 = shear_modulus / (2 * pi * (1 - poisson_ratio))
 
     def displacement_kernel(self, double rx, double ry, double nx, double ny):
         """
@@ -132,4 +133,18 @@ class ElastostaticKernel:
                     ( -dr[k] * (i==j) + dr[j] * (k==i) + dr[i] * (j==k) ) + \
                     2 * dr[i] * dr[j] * dr[k] )
         return Dkij
+
+    def hypersingular_regularized(self, double rx, double ry,
+                                        double nx, double ny):
+        cdef double dist = sqrt(rx ** 2 + ry ** 2)
+        cdef double drdn = (rx * nx + ry * ny) / dist
+        cdef np.ndarray[double, ndim=1] dr = np.zeros(2)
+        dr[0] = rx / dist
+        dr[1] = ry / dist
+        cdef np.ndarray[double, ndim=3] B = np.zeros((2, 2, 2))
+        B[0, 0] = self.const5 * (log(dist) - dr[0] * dr[0])
+        B[1, 1] = self.const5 * (log(dist) - dr[1] * dr[1])
+        B[1, 0] = self.const5 * (-dr[1] * dr[0])
+        B[0, 1] = B[1, 0]
+        return B
         
