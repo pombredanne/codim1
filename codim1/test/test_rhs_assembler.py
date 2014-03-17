@@ -29,7 +29,21 @@ def rhs_assembler():
     assembler = RHSAssembler(msh, bf, dh, qs)
     return assembler
 
-def test_rhs_row():
+def test_rhs_row_not_shared():
+    a = rhs_assembler()
+    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
+    row_correct_x = np.sum(correct_matrix[0, :])
+    row_correct_y = np.sum(correct_matrix[3, :])
+
+    f = lambda x: np.array((1.0, 1.0))
+    # Make the function look like a basis function. It is one! The only one!
+    fnc = basis_funcs.BasisFunctions.from_function(f)
+    row_x, row_y = a.assemble_row(fnc, kernel, 0, 0)
+
+    np.testing.assert_almost_equal(row_correct_x, row_x)
+    np.testing.assert_almost_equal(row_correct_y, row_y)
+
+def test_rhs_row_shared():
     a = rhs_assembler()
     kernel = elastic_kernel.TractionKernel(1.0, 0.25)
     row_correct_x = np.sum(correct_matrix[1, :])
