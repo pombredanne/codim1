@@ -56,7 +56,7 @@ class QuadStrategy(object):
         """Get whatever quadrature rule is used for a non singular case."""
         return self.highest_nonsingular
 
-    def get_quadrature(self, k, l):
+    def get_quadrature(self, singularity_type, k, l):
         """
         This function computes which quadrature formula should be used in
         which case.
@@ -65,32 +65,30 @@ class QuadStrategy(object):
         A Piessen method is used for 1/r singularities.
         """
 
-        which_nonsingular = self.choose_nonsingular(k, l)
-        outer = self.quad_nonsingular[which_nonsingular]
-
         # The double integration methods require one quadrature formula
         # per point of the outer quadrature. So, if we want them to all
         # be the same, just send a bunch of references to the same
         # formula.
-        def make_inner(quad):
+        def _make_inner(quad):
             return [quad] * len(outer.x)
 
+        which_nonsingular = self.choose_nonsingular(k, l)
+        outer = self.quad_nonsingular[which_nonsingular]
         if k == l:
-            G_quad = self.quad_logr
-            H_quad = self.quad_oneoverr
+            if singularity_type == 'logr':
+                inner = self.quad_logr
+            elif singularity_type == 'oneoverr':
+                inner = self.quad_oneoverr
         # element l is to the left of element k, but we care about the
         # quadrature from the perspective of element l, so we need to use the
         # right sided quadrature
         elif self.mesh.is_neighbor(k, l, 'left'):
-            G_quad = make_inner(self.quad_shared_edge_right)
-            H_quad = make_inner(self.quad_shared_edge_right)
+            inner = _make_inner(self.quad_shared_edge_right)
         elif self.mesh.is_neighbor(k, l, 'right'):
-            G_quad = make_inner(self.quad_shared_edge_left)
-            H_quad = make_inner(self.quad_shared_edge_left)
+            inner = _make_inner(self.quad_shared_edge_left)
         else:
-            G_quad = make_inner(outer)
-            H_quad = make_inner(outer)
-        return (outer, G_quad), (outer, H_quad)
+            inner = _make_inner(outer)
+        return outer, inner
 
     def choose_nonsingular(self, k, l):
         dist = self.mesh.element_distances[k, l]

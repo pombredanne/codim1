@@ -31,60 +31,44 @@ def simple_assembler(degree = 0,
                      logr_pts, oneoverr_pts)
     dh = dof_handler.DiscontinuousDOFHandler(msh, degree)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
-    k = TestKernel()
-    assembler = Assembler(msh, bf, k, dh, qs)
+    assembler = Assembler(msh, bf, dh, qs)
     return assembler
-
-
-def test_assemble_one_interaction_same_dof():
-    a = simple_assembler(degree = 1)
-    G_local, H_local, M_local = a.assemble_one_interaction(0, 0, 0, 0)
-    # -0.5 * integral of (1-x)^2 from 0 to 1
-    np.testing.assert_almost_equal(M_local, -(1.0 / 6.0))
-
-
-def test_assemble_one_interaction_same_dof_with_jacobian():
-    a = simple_assembler(degree = 1, n_elements = 4)
-    G_local, H_local, M_local = a.assemble_one_interaction(0, 0, 0, 0)
-    # Element size divided by two so the M value should be divided by two
-    np.testing.assert_almost_equal(M_local, -(1.0 / 12.0))
-
-
-def test_assemble_one_interaction_diff_dof():
-    a = simple_assembler(degree = 1)
-    G_local, H_local, M_local = a.assemble_one_interaction(0, 0, 0, 1)
-    # -0.5 * integral of (1-x)*x from 0 to 1
-    np.testing.assert_almost_equal(M_local, -(1.0 / 12.0))
-
 
 def test_assemble_one_element_off_diagonal():
     a = simple_assembler(nonsing_pts = 10, logr_pts = 10, oneoverr_pts = 10)
-    G_local, H_local, M_local = a.assemble_one_interaction(0, 0, 1, 0)
+    k = TestKernel()
+    G_local = a.assemble_one_interaction(
+            k.displacement_kernel, 'logr', 0, 0, 1, 0)
+    H_local = a.assemble_one_interaction(
+            k.traction_kernel, 'logr', 0, 0, 1, 0)
     np.testing.assert_almost_equal(H_local, np.ones((2, 2)))
-    G_exact = np.array([[0.113706, 1.0],
-                        [1.0, 0.113706]])
-    np.testing.assert_almost_equal(G_local, G_exact, 4)
+    np.testing.assert_almost_equal(G_local,
+            np.array([[0.113706, 1.0], [1.0, 0.113706]]), 4)
 
 
 def test_assemble_one_element_on_diagonal():
     a = simple_assembler(nonsing_pts = 15, logr_pts = 16, oneoverr_pts = 10)
-    G_local, H_local, M_local = a.assemble_one_interaction(0, 0, 0, 0)
-    H_local[0, 0] += M_local
-    H_local[1, 1] += M_local
-    np.testing.assert_almost_equal(H_local, np.array([[0.5, 1.0], [1.0, 0.5]]))
-    G_exact = np.array([[1.5, 1.0],
-                        [1.0, 1.5]])
-    np.testing.assert_almost_equal(G_local, G_exact, 4)
+    k = TestKernel()
+    G_local = a.assemble_one_interaction(
+            k.displacement_kernel, 'logr', 0, 0, 0, 0)
+    H_local = a.assemble_one_interaction(
+            k.traction_kernel, 'logr', 0, 0, 0, 0)
+    np.testing.assert_almost_equal(H_local,
+                                   np.array([[1.0, 1.0], [1.0, 1.0]]))
+    np.testing.assert_almost_equal(G_local,
+                                   np.array([[1.5, 1.0], [1.0, 1.5]]), 4)
 
 
 def test_assemble_row():
     a = simple_assembler(nonsing_pts = 16, logr_pts = 16, oneoverr_pts = 16)
+    k = TestKernel()
 
     # The row functions should return one vector for each dimension.
-    (G_row_x, G_row_y), (H_row_x, H_row_y)  = a.assemble_row(0, 0)
+    (G_row_x, G_row_y) = a.assemble_row(k.displacement_kernel, 'logr', 0, 0)
+    (H_row_x, H_row_y) = a.assemble_row(k.traction_kernel, 'oneoverr', 0, 0)
 
-    np.testing.assert_almost_equal(H_row_x, np.array([0.5, 1.0, 1.0, 1.0]))
-    np.testing.assert_almost_equal(H_row_y, np.array([1.0, 1.0, 0.5, 1.0]))
+    np.testing.assert_almost_equal(H_row_x, np.array([1.0, 1.0, 1.0, 1.0]))
+    np.testing.assert_almost_equal(H_row_y, np.array([1.0, 1.0, 1.0, 1.0]))
 
     # Haha, I made a pun.
     G_row_xact = np.array([1.5, 0.113706, 1.0, 1.0])
@@ -95,7 +79,9 @@ def test_assemble_row():
 
 def test_assemble():
     a = simple_assembler()
-    H, G = a.assemble()
+    k = TestKernel()
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
     # Just make sure it worked. Don't check for correctness.
     assert(H.shape[0] == a.dof_handler.total_dofs)
     assert(H.shape[1] == a.dof_handler.total_dofs)
@@ -109,7 +95,9 @@ def test_simple_symmetric_linear():
     # The test kernel is completely symmetric as are the basis functions.
     a = simple_assembler(n_elements = 1, degree = 1,
                          nonsing_pts = 4, logr_pts = 4, oneoverr_pts = 4)
-    H, G = a.assemble()
+    k = TestKernel()
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
     np.testing.assert_almost_equal((H - H.T), np.zeros_like(H))
     np.testing.assert_almost_equal((G - G.T), np.zeros_like(G))
 
@@ -125,18 +113,15 @@ def realistic_assembler(n_elements = 4,
                         left = -1.0,
                         right = 1.0):
     dim = 2
-    shear_modulus = 1.0
-    poisson_ratio = 0.25
     if quad_points_oneoverr % 2 == 1:
         quad_points_oneoverr += 1
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
     msh = mesh.Mesh.simple_line_mesh(n_elements, left, right)
-    kernel = elastic_kernel.ElastostaticKernel(shear_modulus, poisson_ratio)
     dh = dof_handler.ContinuousDOFHandler(msh, element_deg)
     qs = quad_strategy.QuadStrategy(msh, quad_points_nonsingular,
                         quad_points_nonsingular,
                         quad_points_logr, quad_points_oneoverr)
-    assembler = Assembler(msh, bf, kernel, dh, qs)
+    assembler = Assembler(msh, bf, dh, qs)
     return assembler
 
 
@@ -149,22 +134,23 @@ def test_exact_dbl_integrals_H_same_element():
                             quad_points_logr = 10,
                             quad_points_oneoverr = 10,
                             n_elements = 1)
-    H_00 = a.double_integral(a.kernel.traction_kernel, a.quad_strategy.quad_oneoverr,
-                      0, 0, 0, 0)
+    kernel = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    H_00 = a.double_integral(kernel.traction_kernel,
+            a.quad_strategy.quad_oneoverr, 0, 0, 0, 0)
     np.testing.assert_almost_equal(H_00, np.zeros((2, 2)), 3)
 
-    H_11 = a.double_integral(a.kernel.traction_kernel, a.quad_strategy.quad_oneoverr,
-                      0, 1, 0, 1)
+    H_11 = a.double_integral(kernel.traction_kernel,
+            a.quad_strategy.quad_oneoverr, 0, 1, 0, 1)
     np.testing.assert_almost_equal(H_11, np.zeros((2, 2)), 3)
 
-    H_01 = a.double_integral(a.kernel.traction_kernel, a.quad_strategy.quad_oneoverr,
-                      0, 0, 0, 1)
+    H_01 = a.double_integral(kernel.traction_kernel,
+            a.quad_strategy.quad_oneoverr, 0, 0, 0, 1)
     H_01_exact = np.array([[0.0, 1 / (6 * np.pi)],
                            [-1 / (6 * np.pi), 0.0]])
     np.testing.assert_almost_equal(H_01, H_01_exact, 3)
 
-    H_10 = a.double_integral(a.kernel.traction_kernel, a.quad_strategy.quad_oneoverr,
-                      0, 1, 0, 0)
+    H_10 = a.double_integral(kernel.traction_kernel,
+            a.quad_strategy.quad_oneoverr, 0, 1, 0, 0)
     H_10_exact = np.array([[0.0, -1 / (6 * np.pi)],
                            [1 / (6 * np.pi), 0.0]])
     np.testing.assert_almost_equal(H_10, H_10_exact, 3)
@@ -180,18 +166,18 @@ def test_exact_dbl_integrals_G_same_element():
                             n_elements = 1,
                             left = -1.0,
                             right = 1.0)
-    G_00 = a.double_integral(a.kernel.displacement_kernel, a.quad_strategy.quad_logr,
-                      0, 0, 0, 0)
+    kernel = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G_00 = a.double_integral(kernel.displacement_kernel,
+            a.quad_strategy.quad_logr, 0, 0, 0, 0)
     np.testing.assert_almost_equal(G_00, [[0.165187, 0], [0, 0.112136]], 4)
-
-    G_10 = a.double_integral(a.kernel.displacement_kernel, a.quad_strategy.quad_logr,
-                      0, 1, 0, 0)
+    G_10 = a.double_integral(kernel.displacement_kernel,
+            a.quad_strategy.quad_logr, 0, 1, 0, 0)
     np.testing.assert_almost_equal(G_10, [[0.112136, 0], [0, 0.0590839]], 4)
-    G_01 = a.double_integral(a.kernel.displacement_kernel, a.quad_strategy.quad_logr,
-                      0, 0, 0, 1)
+    G_01 = a.double_integral(kernel.displacement_kernel,
+            a.quad_strategy.quad_logr, 0, 0, 0, 1)
     np.testing.assert_almost_equal(G_01, [[0.112136, 0], [0, 0.0590839]], 4)
-    G_11 = a.double_integral(a.kernel.displacement_kernel, a.quad_strategy.quad_logr,
-                      0, 1, 0, 1)
+    G_11 = a.double_integral(kernel.displacement_kernel,
+            a.quad_strategy.quad_logr, 0, 1, 0, 1)
     np.testing.assert_almost_equal(G_11, [[0.165187, 0], [0, 0.112136]], 4)
 
 def test_exact_dbl_integrals_G_different_element():
@@ -205,34 +191,52 @@ def test_exact_dbl_integrals_G_different_element():
                             n_elements = 2,
                             left = -1.0,
                             right = 1.0)
+    kernel = elastic_kernel.ElastostaticKernel(1.0, 0.25)
     q = [a.quad_strategy.quad_shared_edge_left] * \
             len(a.quad_strategy.get_simple().x)
-    G_00 = a.double_integral(a.kernel.displacement_kernel, q, 0, 0, 1, 0)
+    G_00 = a.double_integral(kernel.displacement_kernel, q, 0, 0, 1, 0)
     np.testing.assert_almost_equal(G_00, [[0.0150739, 0], [0, 0.00181103]], 4)
-    G_10 = a.double_integral(a.kernel.displacement_kernel, q, 0, 1, 1, 0)
+    G_10 = a.double_integral(kernel.displacement_kernel, q, 0, 1, 1, 0)
     np.testing.assert_almost_equal(G_10, [[0.02833119, 0], [0, 0.01506828]], 4)
-    G_01 = a.double_integral(a.kernel.displacement_kernel, q, 0, 0, 1, 1)
+    G_01 = a.double_integral(kernel.displacement_kernel, q, 0, 0, 1, 1)
     np.testing.assert_almost_equal(G_01, [[0.00663146, 0], [0, -0.00663146]], 4)
-    G_11 = a.double_integral(a.kernel.displacement_kernel, q, 0, 1, 1, 1)
+    G_11 = a.double_integral(kernel.displacement_kernel, q, 0, 1, 1, 1)
     np.testing.assert_almost_equal(G_11, [[0.0150739, 0], [0, 0.00181103]], 4)
 
 def test_realistic_nan():
     a = realistic_assembler()
-    H, G = a.assemble()
+    k = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
     assert(not np.isnan(np.sum(H)))
     assert(not np.isnan(np.sum(G)))
 
 
 def test_realistic_symmetric_linear():
     a = realistic_assembler()
-    H, G = a.assemble()
-    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
+    k = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
+    np.testing.assert_almost_equal((G - G.T) /
+                                    np.mean(G), np.zeros_like(G), 4)
+
+
+def test_realistic_symmetric_quadratic():
+    a = realistic_assembler(quad_points_nonsingular = 14,
+                            quad_points_logr = 14,
+                            quad_points_oneoverr = 10,
+                            n_elements = 1, element_deg = 2)
+    k = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
+    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G), 4)
 
 
 def test_realistic_double_integral_symmetry():
     a = realistic_assembler(n_elements = 2, element_deg = 1)
+    kernel = elastic_kernel.ElastostaticKernel(1.0, 0.25)
     # fnc = lambda r, n: 1 / r[0]
-    fnc = a.kernel.displacement_kernel
+    fnc = kernel.displacement_kernel
     one = a.double_integral(fnc,
                       a.quad_strategy.quad_oneoverr,
                       1, 0, 1, 1)
@@ -243,18 +247,11 @@ def test_realistic_double_integral_symmetry():
     np.testing.assert_almost_equal(one, two)
 
 
-def test_realistic_symmetric_quadratic():
-    a = realistic_assembler(quad_points_nonsingular = 14,
-                            quad_points_logr = 14,
-                            quad_points_oneoverr = 10,
-                            n_elements = 1, element_deg = 2)
-    H, G = a.assemble()
-    np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G))
-
-
 def test_reciprocal_effects():
     a = realistic_assembler(n_elements = 2)
-    H, G = a.assemble()
+    k = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
     # The influence of u_x(0) on u_y(1) should be the opposite of the
     # effect of u_x(1) on u_y(0), where the parenthesis indicate which element
     np.testing.assert_almost_equal(H[4,0], -H[3,1], 2)
@@ -268,7 +265,9 @@ def test_reciprocal_effects():
 
 def test_realistic_zero_discontinuity():
     a = realistic_assembler(element_deg = 1)
-    H, G = a.assemble()
+    k = elastic_kernel.ElastostaticKernel(1.0, 0.25)
+    G = a.assemble_matrix(k.displacement_kernel, 'logr')
+    H = a.assemble_matrix(k.traction_kernel, 'oneoverr')
     fnc = lambda x, n: (0.0, 1.0)
     displacements = tools.interpolate(fnc, a.dof_handler,
                                   a.basis_funcs, a.mesh)

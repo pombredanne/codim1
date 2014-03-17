@@ -11,6 +11,7 @@ from codim1.core.basis_funcs import BasisFunctions
 from codim1.fast.elastic_kernel import ElastostaticKernel
 from codim1.core.quad_strategy import QuadStrategy
 from codim1.core.quadrature import QuadGauss
+from codim1.core.mass_matrix import MassMatrix
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
@@ -41,12 +42,22 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
     # tools.plot_mesh(mesh)
     kernel = ElastostaticKernel(shear_modulus, poisson_ratio)
 
+
+    # This disk compression problem doesn't work properly with anything
+    # except constant discontinuous elements. This is because we are
+    # interpolating the forcing onto the polynomial basis before solving
+    # the problem. The discontinuity of the forcing is not preserved by
+    # this interpolation. Redesigning such that the input function is
+    # integrated exactly would solve this problem and increase the speed of
+    # the evaluation significantly. I will do this eventually.
     if dof_type == 'Disc':
         dh = DiscontinuousDOFHandler(mesh, element_deg)
     elif dof_type == 'Cont':
         dh = ContinuousDOFHandler(mesh, element_deg)
 
-    assembler = Assembler(mesh, bf, kernel, dh, qs)
+    assembler = Assembler(mesh, bf, dh, qs)
+    mass_matrix = MassMatrix(mesh, bf, dh, QuadGauss(element_deg + 1),
+                             compute_on_init = True)
 
     if load:
         with open('H.matrix', 'rb') as f:
@@ -54,7 +65,12 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
         with open('G.matrix', 'rb') as f:
             G = cPickle.load(f)
     else:
-        H, G = assembler.assemble()
+        print('Assembling displacement->displacement kernel matrix, Guu')
+        G = assembler.assemble_matrix(kernel.displacement_kernel, 'logr')
+        print('Assembling traction->displacement kernel matrix, Gup')
+        H = assembler.assemble_matrix(kernel.traction_kernel, 'oneoverr')
+        # Interior problem so we subtract -(1/2)*M
+        H -= 0.5 * mass_matrix.M
         with open('H.matrix', 'wb') as f:
             cPickle.dump(H, f)
         with open('G.matrix', 'wb') as f:
@@ -126,8 +142,8 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
 
 if __name__ == "__main__":
     # 13 Quadrature points seems like enough for interior computations
-    # main(100, 0, True, 13, 'Disc')
-    main(100, 1, True, 13, 'Cont')
+    main(100, 0, True, 13, 'Disc')
+    # main(100, 1, True, 13, 'Cont')
     plt.show()
     # strs = []
     # for i in range(5):

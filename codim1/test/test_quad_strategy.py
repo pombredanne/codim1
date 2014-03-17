@@ -21,7 +21,8 @@ def test_build_quadrature_list():
 def test_get_quadrature_nonsingular():
     msh = Mesh.simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
-    (Gqo, Gqi), (Hqo, Hqi) = qs.get_quadrature(0, 2)
+    (Gqo, Gqi) = qs.get_quadrature('logr', 0, 2)
+    (Hqo, Hqi) = qs.get_quadrature('oneoverr', 0, 2)
     assert(Gqi[0] == qs.quad_nonsingular[2])
     assert(Gqo == qs.quad_nonsingular[2])
     assert(Hqi[0] == qs.quad_nonsingular[2])
@@ -30,7 +31,8 @@ def test_get_quadrature_nonsingular():
 def test_get_quadrature_singular():
     msh = Mesh.simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
-    (Gqo, Gqi), (Hqo, Hqi) = qs.get_quadrature(0, 0)
+    (Gqo, Gqi) = qs.get_quadrature('logr', 0, 0)
+    (Hqo, Hqi) = qs.get_quadrature('oneoverr', 0, 0)
     assert(Gqo == qs.quad_nonsingular[2])
     assert(Gqi == qs.quad_logr)
     assert(Hqo == qs.quad_nonsingular[2])
@@ -39,7 +41,8 @@ def test_get_quadrature_singular():
 def test_get_quadrature_side():
     msh = Mesh.simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
-    (Gqo, Gqi), (Hqo, Hqi) = qs.get_quadrature(1, 0)
+    (Gqo, Gqi) = qs.get_quadrature('logr', 1, 0)
+    (Hqo, Hqi) = qs.get_quadrature('oneoverr', 1, 0)
     assert(Gqo == qs.quad_nonsingular[2])
     assert(Gqi[0] == qs.quad_shared_edge_right)
     assert(Hqo == qs.quad_nonsingular[2])

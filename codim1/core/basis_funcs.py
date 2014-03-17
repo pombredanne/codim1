@@ -36,6 +36,7 @@ class BasisFunctions(object):
             # shouldn't be an issue for this code
             poly = spi.lagrange(nodes, w)
             self.fncs[i, :] = poly.c
+            derivs[i, 0] = 0.0
             derivs[i, 1:] = poly.deriv().c
         self.derivs = _DerivativeBasisFunctions(self.nodes, derivs)
 
