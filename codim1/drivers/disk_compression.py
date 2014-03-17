@@ -60,21 +60,21 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
                              compute_on_init = True)
 
     if load:
-        with open('H.matrix', 'rb') as f:
-            H = cPickle.load(f)
-        with open('G.matrix', 'rb') as f:
-            G = cPickle.load(f)
+        with open('Guu.matrix', 'rb') as f:
+            Guu = cPickle.load(f)
+        with open('Gup.matrix', 'rb') as f:
+            Gup = cPickle.load(f)
     else:
-        print('Assembling displacement->displacement kernel matrix, Guu')
-        G = assembler.assemble_matrix(kernel.displacement_kernel, 'logr')
-        print('Assembling traction->displacement kernel matrix, Gup')
-        H = assembler.assemble_matrix(kernel.traction_kernel, 'oneoverr')
+        print('Assembling kernel matrix, Guu')
+        Guu = assembler.assemble_matrix(kernel.displacement_kernel, 'logr')
+        print('Assembling kernel matrix, Gup')
+        Gup = assembler.assemble_matrix(kernel.traction_kernel, 'oneoverr')
         # Interior problem so we subtract -(1/2)*M
-        H -= 0.5 * mass_matrix.M
-        with open('H.matrix', 'wb') as f:
-            cPickle.dump(H, f)
-        with open('G.matrix', 'wb') as f:
-            cPickle.dump(G, f)
+        Gup -= 0.5 * mass_matrix.M
+        with open('Guu.matrix', 'wb') as f:
+            cPickle.dump(Guu, f)
+        with open('Gup.matrix', 'wb') as f:
+            cPickle.dump(Gup, f)
 
 
 
@@ -87,18 +87,18 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
             return (n[0], n[1])
         return (0.0, 0.0)
 
-    # G multiplies tractions
-    # H mutliplies displacements
+    # Gup multiplies displacements
+    # Guu mutliplies tractions
     def solve_traction_problem(fnc):
         displacements = tools.interpolate(fnc, dh, bf, mesh)
-        rhs = np.dot(H, displacments)
-        soln = np.linalg.solve(G, rhs)
+        rhs = np.dot(Gup, displacments)
+        soln = np.linalg.solve(Guu, rhs)
         return soln, displacements
 
     def solve_displacement_problem(fnc):
         tractions = tools.interpolate(fnc, dh, bf, mesh)
-        rhs = np.dot(G, tractions)
-        soln = np.linalg.solve(H, rhs)
+        rhs = np.dot(Guu, tractions)
+        soln = np.linalg.solve(Gup, rhs)
         return soln, tractions
 
     disp, trac = solve_displacement_problem(section_traction)

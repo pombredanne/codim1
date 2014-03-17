@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.core.quadrature import QuadGauss, QuadSingularTelles, QuadOneOverR
-from codim1.fast.elastic_kernel import ElastostaticKernel
+from codim1.fast.elastic_kernel import DisplacementKernel
 import codim1.core.gaussian_quad as gaussian_quad
 
 ################################################################################
@@ -62,9 +62,9 @@ def test_QuadLogR2():
     np.testing.assert_almost_equal(exact, est, 4)
 
 def test_anotherLogRDouble_G11_from_kernel():
-    k = ElastostaticKernel(1.0, 0.25)
-    f = lambda x, y: k.displacement_kernel(x - y, 0.0, 0.0, 0.0) * \
-            (1 - x) * (1 - y)
+    k = DisplacementKernel(1.0, 0.25)
+    f = lambda x, y: k.call(np.array([x - y, 0.0]),
+                            np.zeros(2), np.zeros(2)) * (1 - x) * (1 - y)
 
     exact = 7 / (48 * np.pi)
     q = QuadGauss(75)

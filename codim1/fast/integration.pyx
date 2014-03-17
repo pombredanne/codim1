@@ -15,8 +15,6 @@ def double_integral(mesh, basis_funcs, kernel,
     provided quadrature rule.
 
     In a sense, this is the core method of any BEM implementation.
-
-    Warning: This function modifies the "result" input.
     """
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
@@ -25,11 +23,11 @@ def double_integral(mesh, basis_funcs, kernel,
     cdef double src_jacobian = mesh.get_element_jacobian(k)
     cdef double soln_jacobian = mesh.get_element_jacobian(l)
 
-    # The normal is the one on the soln integration element.
-    # This is clear if you remember the source is actually a point
-    # and thus has no defined normal. We are integrating over many point
-    # sources.
-    cdef np.ndarray[double, ndim = 1] normal = mesh.normals[l]
+    # The l_normal is needed for the traction kernel -- the solution normal.
+    # The k_normal is normally needed for the adjoint traction kernel
+    # and for the hypersingular kernel -- the source normal.
+    cdef np.ndarray[double, ndim = 1] k_normal = mesh.normals[k]
+    cdef np.ndarray[double, ndim = 1] l_normal = mesh.normals[l]
 
     # Just store some variables in a typed way to speed things up 
     # inside the loop
@@ -78,7 +76,7 @@ def double_integral(mesh, basis_funcs, kernel,
             r = phys_soln_pt - phys_src_pt
 
             # Actually evaluate the kernel.
-            k_val = kernel(r[0], r[1], normal[0], normal[1])
+            k_val = kernel.call(r, k_normal, l_normal)
 
             # Actually perform the quadrature
             result += k_val * src_basis_fnc * soln_basis_fnc *\

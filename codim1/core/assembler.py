@@ -16,18 +16,32 @@ class Assembler(object):
     is the mass matrix. This step is not performed by this class and needs
     to be done independently.
 
+    Two boundary integral equations are used:
+    DBIE -- The variable of interest is the displacement. All integrals have
+    units of displacement.
+    TBIE -- Normal derivative of the DBIE. The variable of interest is the
+    traction. All integrals have units of traction.
+
     Four different kernels are normally used.
-    1. Guu -- The displacement->displacement kernel from the displacement BIE
-    2. Gup -- The traction->displacement kernel from the displacement BIE
-    3. Gpu -- The displacement->traction kernel from the traction BIE
-    4. Gpp -- The traction->traction kernel from the traction BIE
+    1. Guu -- Represents the test tractions and is multiplied by the solution
+              displacements for the DBIE
+    2. Gup -- Represents the test displacements and is multiplied by the
+              solution tractions for the DBIE
+    3. Gpu -- Represents the test displacements and is multiplied by the
+              solution tractions for the TBIE
+    4. Gpp -- Represents the test tractions and is multiplied by the solution
+              displacements for the TBIE
 
     #1 is improperly integrable. #2, #3 are strongly singular, so they
     must be interpreted in the Cauchy principal value sense.
     #4 is hypersingular and is only useful because of its origins in a real
-    physical model. It can be interpreted as a "Hadamard finite part"
-    integral. But, in this code it is integrated by parts to reduce the
-    singularity to be improperly integrable.
+    physical model (in other words, the hypersingularity cancels out,
+    otherwise, reality would be infinite!).
+    It can be interpreted as a "Hadamard finite part"
+    integral, by separating out the divergent (infinite) terms from the
+    convergent ones. However, in this code it is integrated by parts to
+    reduce the singularity to be improperly integrable -- a much easier
+    solution.
     """
     def __init__(self,
                  mesh,
