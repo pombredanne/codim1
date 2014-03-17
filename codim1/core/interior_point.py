@@ -10,14 +10,20 @@ class InteriorPoint(object):
     def __init__(self,
                  mesh,
                  basis_funcs,
-                 kernel,
+                 Guu, Gup,
+                 Dijk, Sijk,
                  dof_handler,
                  quadrature):
         self.mesh = mesh
         self.basis_funcs = basis_funcs
-        self.kernel = kernel
+        self.Guu = Guu
+        self.Gup = Gup
+        self.Dijk = Dijk
+        self.Sijk = Sijk
         self.dof_handler = dof_handler
         self.quadrature = quadrature
+
+    # TODO:
 
     def compute_displacement(self, point, disp, trac):
         result = np.zeros(2)
@@ -27,13 +33,11 @@ class InteriorPoint(object):
                 dofs = [self.dof_handler.dof_map[0, k, i],
                         self.dof_handler.dof_map[1, k, i]]
 
-                G_local = self.interior_integral(
-                                self.kernel.displacement_kernel,
+                G_local = self.interior_integral(self.Guu,
                                 np.zeros((2, 2)),
                                 point, k, i)
 
-                H_local = self.interior_integral(
-                                self.kernel.traction_kernel,
+                H_local = self.interior_integral(self.Gup,
                                 np.zeros((2, 2)),
                                 point, k, i)
 
@@ -52,11 +56,11 @@ class InteriorPoint(object):
                 dofs = [self.dof_handler.dof_map[0, k, i],
                         self.dof_handler.dof_map[1, k, i]]
 
-                D_local = self.interior_integral(self.kernel.traction_adjoint,
+                D_local = self.interior_integral(self.Dijk,
                                 np.zeros((2, 2, 2)),
                                 point, k, i)
 
-                S_local = self.interior_integral(self.kernel.hypersingular,
+                S_local = self.interior_integral(self.Sijk,
                                 np.zeros((2, 2, 2)),
                                 point, k, i)
 
@@ -88,7 +92,7 @@ class InteriorPoint(object):
             phys_soln_pt = self.mesh.get_physical_points(k, q_pt)
 
             r = phys_soln_pt - pt
-            result += kernel(r[0], r[1], normal[0], normal[1]) * \
+            result += kernel.call(r, np.zeros(2), normal) * \
                 soln_basis_fnc * jacobian * w
 
         return result

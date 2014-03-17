@@ -2,7 +2,7 @@ import numpy as np
 import codim1.core.quadrature as quadrature
 import codim1.fast.integration as integration
 
-class Assembler(object):
+class MatrixAssembler(object):
     """
     This class computes the kernel function matrices needed by a boundary
     element method. These matrices are of the form:
@@ -53,7 +53,7 @@ class Assembler(object):
         self.dof_handler = dof_handler
         self.quad_strategy = quad_strategy
 
-    def assemble_matrix(self, kernel, singularity_type):
+    def assemble_matrix(self, kernel):
         """
         Assemble a matrix representing the double integral over
         sources and solutions against the given kernel function.
@@ -66,13 +66,12 @@ class Assembler(object):
             for i in range(self.basis_funcs.num_fncs):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
-                (G_row_x, G_row_y) = self.assemble_row(kernel,
-                                            singularity_type, k, i)
+                (G_row_x, G_row_y) = self.assemble_row(kernel, k, i)
                 G[dof_x, :] += G_row_x
                 G[dof_y, :] += G_row_y
         return G
 
-    def assemble_row(self, kernel, singularity_type, k, i):
+    def assemble_row(self, kernel, k, i):
         G_row_x = np.zeros(self.dof_handler.total_dofs)
         G_row_y = np.zeros(self.dof_handler.total_dofs)
         for l in range(self.mesh.n_elements):
@@ -80,8 +79,7 @@ class Assembler(object):
                 soln_dof_x = self.dof_handler.dof_map[0, l, j]
                 soln_dof_y = self.dof_handler.dof_map[1, l, j]
 
-                G_local = self.assemble_one_interaction(kernel,
-                        singularity_type, k, i, l, j)
+                G_local = self.assemble_one_interaction(kernel, k, i, l, j)
                 # # M_local is only applied on the block diagonal
                 # H_local[0, 0] += M_local
                 # H_local[1, 1] += M_local
@@ -94,12 +92,12 @@ class Assembler(object):
                 G_row_y[soln_dof_y] += G_local[1, 1]
         return (G_row_x, G_row_y)
 
-    def assemble_one_interaction(self, kernel, singularity_type, k, i, l, j):
+    def assemble_one_interaction(self, kernel, k, i, l, j):
         """
         Compute one pair of element interactions
         """
         (G_quad_outer, G_quad_inner) = self.quad_strategy.get_quadrature(
-                                            singularity_type, k, l)
+                                            kernel.singularity_type, k, l)
         G_local = integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
@@ -110,14 +108,7 @@ class Assembler(object):
         return G_local
 
     def double_integral(self, kernel, inner_quadrature, k, i, l, j):
-        """
-        Performs a double integral over a pair of elements with the
-        provided quadrature rule.
-
-        In a sense, this is the core method of any BEM implementation.
-
-        Warning: This function modifies the "result" input.
-        """
+        """Thin wrapper around the integration.double_integral method"""
         return integration.double_integral(
                         self.mesh,
                         self.basis_funcs,
