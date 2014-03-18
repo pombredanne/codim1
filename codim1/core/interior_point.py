@@ -6,10 +6,13 @@ class InteriorPoint(object):
 
     A lot of this code is exactly what's found in the Assembler class. Seems
     like an opportunity for some better abstraction.
+
     """
+    #TODO: There are no tests for any of this. HOW TO TEST IT?
     def __init__(self,
                  mesh,
-                 basis_funcs,
+                 basis_funcs_disp,
+                 basis_funcs_trac,
                  Guu, Gup,
                  Dijk, Sijk,
                  dof_handler,
@@ -72,6 +75,8 @@ class InteriorPoint(object):
 
         return stress
 
+    # TODO: Integrate this single integral function with the one in mass
+    # matrix. Move them both to the integration module.
     def interior_integral(self, kernel, result, pt, k, i):
         """
         Performs an integral over a surface element, computing the solution
@@ -84,12 +89,13 @@ class InteriorPoint(object):
         w = self.quadrature.w
         # Just perform standard gauss quadrature
         for (q_pt, w) in zip(q_pts, w):
-            # The basis functions should be evaluated on reference
-            # coordinates
-            soln_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt)
-
             # The kernel is evaluated in physical coordinates
             phys_soln_pt = self.mesh.get_physical_points(k, q_pt)
+
+            # The basis functions should be evaluated on reference
+            # coordinates
+            soln_basis_fnc = self.basis_funcs.evaluate_basis(i,
+                                    q_pt, phys_soln_pt)
 
             r = phys_soln_pt - pt
             result += kernel.call(r, np.zeros(2), normal) * \

@@ -27,9 +27,12 @@ def double_integral(mesh, kernel,
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
     # Jacobian determinants are necessary to scale the integral with the
-    # change of variables.
-    cdef double src_jacobian = mesh.get_element_jacobian(k)
-    cdef double soln_jacobian = mesh.get_element_jacobian(l)
+    # change of variables. There may also be contributions from applying the
+    # chain rule to derivatives of the basis functions.
+    cdef double src_jacobian = mesh.get_element_jacobian(k) * \
+                               src_basis_fncs.basis_chain_rule(k)
+    cdef double soln_jacobian = mesh.get_element_jacobian(l) * \
+                               soln_basis_fncs.basis_chain_rule(k)
 
     # The l_normal is needed for the traction kernel -- the solution normal.
     # The k_normal is normally needed for the adjoint traction kernel

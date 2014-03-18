@@ -18,8 +18,8 @@ def test_rmse():
 def test_interpolate():
     n_elements = 2
     element_deg = 0
-    bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
+    bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0], x[1])
     val = interpolate(fnc, dh, bf, msh)
@@ -33,8 +33,8 @@ def test_interpolate():
 def test_evaluate_boundary_solution_easy():
     n_elements = 2
     element_deg = 0
-    bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
+    bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
@@ -47,8 +47,8 @@ def test_evaluate_boundary_solution_easy():
 def test_evaluate_solution_on_element():
     n_elements = 2
     element_deg = 1
-    bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
+    bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0], x[1])
     solution = interpolate(fnc, dh, bf, msh)
@@ -62,8 +62,8 @@ def test_interpolate_evaluate_hard():
     n_elements = 5
     # Sixth order elements should exactly interpolate a sixth order polynomial.
     element_deg = 6
-    bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
+    bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0] ** 6, 0)
     solution = interpolate(fnc, dh, bf, msh)
@@ -74,8 +74,8 @@ def test_interpolate_evaluate_hard():
 def test_interpolate_normal():
     n_elements = 2
     element_deg = 0
-    bf = BasisFunctions.from_degree(element_deg)
     msh = Mesh.simple_line_mesh(n_elements)
+    bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0] * n[0], x[1])
     val = interpolate(fnc, dh, bf, msh)

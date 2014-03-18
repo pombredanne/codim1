@@ -22,7 +22,7 @@ import matplotlib.collections
 #     plt.show()
 
 def rmse(f1, f2):
-    return np.sqrt((np.sum((f1 - f2) ** 2) / f2.shape[0]))
+    return np.sqrt((np.sum(((f1 - f2) / (f2)) ** 2) / f2.shape[0]))
 
 def plot_mesh(msh, show = True):
     points1 = msh.vertices[msh.element_to_vertex[:, 0]]

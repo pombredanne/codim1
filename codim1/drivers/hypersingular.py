@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import ContinuousDOFHandler
 from codim1.core.mesh import Mesh
-from codim1.core.assembler import MatrixAssembler
+from codim1.core.matrix_assembler import MatrixAssembler
+from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.fast.elastic_kernel import AdjointTractionKernel,\
                                        HypersingularKernel
@@ -26,8 +27,8 @@ quad_max = 12
 quad_logr = 12
 quad_oneoverr = 12
 
-bf = BasisFunctions.from_degree(1)
-mesh = Mesh.simple_line_mesh(50)
+mesh = Mesh.simple_line_mesh(100)
+bf = BasisFunctions.from_degree(1, mesh)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_h = HypersingularKernel(shear_modulus, poisson_ratio)
@@ -49,9 +50,13 @@ Gpu += 0.5 * mass_matrix.M
 print('Assembling kernel matrix, Gpp')
 Gpp = derivs_assembler.assemble_matrix(k_h)
 
-fnc = lambda x, n: (1.0, 0.0)
-tractions = tools.interpolate(fnc, dh, bf, mesh)
+fnc = lambda x: np.array([1.0, 0.0])
+tractions = tools.interpolate(lambda x,n: fnc(x), dh, bf, mesh)
+rhs_assembler = RHSAssembler(mesh, bf, dh, qs)
+rhs = rhs_assembler.assemble_rhs(
+        BasisFunctions.from_function(fnc), k_tp)
 rhs = np.dot(Gpu, tractions)
+# import ipdb; ipdb.set_trace()
 soln = np.linalg.solve(Gpp, rhs)
 x, s = tools.evaluate_boundary_solution(5, soln, dh, bf, mesh)
 

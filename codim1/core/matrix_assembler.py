@@ -62,6 +62,8 @@ class MatrixAssembler(object):
         total_dofs = self.dof_handler.total_dofs
         G = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
+            if k % 25 == 0:
+                print "Assembling element " + str(k)
             for i in range(self.basis_funcs.num_fncs):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]

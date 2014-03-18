@@ -22,8 +22,8 @@ correct_matrix = \
       0.00000000e+00,   0.00000000e+00,   0.00000000e+00]])
 
 def rhs_assembler():
-    bf = basis_funcs.BasisFunctions.from_degree(1)
     msh = mesh.Mesh.simple_line_mesh(2, -1.0, 1.0)
+    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
     dh = dof_handler.ContinuousDOFHandler(msh, 1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     assembler = RHSAssembler(msh, bf, dh, qs)
