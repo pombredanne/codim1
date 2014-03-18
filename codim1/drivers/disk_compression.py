@@ -102,21 +102,24 @@ def main(n_elements, element_deg, plot, interior_quad_pts, dof_type):
     # Compute along the x axis
     x_vals = np.linspace(0, 1.0, 11)[:-1]
 
+    # TODO: Spend some time refactoring and refining RHS and
+    # Interior integrals. They don't require producing a matrix and thus are
+    # simpler in a sense.
     interior_k_d = AdjointTractionVolumeKernel(1.0, 0.25)
     interior_k_t = HypersingularVolumeKernel(1.0, 0.25)
 
     ip = InteriorPoint(mesh,
-                       bf, BasisFunctions.from_function(section_traction),
+                       bf, #BasisFunctions.from_function(section_traction),
                        k_d, k_t,
                        interior_k_d, interior_k_t, dh,
                        QuadGauss(interior_quad_pts, 0.0, 1.0))
     ones_like_disp = np.ones_like(disp)
     int_strs = np.array(
             [ip.compute_stress(
-                (x_v, 0.0), disp, ones_like_disp) for x_v in x_vals])
+                (x_v, 0.0), disp, trac) for x_v in x_vals])
     int_disp = np.array(
-            [ip.compute_displacement
-                (x_v, 0.0), disp, ones_like_disp) for x_v in x_vals])
+            [ip.compute_displacement(
+                (x_v, 0.0), disp, trac) for x_v in x_vals])
 
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004])

@@ -96,9 +96,9 @@ def evaluate_boundary_solution(points_per_element, soln,
             for i in range(dof_handler.element_deg + 1):
                 coeff = dof_handler.dof_map[:, k, i]
                 ux += soln[coeff[0]] * \
-                        basis_funcs.evaluate_basis(i, pt, phys_pt)[0]
+                        basis_funcs.evaluate(i, pt, phys_pt)[0]
                 uy += soln[coeff[1]] * \
-                        basis_funcs.evaluate_basis(i, pt, phys_pt)[1]
+                        basis_funcs.evaluate(i, pt, phys_pt)[1]
             y.append([ux, uy])
     x = np.array(x)
     y = np.array(y)
@@ -113,8 +113,8 @@ def evaluate_solution_on_element(element_idx, reference_point, soln,
         dof_x = dof_handler.dof_map[0, element_idx, i]
         dof_y = dof_handler.dof_map[1, element_idx, i]
         soln_x += soln[dof_x] * \
-                basis_funcs.evaluate_basis(i, reference_point, phys_pt)[0]
+                basis_funcs.evaluate(i, reference_point, phys_pt)[0]
         soln_y += soln[dof_y] * \
-                basis_funcs.evaluate_basis(i, reference_point, phys_pt)[1]
+                basis_funcs.evaluate(i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 

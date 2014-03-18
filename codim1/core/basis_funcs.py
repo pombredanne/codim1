@@ -7,10 +7,10 @@ class Function(object):
     def __init__(self, f):
         self.f = f
 
-    def evaluate_basis(self, i, x_hat, x):
+    def evaluate(self, i, x_hat, x):
         return self.f(x)
 
-    def basis_chain_rule(self, element_idx):
+    def chain_rule(self, element_idx):
         return 1.0
 
 # class Solution(object):
@@ -18,7 +18,7 @@ class Function(object):
 #         self.basis = basis
 #         self.coefficients = coefficients
 #
-#     def evaluate_basis(self, i, x_hat, x):
+#     def evaluate(self, i, x_hat, x):
 
 class BasisFunctions(object):
     """
@@ -65,10 +65,10 @@ class BasisFunctions(object):
             derivs[i, 1:] = poly.deriv().c
         self.derivs = _DerivativeBasisFunctions(self.nodes, derivs, mesh)
 
-    def evaluate_basis(self, i, x_hat, x):
+    def evaluate(self, i, x_hat, x):
         return _evaluate_basis(self.fncs, i, x_hat)
 
-    def basis_chain_rule(self, element_idx):
+    def chain_rule(self, element_idx):
         return 1.0
 
 class _DerivativeBasisFunctions(BasisFunctions):
@@ -86,7 +86,7 @@ class _DerivativeBasisFunctions(BasisFunctions):
         self.nodes = nodes
         self.fncs = fncs
 
-    def basis_chain_rule(self, element_idx):
+    def chain_rule(self, element_idx):
         # In 1D, all we need is the inverse of the element jacobian
         # determinant -- which is just the single dx/d\hat{x}
         return 1.0 / self.mesh.get_element_jacobian(element_idx)

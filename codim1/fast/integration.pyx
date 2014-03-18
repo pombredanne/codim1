@@ -30,9 +30,9 @@ def double_integral(mesh, kernel,
     # change of variables. There may also be contributions from applying the
     # chain rule to derivatives of the basis functions.
     cdef double src_jacobian = mesh.get_element_jacobian(k) * \
-                               src_basis_fncs.basis_chain_rule(k)
+                               src_basis_fncs.chain_rule(k)
     cdef double soln_jacobian = mesh.get_element_jacobian(l) * \
-                               soln_basis_fncs.basis_chain_rule(k)
+                               soln_basis_fncs.chain_rule(k)
 
     # The l_normal is needed for the traction kernel -- the solution normal.
     # The k_normal is normally needed for the adjoint traction kernel
@@ -66,7 +66,7 @@ def double_integral(mesh, kernel,
 
         # The basis functions should be evaluated on reference
         # coordinates
-        src_basis_fnc = src_basis_fncs.evaluate_basis(i, 
+        src_basis_fnc = src_basis_fncs.evaluate(i, 
                                 q_pt_src, phys_src_pt)
 
         # If the integrand is singular, we need to use the appropriate
@@ -83,7 +83,7 @@ def double_integral(mesh, kernel,
             phys_soln_pt = get_physical_points(element_to_vertex,
                                                vertices, l, q_pt_soln)
 
-            soln_basis_fnc = soln_basis_fncs.evaluate_basis(j, 
+            soln_basis_fnc = soln_basis_fncs.evaluate(j, 
                                     q_pt_soln, phys_soln_pt)
 
             # Separation of the two quadrature points, use real,
@@ -104,4 +104,41 @@ def double_integral(mesh, kernel,
                             src_basis_fnc[idx_x] * soln_basis_fnc[idx_y]
 
     result *= src_jacobian * soln_jacobian
+    return result
+
+def single_integral(mesh, kernel, basis_fncs, quadrature, 
+                    int k, int i, int j):
+    """
+    Performs a single integral over one element. The operations all almost
+    identical to those in the double_integral method. Thus, read through
+    that method for details. 
+
+    A key difference with single_integral is that the kernel function here
+    is expected to just be a standard python function with a location 
+    parameter. The double integral function takes a kernel function with a
+    distance input. K(x) vs. K(x - y)
+    """
+    cdef np.ndarray[double] result = np.zeros((2, 2))
+
+    cdef double jacobian = mesh.get_element_jacobian(k) * \
+                           basis_fncs.chain_rule(k)
+    cdef np.ndarray[double, ndim = 1] k_normal = mesh.normals[k]
+
+    # Just perform standard gauss quadrature
+    cdef np.ndarray[double, ndim = 1] q_pts = quadrature.x
+    cdef np.ndarray[double, ndim = 1] wts = quadrature.w
+    for (q_pt, w) in zip(q_pts, wts):
+        phys_pt = mesh.get_physical_points(k, q_pt)
+
+        src_basis_fnc = basis_fncs.evaluate(i, q_pt, phys_pt)
+        soln_basis_fnc = basis_fncs.evaluate(j, q_pt, phys_pt)
+
+        k_val = kernel(phys_pt, k_normal)
+        k_val *= w
+
+        for idx_x in range(2):
+            for idx_y in range(2):
+                result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
+                        src_basis_fnc[idx_x] * soln_basis_fnc[idx_y]
+    result *= jacobian
     return result

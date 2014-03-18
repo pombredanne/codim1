@@ -134,85 +134,6 @@ def realistic_assembler(n_elements = 4,
     return assembler
 
 
-def test_exact_dbl_integrals_H_same_element():
-    """
-    This is probably the best test of working the H matrix is being
-    assembled properly
-    """
-    a = realistic_assembler(quad_points_nonsingular = 10,
-                            quad_points_logr = 10,
-                            quad_points_oneoverr = 10,
-                            n_elements = 1)
-    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
-    H_00 = a.double_integral(kernel,
-            a.quad_strategy.quad_oneoverr, 0, 0, 0, 0)
-    np.testing.assert_almost_equal(H_00, np.zeros((2, 2)), 3)
-
-    H_11 = a.double_integral(kernel,
-            a.quad_strategy.quad_oneoverr, 0, 1, 0, 1)
-    np.testing.assert_almost_equal(H_11, np.zeros((2, 2)), 3)
-
-    H_01 = a.double_integral(kernel,
-            a.quad_strategy.quad_oneoverr, 0, 0, 0, 1)
-    H_01_exact = np.array([[0.0, 1 / (6 * np.pi)],
-                           [-1 / (6 * np.pi), 0.0]])
-    np.testing.assert_almost_equal(H_01, H_01_exact, 3)
-
-    H_10 = a.double_integral(kernel,
-            a.quad_strategy.quad_oneoverr, 0, 1, 0, 0)
-    H_10_exact = np.array([[0.0, -1 / (6 * np.pi)],
-                           [1 / (6 * np.pi), 0.0]])
-    np.testing.assert_almost_equal(H_10, H_10_exact, 3)
-
-def test_exact_dbl_integrals_G_same_element():
-    """
-    This is probably the best test of working the G matrix is being
-    assembled properly
-    """
-    a = realistic_assembler(quad_points_nonsingular = 14,
-                            quad_points_logr = 14,
-                            quad_points_oneoverr = 10,
-                            n_elements = 1,
-                            left = -1.0,
-                            right = 1.0)
-    kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    G_00 = a.double_integral(kernel,
-            a.quad_strategy.quad_logr, 0, 0, 0, 0)
-    np.testing.assert_almost_equal(G_00, [[0.165187, 0], [0, 0.112136]], 4)
-    G_10 = a.double_integral(kernel,
-            a.quad_strategy.quad_logr, 0, 1, 0, 0)
-    np.testing.assert_almost_equal(G_10, [[0.112136, 0], [0, 0.0590839]], 4)
-    G_01 = a.double_integral(kernel,
-            a.quad_strategy.quad_logr, 0, 0, 0, 1)
-    np.testing.assert_almost_equal(G_01, [[0.112136, 0], [0, 0.0590839]], 4)
-    G_11 = a.double_integral(kernel,
-            a.quad_strategy.quad_logr, 0, 1, 0, 1)
-    np.testing.assert_almost_equal(G_11, [[0.165187, 0], [0, 0.112136]], 4)
-
-def test_exact_dbl_integrals_G_different_element():
-    """
-    This is probably the best test of working the G matrix is being
-    assembled properly
-    """
-    a = realistic_assembler(quad_points_nonsingular = 14,
-                            quad_points_logr = 14,
-                            quad_points_oneoverr = 10,
-                            n_elements = 2,
-                            left = -1.0,
-                            right = 1.0)
-    kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    q = [a.quad_strategy.quad_shared_edge_left] * \
-            len(a.quad_strategy.get_simple().x)
-    G_00 = a.double_integral(kernel, q, 0, 0, 1, 0)
-    np.testing.assert_almost_equal(G_00, [[0.0150739, 0], [0, 0.00181103]], 4)
-    G_10 = a.double_integral(kernel, q, 0, 1, 1, 0)
-    np.testing.assert_almost_equal(G_10,
-            [[0.02833119, 0], [0, 0.01506828]], 4)
-    G_01 = a.double_integral(kernel, q, 0, 0, 1, 1)
-    np.testing.assert_almost_equal(G_01,
-            [[0.00663146, 0], [0, -0.00663146]], 4)
-    G_11 = a.double_integral(kernel, q, 0, 1, 1, 1)
-    np.testing.assert_almost_equal(G_11, [[0.0150739, 0], [0, 0.00181103]], 4)
 
 def test_realistic_nan():
     a = realistic_assembler()
@@ -244,20 +165,6 @@ def test_realistic_symmetric_quadratic():
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G), 4)
-
-
-def test_realistic_double_integral_symmetry():
-    a = realistic_assembler(n_elements = 2, element_deg = 1)
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    # fnc = lambda r, n: 1 / r[0]
-    one = a.double_integral(k_d,
-                      a.quad_strategy.quad_oneoverr,
-                      1, 0, 1, 1)
-
-    two = a.double_integral(k_d,
-                      a.quad_strategy.quad_oneoverr,
-                      1, 1, 1, 0)
-    np.testing.assert_almost_equal(one, two)
 
 
 def test_reciprocal_effects():

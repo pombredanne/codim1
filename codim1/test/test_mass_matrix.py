@@ -22,20 +22,3 @@ def test_mass_matrix():
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
     np.testing.assert_almost_equal(M_exact, m.M[0:4, 0:4])
 
-def test_M_integral_same_dof():
-    m = simple_mass_matrix()
-    M_local = m.single_integral(0, 0, 0)
-    # integral of (1-x)^2 from 0 to 1
-    np.testing.assert_almost_equal(M_local, 1.0 / 3.0)
-
-def test_M_integral_same_dof_with_jacobian():
-    m = simple_mass_matrix(n_elements = 4)
-    M_local = m.single_integral(0, 0, 0)
-    # Element size divided by two so the M value should be divided by two
-    np.testing.assert_almost_equal(M_local, 1.0 / 6.0)
-
-def test_M_integral_diff_dof():
-    m = simple_mass_matrix(n_elements = 2)
-    M_local = m.single_integral(0, 0, 1)
-    # integral of (1-x)*x from 0 to 1
-    np.testing.assert_almost_equal(M_local, 1.0 / 6.0)

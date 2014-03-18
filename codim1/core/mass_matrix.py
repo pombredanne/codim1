@@ -1,4 +1,5 @@
 import numpy as np
+from codim1.fast.integration import single_integral
 
 class MassMatrix(object):
     """
@@ -39,31 +40,14 @@ class MassMatrix(object):
                 for j in range(self.basis_funcs.num_fncs):
                     j_dof_x = self.dof_handler.dof_map[0, k, j]
                     j_dof_y = self.dof_handler.dof_map[1, k, j]
-                    M_local = self.single_integral(k, i, j)
-                    self.M[i_dof_x, j_dof_x] = M_local[0]
-                    self.M[i_dof_y, j_dof_y] = M_local[1]
+                    M_local = single_integral(self.mesh,
+                                              self.mass_matrix_kernel,
+                                              self.basis_funcs,
+                                              self.quadrature,
+                                              k, i, j)
+                    self.M[i_dof_x, j_dof_x] = M_local[0, 0]
+                    self.M[i_dof_y, j_dof_y] = M_local[1, 1]
         self.computed = True
 
-    def single_integral(self, k, i, j):
-        """
-        Performs a single integral over the element specified by k
-        with the basis functions specified by i and j.  Kernel should be
-        a function that can be evaluated at all point within the element
-        and (is not singular!)
-        """
-
-        # Jacobian used to transfer the integral back to physical coordinates
-        jacobian = self.mesh.get_element_jacobian(k)
-
-        # Just perform standard gauss quadrature
-        q_pts = self.quadrature.x
-        w = self.quadrature.w
-        result = 0.0
-        for (q_pt, w) in zip(q_pts, w):
-            phys_pt = self.mesh.get_physical_points(k, q_pt)
-            # The basis functions should be evaluated on reference
-            # coordinates
-            src_basis_fnc = self.basis_funcs.evaluate_basis(i, q_pt, phys_pt)
-            soln_basis_fnc = self.basis_funcs.evaluate_basis(j, q_pt, phys_pt)
-            result += soln_basis_fnc * src_basis_fnc * jacobian * w
-        return result
+    def mass_matrix_kernel(self, x, n):
+        return np.array([[1.0, 0.0], [0.0, 1.0]])

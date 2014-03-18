@@ -109,13 +109,3 @@ class MatrixAssembler(object):
                         k, i, l, j)
         return G_local
 
-    def double_integral(self, kernel, inner_quadrature, k, i, l, j):
-        """Thin wrapper around the integration.double_integral method"""
-        return integration.double_integral(
-                        self.mesh,
-                        kernel,
-                        self.basis_funcs,
-                        self.basis_funcs,
-                        self.quad_strategy.get_simple(),
-                        inner_quadrature,
-                        k, i, l, j)
