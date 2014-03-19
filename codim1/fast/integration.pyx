@@ -10,8 +10,9 @@ from basis_funcs cimport evaluate_basis
 # A true c++ implementation could use templates to adapt the integraton
 # to matrix elements vs. rhs element, etc.
 # TODO: I think this function has reversed the order of integration from the
-# standard. Flip it back to standard. Shouldn't matter, because the domains 
-# are independently defined, but conforming to standards is generally good.
+# standard. (kernel interior, solution basis exterior).
+# Flip it back to standard. Shouldn't matter, because the domains are 
+# independently defined, but conforming to standards is generally good.
 def double_integral(mesh, kernel, 
                     src_basis_fncs, soln_basis_fncs, 
                     src_quadrature, soln_quadrature, 
@@ -66,7 +67,7 @@ def double_integral(mesh, kernel,
 
         # The basis functions should be evaluated on reference
         # coordinates
-        src_basis_fnc = src_basis_fncs.evaluate(i, 
+        src_basis_fnc = src_basis_fncs.evaluate(k, i, 
                                 q_pt_src, phys_src_pt)
 
         # If the integrand is singular, we need to use the appropriate
@@ -83,7 +84,7 @@ def double_integral(mesh, kernel,
             phys_soln_pt = get_physical_points(element_to_vertex,
                                                vertices, l, q_pt_soln)
 
-            soln_basis_fnc = soln_basis_fncs.evaluate(j, 
+            soln_basis_fnc = soln_basis_fncs.evaluate(l, j, 
                                     q_pt_soln, phys_soln_pt)
 
             # Separation of the two quadrature points, use real,
@@ -109,16 +110,16 @@ def double_integral(mesh, kernel,
 def single_integral(mesh, kernel, basis_fncs, quadrature, 
                     int k, int i, int j):
     """
-    Performs a single integral over one element. The operations all almost
-    identical to those in the double_integral method. Thus, read through
-    that method for details. 
+    Performs a single integral over one element. The operations are all 
+    almost identical to those in the double_integral method. Thus, read 
+    through that method for details. 
 
     A key difference with single_integral is that the kernel function here
-    is expected to just be a standard python function with a location 
-    parameter. The double integral function takes a kernel function with a
-    distance input. K(x) vs. K(x - y)
+    is expected to just be a standard function with a location 
+    parameter. The double integral function takes a kernel class object with 
+    a call method taking a separation input. K(x) vs. K(x - y)
     """
-    cdef np.ndarray[double] result = np.zeros((2, 2))
+    cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
     cdef double jacobian = mesh.get_element_jacobian(k) * \
                            basis_fncs.chain_rule(k)
@@ -130,8 +131,8 @@ def single_integral(mesh, kernel, basis_fncs, quadrature,
     for (q_pt, w) in zip(q_pts, wts):
         phys_pt = mesh.get_physical_points(k, q_pt)
 
-        src_basis_fnc = basis_fncs.evaluate(i, q_pt, phys_pt)
-        soln_basis_fnc = basis_fncs.evaluate(j, q_pt, phys_pt)
+        src_basis_fnc = basis_fncs.evaluate(k, i, q_pt, phys_pt)
+        soln_basis_fnc = basis_fncs.evaluate(k, j, q_pt, phys_pt)
 
         k_val = kernel(phys_pt, k_normal)
         k_val *= w

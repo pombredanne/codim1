@@ -77,26 +77,3 @@ def test_hypersingular_regularized():
                     np.array([0, 0.0]))
     W_exact = np.array([[2 * (np.log(2) + 1) / (3 * np.pi), 0],
                         [0, 2 * np.log(2) / (3 * np.pi)]])
-
-def test_interior_point_Dijk():
-    kernel = AdjointTractionVolumeKernel(1.0, 0.25)
-    D = kernel.call(np.array([2.0, 0.0]),
-                    np.array([0, 0.0]),
-                    np.array([0, 1.0]))
-    D_exact = np.array([[[ 0.13262912,  0.        ],
-                         [ 0.        ,  0.02652582]],
-                        [[ 0.        ,  0.02652582],
-                         [-0.02652582,  0.        ]]])
-    np.testing.assert_almost_equal(D_exact, D)
-
-def test_interior_point_Sijk():
-    kernel = HypersingularVolumeKernel(1.0, 0.25)
-    S = kernel.call(np.array([2.0, 0.0]),
-                    np.array([0, 0.0]),
-                    np.array([0, 1.0]))
-
-    S_exact = np.array([[[ 0.        ,  0.05305165],
-                         [ 0.05305165,  0.        ]],
-                        [[ 0.05305165,  0.        ],
-                         [ 0.        ,  0.05305165]]])
-    np.testing.assert_almost_equal(S_exact, S)

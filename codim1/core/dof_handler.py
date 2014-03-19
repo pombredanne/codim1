@@ -20,15 +20,17 @@ class DiscontinuousDOFHandler(object):
         # also one dof per dimension
         self.total_dofs = self.dim * self.mesh.n_elements * (element_deg + 1)
 
-        # Making a dof_map in 1D is super simple! Its just a folded over list of all
-        # the dofs
+        # Making a dof_map in 1D is super simple! Its just a folded over
+        # list of all the dofs
         self.dof_map = np.arange(self.total_dofs)\
-                       .reshape(self.dim, self.mesh.n_elements, element_deg + 1)
+                       .reshape(self.dim,
+                                self.mesh.n_elements,
+                                element_deg + 1)
 
 class ContinuousDOFHandler(object):
     """
-    As opposed to DiscontinuousDOFHandler, the ContinuousDOFHandler makes sure that
-    adjacent elements share DOFs.
+    As opposed to DiscontinuousDOFHandler, the ContinuousDOFHandler makes
+    sure that adjacent elements share DOFs.
     """
     def __init__(self, mesh, element_deg):
         self.dim = 2
@@ -40,7 +42,9 @@ class ContinuousDOFHandler(object):
 
         # Loop over elements and attach local dofs to the global dofs vector
 
-        self.dof_map = np.empty((2, self.mesh.n_elements, self.element_deg + 1),
+        self.dof_map = np.empty((2,
+                                self.mesh.n_elements,
+                                self.element_deg + 1),
                                 dtype = np.int)
         self.total_dofs = 0
         d = 0

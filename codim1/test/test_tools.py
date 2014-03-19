@@ -2,7 +2,7 @@ import numpy as np
 from codim1.core.tools import interpolate, evaluate_boundary_solution, \
                 evaluate_solution_on_element, plot_mesh, rmse
 from codim1.core.dof_handler import DiscontinuousDOFHandler
-from codim1.core.basis_funcs import BasisFunctions
+from codim1.core.basis_funcs import BasisFunctions, Solution
 from codim1.core.mesh import Mesh
 
 # def test_plot_mesh():
@@ -37,8 +37,9 @@ def test_evaluate_boundary_solution_easy():
     bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0], x[1])
-    solution = interpolate(fnc, dh, bf, msh)
-    x, soln = evaluate_boundary_solution(11, solution, dh, bf, msh)
+    solution_coeffs = interpolate(fnc, dh, bf, msh)
+    solution = Solution(bf, dh, solution_coeffs)
+    x, soln = evaluate_boundary_solution(11, solution, msh)
     # Constant basis, so it should be 0.5 everywhere on the element [0,1]
     assert(x[-2][0] == 0.9)
     assert(soln[-2][0] == 0.5)
@@ -51,9 +52,9 @@ def test_evaluate_solution_on_element():
     bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0], x[1])
-    solution = interpolate(fnc, dh, bf, msh)
-    eval = evaluate_solution_on_element(1, 1.0, solution,
-                                 dh, bf, msh)
+    solution_coeffs = interpolate(fnc, dh, bf, msh)
+    solution = Solution(bf, dh, solution_coeffs)
+    eval = evaluate_solution_on_element(1, 1.0, solution, msh)
     assert(eval[0] == 1.0)
     assert(eval[1] == 0.0)
 
@@ -66,8 +67,9 @@ def test_interpolate_evaluate_hard():
     bf = BasisFunctions.from_degree(element_deg, msh)
     dh = DiscontinuousDOFHandler(msh, element_deg)
     fnc = lambda x, n: (x[0] ** 6, 0)
-    solution = interpolate(fnc, dh, bf, msh)
-    x, soln = evaluate_boundary_solution(5, solution, dh, bf, msh)
+    solution_coeffs = interpolate(fnc, dh, bf, msh)
+    solution = Solution(bf, dh, solution_coeffs)
+    x, soln = evaluate_boundary_solution(5, solution, msh)
     assert(x[-2][0] == 0.9)
     np.testing.assert_almost_equal(soln[-2][0], (0.9 ** 6))
 

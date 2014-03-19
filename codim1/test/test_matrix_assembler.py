@@ -194,10 +194,10 @@ def test_realistic_zero_discontinuity():
     displacements = tools.interpolate(fnc, a.dof_handler,
                                   a.basis_funcs, a.mesh)
     rhs = np.dot(H, displacements)
-    soln = np.linalg.solve(G, rhs)
+    soln_coeffs = np.linalg.solve(G, rhs)
+    soln = basis_funcs.Solution(a.basis_funcs, a.dof_handler, soln_coeffs)
     for k in range(a.mesh.n_elements - 1):
-        value_left = tools.evaluate_solution_on_element(k, 1.0, soln,
-            a.dof_handler, a.basis_funcs, a.mesh)
+        value_left = tools.evaluate_solution_on_element(k, 1.0, soln, a.mesh)
         value_right = tools.evaluate_solution_on_element(k + 1, 0.0, soln,
-            a.dof_handler, a.basis_funcs, a.mesh)
+                                                         a.mesh)
         np.testing.assert_almost_equal(value_left, value_right)

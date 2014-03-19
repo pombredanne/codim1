@@ -7,18 +7,32 @@ class Function(object):
     def __init__(self, f):
         self.f = f
 
-    def evaluate(self, i, x_hat, x):
+    def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
 
     def chain_rule(self, element_idx):
         return 1.0
 
-# class Solution(object):
-#     def __init__(self, basis, coefficients):
-#         self.basis = basis
-#         self.coefficients = coefficients
-#
-#     def evaluate(self, i, x_hat, x):
+class Solution(object):
+    """
+    Represents a solution by some coefficients multiplied by a set of
+    basis functions defined on the reference element
+    """
+    def __init__(self, basis, dof_handler, coeffs):
+        self.dof_handler = dof_handler
+        self.basis = basis
+        self.coeffs = coeffs
+
+    def evaluate(self, element_idx, i, x_hat, x):
+        dof_x = self.dof_handler.dof_map[0, element_idx, i]
+        dof_y = self.dof_handler.dof_map[1, element_idx, i]
+        basis_eval = self.basis.evaluate(element_idx, i, x_hat, x)
+        return [self.coeffs[dof_x] * basis_eval[0],
+                self.coeffs[dof_y] * basis_eval[1]]
+
+    def chain_rule(self, element_idx):
+        return 1.0
+
 
 class BasisFunctions(object):
     """
@@ -65,7 +79,7 @@ class BasisFunctions(object):
             derivs[i, 1:] = poly.deriv().c
         self.derivs = _DerivativeBasisFunctions(self.nodes, derivs, mesh)
 
-    def evaluate(self, i, x_hat, x):
+    def evaluate(self, element_idx, i, x_hat, x):
         return _evaluate_basis(self.fncs, i, x_hat)
 
     def chain_rule(self, element_idx):

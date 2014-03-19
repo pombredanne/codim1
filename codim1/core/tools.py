@@ -73,8 +73,7 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
             result[dof_y] = f_val[1]
     return result
 
-def evaluate_boundary_solution(points_per_element, soln,
-                               dof_handler, basis_funcs, mesh):
+def evaluate_boundary_solution(points_per_element, soln, mesh):
     """
     Once a solution is computed, it's often nice to know the actual value, not
     just the coefficients of the polynomial basis! This function will produce
@@ -88,33 +87,19 @@ def evaluate_boundary_solution(points_per_element, soln,
     y = []
     for k in range(mesh.n_elements):
         for pt in np.linspace(0.0, 1.0, points_per_element):
-            # TODO: This could use evaluate_solution_on_element
-            phys_pt = mesh.get_physical_points(k, pt)
-            x.append(phys_pt)
-            ux = 0
-            uy = 0
-            for i in range(dof_handler.element_deg + 1):
-                coeff = dof_handler.dof_map[:, k, i]
-                ux += soln[coeff[0]] * \
-                        basis_funcs.evaluate(i, pt, phys_pt)[0]
-                uy += soln[coeff[1]] * \
-                        basis_funcs.evaluate(i, pt, phys_pt)[1]
-            y.append([ux, uy])
+            x.append(mesh.get_physical_points(k, pt))
+            u = evaluate_solution_on_element(k, pt, soln, mesh)
+            y.append(u)
     x = np.array(x)
     y = np.array(y)
     return x, y
 
-def evaluate_solution_on_element(element_idx, reference_point, soln,
-                                 dof_handler, basis_funcs, mesh):
+def evaluate_solution_on_element(element_idx, reference_point, soln, mesh):
     phys_pt = mesh.get_physical_points(element_idx, reference_point)
     soln_x = 0.0
     soln_y = 0.0
-    for i in range(basis_funcs.num_fncs):
-        dof_x = dof_handler.dof_map[0, element_idx, i]
-        dof_y = dof_handler.dof_map[1, element_idx, i]
-        soln_x += soln[dof_x] * \
-                basis_funcs.evaluate(i, reference_point, phys_pt)[0]
-        soln_y += soln[dof_y] * \
-                basis_funcs.evaluate(i, reference_point, phys_pt)[1]
+    for i in range(soln.basis.num_fncs):
+        soln_x += soln.evaluate(element_idx, i, reference_point, phys_pt)[0]
+        soln_y += soln.evaluate(element_idx, i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 

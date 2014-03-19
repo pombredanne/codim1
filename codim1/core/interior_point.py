@@ -1,4 +1,5 @@
 import numpy as np
+from codim1.fast.integration import single_integral
 
 class InteriorPoint(object):
     """
@@ -11,30 +12,28 @@ class InteriorPoint(object):
     #TODO: There are no tests for any of this. HOW TO TEST IT?
     def __init__(self,
                  mesh,
-                 basis_funcs_disp,
-                 basis_funcs_trac,
-                 Guu, Gup,
-                 Dijk, Sijk,
                  dof_handler,
                  quadrature):
         self.mesh = mesh
-        self.basis_funcs = basis_funcs
-        self.Guu = Guu
-        self.Gup = Gup
-        self.Dijk = Dijk
-        self.Sijk = Sijk
         self.dof_handler = dof_handler
         self.quadrature = quadrature
 
-    # TODO:
-
-    def compute_displacement(self, point, disp, trac):
+    def compute(self, pt, pt_normal, kernel, solution):
+        """
+        Determine the value of some solution at pt with normal pt_normal.
+        kernel must be a standard kernel function.
+        solution must behave like a set of basis functions.
+        """
+        G_local = self.interior_integral(
         result = np.zeros(2)
-
         for k in range(self.mesh.n_elements):
             for i in range(self.basis_funcs.num_fncs):
                 dofs = [self.dof_handler.dof_map[0, k, i],
                         self.dof_handler.dof_map[1, k, i]]
+
+                kernel_fnc = lambda x, n: kernel.call(x - pt, pt_normal, n)
+
+                integral =
 
                 G_local = self.interior_integral(self.Guu,
                                 np.zeros((2, 2)),
@@ -59,11 +58,11 @@ class InteriorPoint(object):
                 dofs = [self.dof_handler.dof_map[0, k, i],
                         self.dof_handler.dof_map[1, k, i]]
 
-                D_local = self.interior_integral(self.Dijk,
+                Dx_local = self.interior_integral(self.Dijk,
                                 np.zeros((2, 2, 2)),
                                 point, k, i)
 
-                S_local = self.interior_integral(self.Sijk,
+                Sx_local = self.interior_integral(self.Sijk,
                                 np.zeros((2, 2, 2)),
                                 point, k, i)
 
@@ -75,8 +74,8 @@ class InteriorPoint(object):
 
         return stress
 
-    # TODO: Integrate this single integral function with the one in mass
-    # matrix. Move them both to the integration module.
+    # TODO: Combine this single integral function with the one in
+    # the integration module.
     def interior_integral(self, kernel, result, pt, k, i):
         """
         Performs an integral over a surface element, computing the solution
