@@ -103,7 +103,6 @@ def double_integral(mesh, kernel,
                 for idx_y in range(2):
                     result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
                             src_basis_fnc[idx_x] * soln_basis_fnc[idx_y]
-
     result *= src_jacobian * soln_jacobian
     return result
 
