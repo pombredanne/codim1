@@ -100,6 +100,7 @@ def evaluate_solution_on_element(element_idx, reference_point, soln, mesh):
     phys_pt = mesh.get_physical_points(element_idx, reference_point)
     soln_x = 0.0
     soln_y = 0.0
+    # The value is the sum over all the basis functions.
     for i in range(soln.basis.num_fncs):
         soln_x += soln.evaluate(element_idx, i, reference_point, phys_pt)[0]
         soln_y += soln.evaluate(element_idx, i, reference_point, phys_pt)[1]

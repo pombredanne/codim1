@@ -6,9 +6,6 @@ import math
 cdef double pi = math.pi
 
 # All the boundary kernel functions here are in Frangi and Novati 1996.
-# The Dijk and Sijk volume kernels for interior/exterior computation are in 
-# the SGBEM book (Sutradhar, Paulio, Gray, 2008).
-
 ############################################################################
 # SURFACE KERNELS (Displacement and tractions)
 ############################################################################
@@ -116,7 +113,7 @@ class AdjointTractionKernel(Kernel):
                 self.const1 * (dr[1] * m[0] - dr[0] * m[1]))
         return T
 
-class HypersingularKernel(Kernel):
+class RegularizedHypersingularKernel(Kernel):
     """
     Gpp -- 1/r^2 singular in 2D, but integration by parts throws two of the
     (1/r)s onto the basis functions, thus resulting in a log(r) singular
@@ -137,3 +134,47 @@ class HypersingularKernel(Kernel):
         B[1, 0] = self.const5 * (-dr[1] * dr[0])
         B[0, 1] = B[1, 0]
         return B
+
+class HypersingularKernel(Kernel):
+    """
+    The non-regularized hypersingular kernel. Useful for interior 
+    computation, though it will be problematic when the interior point
+    is very close to the boundary.
+    """
+    def __init__(self, double shear_modulus, double poisson_ratio):
+        self.shear_modulus = shear_modulus
+        self.poisson_ratio = poisson_ratio
+        self.const1 = (1 - 2 * poisson_ratio)
+
+    def _call(self, double dist, double drdn, double drdm,
+                    np.ndarray[double, ndim=1] dr,
+                    np.ndarray[double, ndim=1] n,
+                    np.ndarray[double, ndim=1] m):
+        cdef np.ndarray[double, ndim = 2] S = np.zeros((2, 2))
+        # TODO: Do the math to reduce that ugly expression down to one
+        # including the source normal m
+        for i in range(2):
+            for j in range(2):
+                for k in range(2):
+                    value = self._hypersingular(i, j, k, dist, 
+                                                     dr, drdn, n)
+                    S[j, k] += value * m[i]
+        return S
+
+    def _hypersingular(self, int i, int j, int k, 
+                       double r, np.ndarray[double, ndim=1] dr,
+                       double drdn,
+                       np.ndarray[double, ndim=1] n):
+        """ UGLY!!! """
+        Skij = self.shear_modulus / \
+                (2 * pi * (1 - self.poisson_ratio)) * 1 / (r ** 2)
+        Skij = Skij * ( 2 * drdn * ( self.const1 * (i==j) * dr[k] + \
+            self.poisson_ratio * ( dr[j] * (k==i) + dr[i] * (j==k) ) - \
+            4 * dr[i] * dr[j] * dr[k] ) + \
+            2 * self.poisson_ratio * ( n[i] * dr[j] * dr[k] + \
+            n[j] * dr[i] * dr[k] ) + \
+            self.const1 * \
+            ( 2 * n[k] * dr[i] * dr[j] + n[j] * (k==i) + \
+                n[i] * (j==k) ) \
+            - (1 - 4 * self.poisson_ratio) * n[k] * (i==j))
+        return Skij

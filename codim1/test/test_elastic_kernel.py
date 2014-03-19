@@ -71,9 +71,23 @@ def test_traction_adjoint():
     np.testing.assert_almost_equal(HT[1, 0], -HT[0, 1])
 
 def test_hypersingular_regularized():
-    kernel = HypersingularKernel(1.0, 0.25)
+    kernel = RegularizedHypersingularKernel(1.0, 0.25)
     W = kernel.call(np.array([2.0, 0.0]),
                     np.array([0, 1.0]),
                     np.array([0, 0.0]))
     W_exact = np.array([[2 * (np.log(2) + 1) / (3 * np.pi), 0],
                         [0, 2 * np.log(2) / (3 * np.pi)]])
+def test_hypersingular_nonregularized():
+    kernel = HypersingularKernel(1.0, 0.25)
+    S = kernel.call(np.array([2.0, 0.0]),
+                    np.array([1, 0.0]),
+                    np.array([0, 1.0]))
+
+    S_exact = np.array([[[ 0.        ,  0.05305165],
+                         [ 0.05305165,  0.        ]],
+                        [[ 0.05305165,  0.        ],
+                         [ 0.        ,  0.05305165]]])
+    S_exact = S_exact[:, 0, :]# + S_exact[:, 1, :]
+
+    np.testing.assert_almost_equal(S_exact, S)
+

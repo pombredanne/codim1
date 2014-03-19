@@ -6,7 +6,6 @@ class InteriorPoint(object):
     """
     Computes the value of the solution at an interior point.
     """
-    #TODO: There are no tests for any of this. HOW TO TEST IT?
     def __init__(self,
                  mesh,
                  dof_handler,
@@ -30,7 +29,9 @@ class InteriorPoint(object):
                 integral = single_integral(self.mesh, kernel_fnc,
                                            one, solution,
                                            self.quadrature,
-                                           k, i, 0)
-                result[0] += integral[0, 0] + integral[0, 1]
-                result[1] += integral[1, 0] + integral[1, 1]
+                                           k, 0, i)
+                result[0] += integral[0, 0]
+                result[0] += integral[0, 1]
+                result[1] += integral[1, 0]
+                result[1] += integral[1, 1]
         return result

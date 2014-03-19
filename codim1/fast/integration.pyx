@@ -130,8 +130,8 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
     for (q_pt, w) in zip(q_pts, wts):
         phys_pt = mesh.get_physical_points(k, q_pt)
 
-        src_basis_fnc = soln_basis_fncs.evaluate(k, i, q_pt, phys_pt)
-        soln_basis_fnc = src_basis_fncs.evaluate(k, j, q_pt, phys_pt)
+        src_basis_fnc = src_basis_fncs.evaluate(k, i, q_pt, phys_pt)
+        soln_basis_fnc = soln_basis_fncs.evaluate(k, j, q_pt, phys_pt)
 
         k_val = kernel(phys_pt, k_normal)
         k_val *= w

@@ -33,9 +33,9 @@ def main(n_elements, element_deg, plot):
 
     # Quadrature points for the various circumstances
     quad_min = 4
-    quad_max = 10
-    quad_logr = 10
-    quad_oneoverr = 10
+    quad_max = 12
+    quad_logr = 12
+    quad_oneoverr = 12
     # I did some experiments and
     # 13 Quadrature points seems like it gives error like 1e-10, lower
     # than necessary, but nice for testing other components
@@ -54,7 +54,7 @@ def main(n_elements, element_deg, plot):
     # and how many points to use.
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
     # Use more point for the RHS. This is because it is discontinuous
-    # at: theta = (24/50) * pi, so if there aren't enough points, we will
+    # at: theta = (24/50) * pi, so if there aren't enough points, I will
     # miss that discontinuity
     # This is not necessary if the mesh is aligned with the discontinuity
     qs_rhs = qs#QuadStrategy(mesh, quad_max, quad_max,
@@ -95,8 +95,9 @@ def main(n_elements, element_deg, plot):
     # this makes assembly easier.
     # TODO: Could be moved inside assemble_rhs
     traction_function = BasisFunctions.from_function(section_traction)
-    # Assemble the rhs, composed of the displacements induced by the traction
-    # inputs.
+
+    # Assemble the rhs, composed of the displacements induced by the
+    # traction inputs.
     print("Assembling RHS")
     rhs_assembler = RHSAssembler(mesh, bf, dh, qs_rhs)
     rhs = rhs_assembler.assemble_rhs(traction_function, k_d)
@@ -114,34 +115,35 @@ def main(n_elements, element_deg, plot):
     print("Performing interior computations.")
     x_vals = np.linspace(0, 1.0, 11)[:-1]
 
-    # We use a slightly higher order quadrature for interior point
+    # Use a slightly higher order quadrature for interior point
     # computations just to avoid problems in testing. Could be reduced
     # in the future.
     interior_quadrature = QuadGauss(interior_quad_pts)
     ip = InteriorPoint(mesh, dh, interior_quadrature)
 
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
+    # where the normal is n_x=1, n_y=0
     normal = np.array([1.0, 0.0])
-    # Negative contribution of the AdjointTraction kernel
-    int_strs_x = -np.array(
+    # Positive contribution of the AdjointTraction kernel
+    int_strs_x = np.array(
             [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
              for x_v in x_vals])
-    # Positive contribution of the hypersingular kernel
-    int_strs_x += np.array(
+    # Negative contribution of the hypersingular kernel
+    int_strs_x -= np.array(
             [ip.compute((x_v, 0.0), normal, k_h, soln)
              for x_v in x_vals])
 
-    # # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
-    # normal = np.array([0.0, 1.0])
-    # # Negative contribution of the AdjointTraction kernel
-    # int_strs_y = -np.array(
-    #         [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
-    #          for x_v in x_vals])
+    # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
+    normal = np.array([0.0, 1.0])
+    # Negative contribution of the AdjointTraction kernel
+    int_strs_y = np.array(
+            [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
+             for x_v in x_vals])
 
-    # # Positive contribution of the hypersingular kernel
-    # int_strs_y += np.array(
-    #         [ip.compute((x_v, 0.0), normal, k_h, soln)
-    #          for x_v in x_vals])
+    # Positive contribution of the hypersingular kernel
+    int_strs_y -= np.array(
+            [ip.compute((x_v, 0.0), normal, k_h, soln)
+             for x_v in x_vals])
 
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004])
@@ -162,10 +164,10 @@ def main(n_elements, element_deg, plot):
 
         plt.figure(4)
         # \sigma_xx
-        plt.plot(x_vals, int_strs_x[:, 0], label = r'$\sigma_{xx}$')
+        plt.plot(x_vals, int_strs_x[:, 0], linewidth = '2', label = r'$\sigma_{xx}$')
         # \sigma_yy
-        # plt.plot(x_vals, int_strs_y[:, 1], label = r'$\sigma_{yy}$')
-        plt.plot(x_vals, sigma_xx_exact, label = 'exact')
+        plt.plot(x_vals, int_strs_y[:, 1], linewidth = '2', label = r'$\sigma_{yy}$')
+        plt.plot(x_vals, sigma_xx_exact, linewidth = '2', label = 'exact')
         plt.xlabel('distance along x axis from origin')
         plt.ylabel(r'$\sigma_{xx}$ and $\sigma_{yy}$')
         plt.legend()
@@ -175,6 +177,8 @@ def main(n_elements, element_deg, plot):
 if __name__ == "__main__":
     sigma_xx = main(50, 0, True)
     plt.show()
+    sigma_xx_exact_perturbed = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
+                      0.0144, 0.0089, 0.0047, 0.0019, 0.0004]) + np.random.rand(10) * 0.00005
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004])
     sigma_xx_crouch_100 = np.array([0.0393, 0.0378, 0.0335, 0.0274, 0.0206,
