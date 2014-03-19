@@ -54,7 +54,7 @@ class BasisFunctions(object):
         return Function(f)
 
     @classmethod
-    def from_degree(cls, element_deg, mesh):
+    def from_degree(cls, element_deg):
         """
             Create an equispaced nodal basis.
         """
@@ -62,17 +62,16 @@ class BasisFunctions(object):
             nodes = np.array([0.5])
         else:
             nodes = np.linspace(0.0, 1.0, element_deg + 1)
-        return cls(nodes, mesh)
+        return cls(nodes)
 
-    def __init__(self, nodes, mesh):
+    def __init__(self, nodes):
         """
             Builds the Lagrange interpolating polynomials with nodes at the
             points specified.
         """
-        self.mesh = mesh
         self.num_fncs = len(nodes)
         self.fncs = np.empty((self.num_fncs, self.num_fncs))
-        derivs = np.empty((self.num_fncs, self.num_fncs))
+        self.derivs = np.empty((self.num_fncs, self.num_fncs))
         self.nodes = copy.copy(nodes)
         for (i, n) in enumerate(nodes):
             w = np.zeros_like(nodes)
@@ -81,17 +80,28 @@ class BasisFunctions(object):
             # shouldn't be an issue for this code
             poly = spi.lagrange(nodes, w)
             self.fncs[i, :] = poly.c
-            derivs[i, 0] = 0.0
-            derivs[i, 1:] = poly.deriv().c
-        self.derivs = _DerivativeBasisFunctions(self.nodes, derivs, mesh)
+            self.derivs[i, 0] = 0.0
+            self.derivs[i, 1:] = poly.deriv().c
+
+    def get_gradient_basis(self, mesh):
+        return _GradientBasisFunctions(self.nodes, self.derivs, mesh)
 
     def evaluate(self, element_idx, i, x_hat, x):
         return _evaluate_basis(self.fncs, i, x_hat)
 
+    def evaluate_derivative(self, element_idx, i, x_hat, x):
+        """
+        Evaluate the derivative in reference space. Note that this does not
+        include the chain rule term that would arise if the derivative were
+        taken in physical space. Use _GradientBasisFunctions for that
+        purpose.
+        """
+        return _evaluate_basis(self.derivs, i, x_hat)
+
     def chain_rule(self, element_idx):
         return 1.0
 
-class _DerivativeBasisFunctions(BasisFunctions):
+class _GradientBasisFunctions(BasisFunctions):
     """
     Stores the derivatives of the basis functions. For internal use only.
     Because the derivative is now defined on the reference triangle, the

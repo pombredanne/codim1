@@ -7,8 +7,8 @@ from basis_funcs cimport evaluate_basis
 # TODO: I think the future direction for speeding this up more would be
 # to create an "Integrator" class that stores most of the necessary info once
 # so that all the python statements in the core of the loop can be removed.
-# A true c++ implementation could use templates to adapt the integraton
-# to matrix elements vs. rhs element, etc.
+# A c++ implementation could use templates to adapt the integraton
+# to matrix entries vs. rhs values, linear elements, high order, etc.
 # TODO: I think this function has reversed the order of integration from the
 # standard. (kernel interior, solution basis exterior).
 # Flip it back to standard. Shouldn't matter, because the domains are 
@@ -33,7 +33,7 @@ def double_integral(mesh, kernel,
     cdef double src_jacobian = mesh.get_element_jacobian(k) * \
                                src_basis_fncs.chain_rule(k)
     cdef double soln_jacobian = mesh.get_element_jacobian(l) * \
-                               soln_basis_fncs.chain_rule(k)
+                               soln_basis_fncs.chain_rule(l)
 
     # The l_normal is needed for the traction kernel -- the solution normal.
     # The k_normal is normally needed for the adjoint traction kernel

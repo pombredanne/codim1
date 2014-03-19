@@ -38,7 +38,7 @@ def simple_assembler(degree = 0,
     qs = quad_strategy.QuadStrategy(msh, nonsing_pts, nonsing_pts,
                      logr_pts, oneoverr_pts)
     dh = dof_handler.DiscontinuousDOFHandler(msh, degree)
-    bf = basis_funcs.BasisFunctions.from_degree(degree, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(degree)
     assembler = MatrixAssembler(msh, bf, dh, qs)
     return assembler
 
@@ -125,7 +125,7 @@ def realistic_assembler(n_elements = 4,
     if quad_points_oneoverr % 2 == 1:
         quad_points_oneoverr += 1
     msh = mesh.Mesh.simple_line_mesh(n_elements, left, right)
-    bf = basis_funcs.BasisFunctions.from_degree(element_deg, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(element_deg)
     dh = dof_handler.ContinuousDOFHandler(msh, element_deg)
     qs = quad_strategy.QuadStrategy(msh, quad_points_nonsingular,
                         quad_points_nonsingular,

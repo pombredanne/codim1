@@ -17,14 +17,20 @@ from codim1.core.mass_matrix import MassMatrix
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
-def full_surface_traction(x, n):
-    return np.array((x[0], x[1]))
+# The theta width over which to apply the load to our cylinder.
+alpha = (1 / 50.) * np.pi
 
 def section_traction(x):
-    if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
+    # Only apply tractions over the arcs near y=1, y=-1
+    if np.abs(x[0]) < np.cos((np.pi / 2) - alpha):
         x_length = np.sqrt(x.dot(x))
         return -x / x_length
     return np.array((0.0, 0.0))
+
+# # The exact solution extracted from Frangi, Novati 1996
+# # For r = 1, alpha from above
+# def exact_solution_on_x_axis():
+#     sigma_xx =
 
 def main(n_elements, element_deg, plot):
     # Elastic parameters
@@ -42,12 +48,10 @@ def main(n_elements, element_deg, plot):
     interior_quad_pts = 13
 
     # A circle with radius one.
-    # TODO: Implement isoparametric elements, so that curved surfaces can be
-    # better approximated.
     mesh = Mesh.circular_mesh(n_elements, 1.0)
 
     # Define the basis functions on the mesh.
-    bf = BasisFunctions.from_degree(element_deg, mesh)
+    bf = BasisFunctions.from_degree(element_deg)
 
     # This object defines what type of quadrature to use for different
     # situations (log(r) singular, 1/r singular, adjacent elements, others)

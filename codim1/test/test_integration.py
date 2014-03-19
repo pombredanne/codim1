@@ -10,7 +10,7 @@ from codim1.fast.integration import single_integral
 def test_exact_dbl_integrals_H_same_element():
     msh = mesh.Mesh.simple_line_mesh(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
 
     kernel = elastic_kernel.TractionKernel(1.0, 0.25)
     H_00 = double_integral(msh, kernel, bf, bf, qs.get_simple(),
@@ -35,7 +35,7 @@ def test_exact_dbl_integrals_H_same_element():
 
 def test_exact_dbl_integrals_G_same_element():
     msh = mesh.Mesh.simple_line_mesh(1)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
     G_00 = double_integral(msh, kernel, bf, bf, qs.get_simple(),
@@ -53,7 +53,7 @@ def test_exact_dbl_integrals_G_same_element():
 
 def test_exact_dbl_integrals_G_different_element():
     msh = mesh.Mesh.simple_line_mesh(2)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
     q = [qs.quad_shared_edge_left] * \
@@ -71,7 +71,7 @@ def test_exact_dbl_integrals_G_different_element():
 
 def test_realistic_double_integral_symmetry():
     msh = mesh.Mesh.simple_line_mesh(2)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
 
@@ -87,7 +87,7 @@ def test_realistic_double_integral_symmetry():
 def test_M_integral_same_dof():
     msh = mesh.Mesh.simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
     M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 0)
     # integral of (1-x)^2 from 0 to 1
@@ -96,7 +96,7 @@ def test_M_integral_same_dof():
 def test_M_integral_same_dof_with_jacobian():
     msh = mesh.Mesh.simple_line_mesh(4)
     q = quadrature.QuadGauss(2)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
     M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 0)
     # Element size divided by two so the M value should be divided by two
@@ -105,7 +105,7 @@ def test_M_integral_same_dof_with_jacobian():
 def test_M_integral_diff_dof():
     msh = mesh.Mesh.simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
-    bf = basis_funcs.BasisFunctions.from_degree(1, msh)
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
     M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 1)
     # integral of (1-x)*x from 0 to 1

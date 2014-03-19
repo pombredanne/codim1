@@ -142,8 +142,10 @@ class Mesh(object):
 
         self.neighbors = np.zeros((self.n_elements, 2))
         for k in range(0, self.n_elements):
-            self.neighbors[k][0] = touch_vertex[self.element_to_vertex[k][0]][0]
-            self.neighbors[k][1] = touch_vertex[self.element_to_vertex[k][1]][1]
+            self.neighbors[k][0] = \
+                touch_vertex[self.element_to_vertex[k][0]][0]
+            self.neighbors[k][1] = \
+                touch_vertex[self.element_to_vertex[k][1]][1]
         self.neighbors = self.neighbors.astype(np.int)
 
     def is_neighbor(self, k, l, direction = 'both'):
@@ -162,7 +164,8 @@ class Mesh(object):
         Use a linear affine mapping to convert from the reference element
         back to physical coordinates. Note that the reference element is
         1D whereas physical space is 2D. So, the reference_pt input will be
-        scalar and the output will be a 2 element vector.
+        scalar and the output will be a 2 element vector. The reference
+        element is a line segment from 0 to 1.
         """
         return _get_physical_points(self.element_to_vertex,
                                     self.vertices,
@@ -185,3 +188,12 @@ class Mesh(object):
         j = np.sqrt(pt2_minus_pt1[0] ** 2 + pt2_minus_pt1[1] ** 2)
         return j
 
+class HigherOrderMesh(object):
+    def __init__(self, basis_funcs, coefficients):
+        pass
+
+    @classmethod
+    def circular_mesh(self, basis_funcs, n_elements, radius):
+        coefficients = np.empty((2, n_elements, basis_funcs.num_fncs))
+        for k in range(n_elements):
+            pass
