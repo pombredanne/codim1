@@ -69,7 +69,7 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
             dof_y = dof_handler.dof_map[1, k, i]
             ref_pt = basis_funcs.nodes[i]
             node_pt = mesh.get_physical_points(k, ref_pt)
-            normal = mesh.normals[k, :]
+            normal = mesh.get_normal(k, ref_pt)
             f_val = fnc(node_pt, normal)
             result[dof_x] = f_val[0]
             result[dof_y] = f_val[1]

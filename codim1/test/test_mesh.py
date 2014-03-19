@@ -1,5 +1,6 @@
 import numpy as np
-from codim1.core.mesh import Mesh
+from codim1.core.mesh import Mesh, HigherOrderMesh
+from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
 
 def test_simple_line_mesh():
@@ -35,13 +36,14 @@ def test_get_one_phys_pts():
 
 def test_jacobian():
     m = Mesh.simple_line_mesh(4)
-    j = m.get_element_jacobian(1)
+    j = m.get_element_jacobian(1, 0.0)
     np.testing.assert_almost_equal(j, 0.5)
 
 def test_normals():
     m = Mesh.simple_line_mesh(4)
-    assert(m.normals.shape[0] == 4)
-    assert((m.normals[:, 1] == [1, 1, 1, 1]).all())
+    for i in range(4):
+        assert(m.get_normal(0, 0.5)[0] == 0)
+        assert(m.get_normal(0, 0.5)[1] == 1)
 
 def test_connectivity():
     m = Mesh.simple_line_mesh(4)
@@ -98,3 +100,10 @@ def test_element_widths():
     m = Mesh(vertices, etov)
     assert(m.element_widths[0] == 1.0)
     assert(m.element_widths[1] == 2.0)
+
+def test_higher_order_two_element_circle():
+    bf = BasisFunctions.from_degree(2)
+    m = HigherOrderMesh.circular_mesh(bf, 2, 1.0)
+    coeffs_exact = np.array([[1.0, 0.0, -1.0],
+                             [0.0, 1.0, 0.0]])
+    np.testing.assert_almost_equal(m.coefficients[:, 0, :], coeffs_exact)

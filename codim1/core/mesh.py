@@ -23,11 +23,9 @@ class Mesh(object):
         self.n_vertices = vertices.shape[0]
         self.n_elements = element_to_vertex.shape[0]
 
-        self.compute_normals()
         self.compute_connectivity()
         self.compute_element_distances()
         self.compute_element_widths()
-        # self.compute_mappings()
 
     @classmethod
     def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
@@ -104,28 +102,6 @@ class Mesh(object):
             length = np.sqrt((v2[1] - v1[1]) ** 2 + (v2[0] - v1[0]) ** 2)
             self.element_widths[k] = length
 
-
-    def compute_normals(self):
-        """
-        Compute normal vectors to each element. Normal vectors are such that
-        if you traverse a circle counterclockwise, the normals point inwards.
-        Is this standard? Right hand rule says... what? in 2D? In 3D the
-        convention is clearer.
-        """
-        self.normals = np.empty((self.n_elements, 2))
-        all_vertices = self.vertices[self.element_to_vertex]
-        r = (all_vertices[:,1,:] - all_vertices[:,0,:])
-        r_norm = np.linalg.norm(r, axis = 1)
-        self.normals = np.vstack((-r[:, 1] / r_norm, r[:, 0] / r_norm)).T
-
-    # def compute_mappings(self):
-    #   """
-    #   Considering pre-computing all the mappings to speed things up.
-    #   """
-    #     pt1 = self.vertices[self.element_to_vertex[:, 0]]
-    #     pt2 = self.vertices[self.element_to_vertex[:, 1]]
-    #     self.pt2_minus_pt1 = pt2 - pt1
-
     def compute_connectivity(self):
         """
         Determine and store a representation of which elements are adjacent.
@@ -159,7 +135,7 @@ class Mesh(object):
             return True
         return False
 
-    def get_physical_points(self, element_id, reference_pt):
+    def get_physical_points(self, element_idx, x_hat):
         """
         Use a linear affine mapping to convert from the reference element
         back to physical coordinates. Note that the reference element is
@@ -168,18 +144,16 @@ class Mesh(object):
         element is a line segment from 0 to 1.
         """
         return _get_physical_points(self.element_to_vertex,
-                                    self.vertices,
-                                    element_id,
-                                    reference_pt)
+                                    self.vertices, element_idx, x_hat)
 
-    def get_element_jacobian(self, element_id):
+    def get_element_jacobian(self, element_idx, x_hat):
         """
         Returns the jacobian of the linear affine mapping from the
         reference element to physical space.
         Used for evaluating integrals on the reference element rather than in
         physical coordinates.
         """
-        vertex_list = self.element_to_vertex[element_id, :]
+        vertex_list = self.element_to_vertex[element_idx, :]
         pt1 = self.vertices[vertex_list[0]]
         pt2 = self.vertices[vertex_list[1]]
         pt2_minus_pt1 = pt2 - pt1
@@ -188,12 +162,69 @@ class Mesh(object):
         j = np.sqrt(pt2_minus_pt1[0] ** 2 + pt2_minus_pt1[1] ** 2)
         return j
 
-class HigherOrderMesh(object):
-    def __init__(self, basis_funcs, coefficients):
-        pass
+    def get_normal(self, element_idx, x_hat):
+        """
+        Return the normal to element_idx at reference location x_hat.
+        For linear elements, the normal is the same everywhere!
+        """
+        vertices = self.vertices[self.element_to_vertex[element_idx, :]]
+        r = (vertices[1, :] - vertices[0,:])
+        r_norm = np.sqrt(r[0] ** 2 + r[1] ** 2)
+        return np.array([-r[1], r[0]]) / r_norm
+
+class HigherOrderMesh(Mesh):
+    """
+    A mesh that uses higher order mappings. Arbitrary order of mapping can
+    be used by simply providing the proper set of basis functions. This
+    is unnecessary for problems with straight boundaries.
+
+    Some of the functions that are simple for a linear boundary are much more
+    difficult for higher order boundaries. For example, computing the distance
+    between two elements is more involved.
+    """
+    def __init__(self, basis_funcs, boundary_fnc,
+                       vertex_params, element_to_vertex):
+        vertices = boundary_fnc(vertex_params).T
+
+        self.vertex_params = vertex_params
+        self.boundary_fnc = boundary_fnc
+        self.basis_funcs = basis_funcs
+
+        super(HigherOrderMesh, self).__init__(vertices, element_to_vertex)
+
+        self.calculate_coefficients()
+
 
     @classmethod
-    def circular_mesh(self, basis_funcs, n_elements, radius):
-        coefficients = np.empty((2, n_elements, basis_funcs.num_fncs))
-        for k in range(n_elements):
-            pass
+    def circular_mesh(cls, basis_funcs, n_elements, radius):
+        n_vertices = n_elements
+        vertex_params = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
+        boundary_func = lambda t: radius * np.sin([np.pi / 2 - t, t])
+        # vertices = boundary_func(vertex_params).T
+
+        element_to_vertex = np.zeros((n_elements, 2))
+        for i in range(0, n_elements - 1):
+            element_to_vertex[i, :] = (i, i + 1)
+        element_to_vertex[-1, :] = (n_elements - 1, 0)
+        element_to_vertex = element_to_vertex.astype(int)
+
+        return cls(basis_funcs, boundary_func,
+                   vertex_params, element_to_vertex)
+
+    def calculate_coefficients(self):
+        # This is basically an interpolation of the boundary function
+        # onto the basis
+        coefficients = np.empty((2, self.n_elements,
+                                 self.basis_funcs.num_fncs))
+        for k in range(self.n_elements):
+            left_vert = self.element_to_vertex[k, 0]
+            right_vert = self.element_to_vertex[k, 1]
+            left_param = self.vertex_params[left_vert]
+            right_param = self.vertex_params[right_vert]
+            for (i, node) in enumerate(self.basis_funcs.nodes):
+                node_param = left_param + node * (right_param - left_param)
+                node_loc = self.boundary_fnc(node_param)
+                coefficients[:, k, i] = node_loc
+        self.coefficients = coefficients
+
+

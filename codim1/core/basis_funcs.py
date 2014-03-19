@@ -15,7 +15,7 @@ class Function(object):
     def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
 
-    def chain_rule(self, element_idx):
+    def chain_rule(self, element_idx, x_hat):
         return 1.0
 
 class Solution(object):
@@ -36,7 +36,7 @@ class Solution(object):
         return [self.coeffs[dof_x] * basis_eval[0],
                 self.coeffs[dof_y] * basis_eval[1]]
 
-    def chain_rule(self, element_idx):
+    def chain_rule(self, element_idx, x_hat):
         return 1.0
 
 
@@ -98,7 +98,7 @@ class BasisFunctions(object):
         """
         return _evaluate_basis(self.derivs, i, x_hat)
 
-    def chain_rule(self, element_idx):
+    def chain_rule(self, element_idx, x_hat):
         return 1.0
 
 class _GradientBasisFunctions(BasisFunctions):
@@ -116,7 +116,7 @@ class _GradientBasisFunctions(BasisFunctions):
         self.nodes = nodes
         self.fncs = fncs
 
-    def chain_rule(self, element_idx):
+    def chain_rule(self, element_idx, x_hat):
         # In 1D, all we need is the inverse of the element jacobian
         # determinant -- which is just the single dx/d\hat{x}
-        return 1.0 / self.mesh.get_element_jacobian(element_idx)
+        return 1.0 / self.mesh.get_element_jacobian(element_idx, x_hat)
