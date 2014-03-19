@@ -89,7 +89,7 @@ def test_M_integral_same_dof():
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1, msh)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
-    M_local = single_integral(msh, kernel, bf, q, 0, 0, 0)
+    M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 0)
     # integral of (1-x)^2 from 0 to 1
     np.testing.assert_almost_equal(M_local[0, 0], 1.0 / 3.0)
 
@@ -98,7 +98,7 @@ def test_M_integral_same_dof_with_jacobian():
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1, msh)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
-    M_local = single_integral(msh, kernel, bf, q, 0, 0, 0)
+    M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 0)
     # Element size divided by two so the M value should be divided by two
     np.testing.assert_almost_equal(M_local[0, 0], 1.0 / 6.0)
 
@@ -107,6 +107,6 @@ def test_M_integral_diff_dof():
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1, msh)
     kernel = lambda x, n: np.array([[1.0, 0], [0, 1.0]])
-    M_local = single_integral(msh, kernel, bf, q, 0, 0, 1)
+    M_local = single_integral(msh, kernel, bf, bf, q, 0, 0, 1)
     # integral of (1-x)*x from 0 to 1
     np.testing.assert_almost_equal(M_local[0, 0], 1.0 / 6.0)

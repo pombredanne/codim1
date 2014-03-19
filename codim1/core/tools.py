@@ -21,8 +21,10 @@ import matplotlib.collections
 #     plt.colorbar()
 #     plt.show()
 
-def rmse(f1, f2):
-    return np.sqrt((np.sum(((f1 - f2) / (f2)) ** 2) / f2.shape[0]))
+def L2_error(f1, f2):
+    L2_f2 = np.sqrt(np.sum((f2 ** 2)))
+    L2_f1_minus_f2 = np.sqrt(np.sum(((f1 - f2) ** 2)))
+    return L2_f1_minus_f2 / L2_f2
 
 def plot_mesh(msh, show = True):
     points1 = msh.vertices[msh.element_to_vertex[:, 0]]

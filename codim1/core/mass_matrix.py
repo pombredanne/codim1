@@ -43,6 +43,7 @@ class MassMatrix(object):
                     M_local = single_integral(self.mesh,
                                               self.mass_matrix_kernel,
                                               self.basis_funcs,
+                                              self.basis_funcs,
                                               self.quadrature,
                                               k, i, j)
                     self.M[i_dof_x, j_dof_x] = M_local[0, 0]

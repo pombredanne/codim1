@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.core.tools import interpolate, evaluate_boundary_solution, \
-                evaluate_solution_on_element, plot_mesh, rmse
+                evaluate_solution_on_element, plot_mesh, L2_error
 from codim1.core.dof_handler import DiscontinuousDOFHandler
 from codim1.core.basis_funcs import BasisFunctions, Solution
 from codim1.core.mesh import Mesh
@@ -9,11 +9,11 @@ from codim1.core.mesh import Mesh
 #     m = Mesh.circular_mesh(50, 1.0)
 #     plot_mesh(m)
 
-def test_rmse():
+def test_L2error():
     x1 = np.array([1.0, 2.0])
     x2 = np.array([0.5, 0.5])
-    exact = 1.118033988
-    np.testing.assert_almost_equal(exact, rmse(x1, x2), 5)
+    exact = np.sqrt(0.25 + 2.25) / (np.sqrt(0.5))
+    np.testing.assert_almost_equal(exact, L2_error(x1, x2), 5)
 
 def test_interpolate():
     n_elements = 2

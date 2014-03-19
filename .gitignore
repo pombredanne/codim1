@@ -1,9 +1,10 @@
 data
-figures
-archive
-software
+build
+codim1.egg-info
 *.pyc
 *.swp
 *.swo
 *nohup.out
 .vagrant
+*.so
+*.html

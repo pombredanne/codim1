@@ -4,8 +4,13 @@ import copy
 from codim1.fast.basis_funcs import evaluate_basis as _evaluate_basis
 
 class Function(object):
+    """
+    A thin wrapper around a normal python function in order to trick all
+    the integration procedures into thinking it is a basis function.
+    """
     def __init__(self, f):
         self.f = f
+        self.num_fncs = 1
 
     def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
@@ -22,6 +27,7 @@ class Solution(object):
         self.dof_handler = dof_handler
         self.basis = basis
         self.coeffs = coeffs
+        self.num_fncs = basis.num_fncs
 
     def evaluate(self, element_idx, i, x_hat, x):
         dof_x = self.dof_handler.dof_map[0, element_idx, i]

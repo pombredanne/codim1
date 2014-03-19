@@ -106,8 +106,8 @@ def double_integral(mesh, kernel,
     result *= src_jacobian * soln_jacobian
     return result
 
-def single_integral(mesh, kernel, basis_fncs, quadrature, 
-                    int k, int i, int j):
+def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
+                    quadrature, int k, int i, int j):
     """
     Performs a single integral over one element. The operations are all 
     almost identical to those in the double_integral method. Thus, read 
@@ -121,17 +121,17 @@ def single_integral(mesh, kernel, basis_fncs, quadrature,
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
     cdef double jacobian = mesh.get_element_jacobian(k) * \
-                           basis_fncs.chain_rule(k)
+                           src_basis_fncs.chain_rule(k) * \
+                           soln_basis_fncs.chain_rule(k)
     cdef np.ndarray[double, ndim = 1] k_normal = mesh.normals[k]
 
-    # Just perform standard gauss quadrature
     cdef np.ndarray[double, ndim = 1] q_pts = quadrature.x
     cdef np.ndarray[double, ndim = 1] wts = quadrature.w
     for (q_pt, w) in zip(q_pts, wts):
         phys_pt = mesh.get_physical_points(k, q_pt)
 
-        src_basis_fnc = basis_fncs.evaluate(k, i, q_pt, phys_pt)
-        soln_basis_fnc = basis_fncs.evaluate(k, j, q_pt, phys_pt)
+        src_basis_fnc = soln_basis_fncs.evaluate(k, i, q_pt, phys_pt)
+        soln_basis_fnc = src_basis_fncs.evaluate(k, j, q_pt, phys_pt)
 
         k_val = kernel(phys_pt, k_normal)
         k_val *= w
