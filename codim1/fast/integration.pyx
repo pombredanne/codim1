@@ -15,6 +15,9 @@ from basis_funcs cimport evaluate_basis
 # independently defined, but conforming to standards is generally good.
 # TODO: For linear mappings, the jacobians and normal vectors are
 # constant. Take advantage of this and make this faster!
+# TODO: Chain rule should return a vector of derivatives. Currently, it 
+# returns a scalar. This is obviously wrong, but doesn't matter in many
+# simple cases.
 def double_integral(mesh, kernel, 
                     src_basis_fncs, soln_basis_fncs, 
                     src_quadrature, soln_quadrature, 

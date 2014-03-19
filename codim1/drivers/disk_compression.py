@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import DiscontinuousDOFHandler,\
                                     ContinuousDOFHandler
-from codim1.core.mesh import Mesh
+from codim1.core.mesh import Mesh, HigherOrderMesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions, Solution
@@ -47,17 +47,22 @@ def main(n_elements, element_deg, plot):
     # than necessary, but nice for testing other components
     interior_quad_pts = 13
 
-    # A circle with radius one.
-    mesh = Mesh.circular_mesh(n_elements, 1.0)
-
-    # Define the basis functions on the mesh.
+    # Define the solution basis functions
     bf = BasisFunctions.from_degree(element_deg)
+
+    # We must use at least first order mesh basis functions.
+    mesh_bf = BasisFunctions.from_degree(
+              element_deg if element_deg > 0 else 1)
+
+    # A circle with radius one.
+    mesh = HigherOrderMesh.circular_mesh(mesh_bf, n_elements, 1.0)
 
     # This object defines what type of quadrature to use for different
     # situations (log(r) singular, 1/r singular, adjacent elements, others)
     # and how many points to use.
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
-    # Use more point for the RHS. This is because it is discontinuous
+
+    # Maybe use more point for the RHS. This is because it is discontinuous
     # at: theta = (24/50) * pi, so if there aren't enough points, I will
     # miss that discontinuity
     # This is not necessary if the mesh is aligned with the discontinuity
@@ -179,7 +184,7 @@ def main(n_elements, element_deg, plot):
     return int_strs_x[:, 0]
 
 if __name__ == "__main__":
-    sigma_xx = main(50, 0, True)
+    sigma_xx = main(16, 2, True)
     plt.show()
     sigma_xx_exact_perturbed = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004]) + np.random.rand(10) * 0.00005

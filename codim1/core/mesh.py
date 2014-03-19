@@ -182,21 +182,38 @@ class HigherOrderMesh(Mesh):
     difficult for higher order boundaries. For example, computing the distance
     between two elements is more involved.
     """
-    def __init__(self, basis_funcs, boundary_fnc,
+    def __init__(self, basis_fncs, boundary_fnc,
                        vertex_params, element_to_vertex):
         vertices = boundary_fnc(vertex_params).T
 
         self.vertex_params = vertex_params
         self.boundary_fnc = boundary_fnc
-        self.basis_funcs = basis_funcs
+        self.basis_fncs = basis_fncs
+        if self.basis_fncs.num_fncs < 2:
+            raise Exception("At least two basis functions are required to" +
+                            " describe a mesh edge.")
 
         super(HigherOrderMesh, self).__init__(vertices, element_to_vertex)
 
         self.calculate_coefficients()
 
+    # @classmethod
+    # def circular_mesh(cls, n_elements, radius):
+    #     n_vertices = n_elements
+    #     theta = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
+    #     vertices = np.zeros((n_vertices, 2))
+    #     vertices[:, 0] = radius * np.cos(theta)
+    #     vertices[:, 1] = radius * np.sin(theta)
+
+    #     element_to_vertex = np.zeros((n_elements, 2))
+    #     for i in range(0, n_elements - 1):
+    #         element_to_vertex[i, :] = (i, i + 1)
+    #     element_to_vertex[-1, :] = (n_elements - 1, 0)
+    #     element_to_vertex = element_to_vertex.astype(int)
+    #     return cls(vertices, element_to_vertex)
 
     @classmethod
-    def circular_mesh(cls, basis_funcs, n_elements, radius):
+    def circular_mesh(cls, basis_fncs, n_elements, radius):
         n_vertices = n_elements
         vertex_params = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
         boundary_func = lambda t: radius * np.sin([np.pi / 2 - t, t])
@@ -208,23 +225,63 @@ class HigherOrderMesh(Mesh):
         element_to_vertex[-1, :] = (n_elements - 1, 0)
         element_to_vertex = element_to_vertex.astype(int)
 
-        return cls(basis_funcs, boundary_func,
+        return cls(basis_fncs, boundary_func,
                    vertex_params, element_to_vertex)
 
     def calculate_coefficients(self):
         # This is basically an interpolation of the boundary function
         # onto the basis
         coefficients = np.empty((2, self.n_elements,
-                                 self.basis_funcs.num_fncs))
+                                 self.basis_fncs.num_fncs))
         for k in range(self.n_elements):
             left_vert = self.element_to_vertex[k, 0]
             right_vert = self.element_to_vertex[k, 1]
             left_param = self.vertex_params[left_vert]
             right_param = self.vertex_params[right_vert]
-            for (i, node) in enumerate(self.basis_funcs.nodes):
+            for (i, node) in enumerate(self.basis_fncs.nodes):
                 node_param = left_param + node * (right_param - left_param)
                 node_loc = self.boundary_fnc(node_param)
                 coefficients[:, k, i] = node_loc
         self.coefficients = coefficients
 
+    def get_physical_points(self, element_idx, x_hat):
+        """
+        Use the mapping defined by the coefficients and basis functions
+        to convert coordinates
+        """
+        phys_pt = np.zeros(2)
+        for i in range(self.basis_fncs.num_fncs):
+            # I assume that the basis functions are defined on the reference
+            # interval and thus the physical point location is unnecesary.
+            phys_pt += self.coefficients[:, element_idx, i] *\
+                       self.basis_fncs.evaluate(element_idx, i, x_hat, 0.0)
+        return phys_pt
 
+    def get_element_jacobian(self, element_idx, x_hat):
+        """
+        Use the derivative of the mapping defined by the coefficients/basis
+        to get the determinant of the jacobian!
+        """
+        deriv_pt = np.zeros(2)
+        for i in range(self.basis_fncs.num_fncs):
+            # I assume that the basis functions are defined on the reference
+            # interval and thus the physical point location is unnecesary.
+            deriv_pt += self.coefficients[:, element_idx, i] *\
+                self.basis_fncs.evaluate_derivative(element_idx, i,
+                                                    x_hat, 0.0)
+        return np.sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
+
+    def get_normal(self, element_idx, x_hat):
+        """
+        Use the derivative of the mapping to determine the tangent vector
+        and thus to determine the local normal vector
+        """
+        deriv_pt = np.zeros(2)
+        for i in range(self.basis_fncs.num_fncs):
+            # I assume that the basis functions are defined on the reference
+            # interval and thus the physical point location is unnecesary.
+            deriv_pt += self.coefficients[:, element_idx, i] *\
+                self.basis_fncs.evaluate_derivative(element_idx, i,
+                                                    x_hat, 0.0)
+        length = np.sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
+        return np.array([-deriv_pt[1], deriv_pt[0]]) / length
