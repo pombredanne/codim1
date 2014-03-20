@@ -15,11 +15,7 @@ from codim1.core.mass_matrix import MassMatrix
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
-# This file solves a Neumann problem using the hypersingular boundary
-# integral equation -- also known as the traction boundary integral
-# equation, because all the terms are in traction units.
-
-# Elastic parameters
+# Elastic parameter
 shear_modulus = 1.0
 poisson_ratio = 0.25
 
@@ -28,7 +24,10 @@ quad_min = 4
 quad_max = 12
 quad_logr = 12
 quad_oneoverr = 12
-interior_quad_pts = 8
+# I did some experiments and
+# 13 Quadrature points seems like it gives error like 1e-10, lower
+# than necessary, but nice for testing other components
+interior_quad_pts = 13
 
 n_elements = 50
 
@@ -41,46 +40,33 @@ mesh = Mesh.simple_line_mesh(n_elements)
 bf = BasisFunctions.from_degree(1)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = ContinuousDOFHandler(mesh, 1)
-assembler = MatrixAssembler(mesh, bf, dh, qs)
-# We used the basis function derivatives for the regularized Gpp kernel
-# This is derived using integration by parts and moving part of the 1/r^3
-# singularity onto the basis functions.
-# TODO: This construct could be extended to handle regularizations of the
-# cauchy singular kernels by allowing different sets of basis functions
-# for the source and solution in the assembler.
-derivs_assembler = MatrixAssembler(mesh, bf.derivs, dh, qs)
+
+print('Assembling kernel matrix, Guu')
+matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
+Guu = matrix_assembler.assemble_matrix(k_d)
+
+print('Assembling kernel matrix, Gup')
+# TODO: Allow "mass matrix" creation on the RHS. Doesn't matter here, because
+# there are no discontinuities, but it is bad practice to use the matrix like
+# this.
 mass_matrix = MassMatrix(mesh, bf, dh, QuadGauss(2),
                          compute_on_init = True)
+Gup = matrix_assembler.assemble_matrix(k_t)
+Gup -= 0.5 * mass_matrix.M
 
-# print('Assembling kernel matrix, Gpu')
-# Gpu = assembler.assemble_matrix(k_tp)
-# Gpu += 0.5 * mass_matrix.M
-print('Assembling kernel matrix, Gpp')
-Gpp = derivs_assembler.assemble_matrix(k_h)
+displacement_function = lambda x, n: np.array([1.0, 0.0])
+displacement_coeffs = tools.interpolate(displacement_function, dh, bf, mesh)
+rhs = np.dot(Gup, displacement_coeffs)
 
-fnc = lambda x: np.array([1.0, 0.0])
-traction_function = BasisFunctions.from_function(fnc)
-rhs_assembler = RHSAssembler(mesh, bf, dh, qs)
-rhs = rhs_assembler.assemble_rhs(traction_function, k_tp)
-soln_coeffs = np.linalg.solve(Gpp, rhs)
+# Solve Ax = b, where x are the coefficients over the solution basis
+soln_coeffs = np.linalg.solve(Guu, rhs)
+
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)
-x, s = tools.evaluate_boundary_solution(5, soln, mesh)
 
-# plt.figure(1)
-# plt.plot(x[:, 0], s[:, 0])
-# plt.xlabel(r'X')
-# plt.ylabel(r'$u_x$', fontsize = 18)
-# plt.figure(2)
-# plt.plot(x[:, 0], s[:, 1])
-# plt.xlabel(r'X')
-# plt.ylabel(r'$u_y$', fontsize = 18)
-# plt.show()
-
-# Compute some interior values.
 # TODO: Extract this interior point computation to some tool function.
-x_pts = 98
-y_pts = 98
+x_pts = 50
+y_pts = 50
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -91,9 +77,11 @@ ip = InteriorPoint(mesh, dh, interior_quadrature)
 for i in range(x_pts):
     for j in range(y_pts):
         traction_effect = ip.compute((x[i], y[j]), np.array((0.0, 0.0)),
-                   k_d, traction_function)
-        displacement_effect = -ip.compute((x[i], y[j]), np.array([0.0, 0.0]),
-                   k_t, soln)
+                   k_d, soln)
+        displacement_effect = -ip.compute(
+                (x[i], y[j]), np.array([0.0, 0.0]), k_t,
+                BasisFunctions.from_function(
+                    lambda x: displacement_function(x, 0)))
         int_ux[j, i] = traction_effect[0] + displacement_effect[0]
         int_uy[j, i] = traction_effect[1] + displacement_effect[1]
 

@@ -42,6 +42,8 @@ def plot_matrix(M, title, show = True):
     Creates and shows two plots. One of the matrix itself and
     one of the symmetric pattern M - M.T
     """
+    # TODO: I think there's a matplotlib function that plots matrices and
+    # probably does a much nicer job than what I have here.
     plt.figure()
     plt.imshow(M)
     plt.title(title)
@@ -106,3 +108,4 @@ def evaluate_solution_on_element(element_idx, reference_point, soln, mesh):
         soln_y += soln.evaluate(element_idx, i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 
+#TODO: Interior point computation over some rectangular domain.
