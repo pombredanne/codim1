@@ -80,9 +80,7 @@ def test_solution():
     soln = Solution(bf, dh, coeffs)
 
     value = soln.evaluate(0, 0, 0.0, -1.0)
-    assert(value[0] == 0.0)
-    assert(value[1] == 1.0)
+    np.testing.assert_almost_equal(value, [0.0, 1.0])
 
     value = soln.evaluate(0, 1, 1.0, -1.0)
-    assert(value[0] == 1.0)
-    assert(value[1] == 0.0)
+    np.testing.assert_almost_equal(value, [1.0, 0.0])

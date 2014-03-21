@@ -24,23 +24,23 @@ def test_get_phys_pts():
     m = Mesh.simple_line_mesh(4)
 
     # Element 2 should lie from 0 to 0.5
-    pts = m.get_physical_points(2, 0.5)
+    pts = m.get_physical_point(2, 0.5)
     np.testing.assert_almost_equal(pts[0], 0.25)
-    pts = m.get_physical_points(2, 0.0)
+    pts = m.get_physical_point(2, 0.0)
     np.testing.assert_almost_equal(pts[0], 0.0)
-    pts = m.get_physical_points(2, 1.0)
+    pts = m.get_physical_point(2, 1.0)
     np.testing.assert_almost_equal(pts[0], 0.5)
     np.testing.assert_almost_equal(pts[1], 0.0)
 
 def test_get_one_phys_pts():
     m = Mesh.simple_line_mesh(4)
     # Element 2 should lie from 0 to 0.5
-    pts = m.get_physical_points(2, np.array([0.5]))
+    pts = m.get_physical_point(2, np.array([0.5]))
     np.testing.assert_almost_equal(pts[0], 0.25)
 
 def test_jacobian():
     m = Mesh.simple_line_mesh(4)
-    j = m.get_element_jacobian(1, 0.0)
+    j = m.get_jacobian(1, 0.0)
     np.testing.assert_almost_equal(j, 0.5)
 
 def test_normals():
@@ -122,22 +122,22 @@ def test_higher_order_coeff_gen():
 def test_higher_order_phys_pt():
     bf = BasisFunctions.from_degree(2)
     m = Mesh.circular_mesh(2, 1.0, bf)
-    phys_pt = m.get_physical_points(0, 0.5)
+    phys_pt = m.get_physical_point(0, 0.5)
     np.testing.assert_almost_equal(phys_pt, (0.0, 1.0))
-    phys_pt = m.get_physical_points(0, 0.25)
+    phys_pt = m.get_physical_point(0, 0.25)
     np.testing.assert_almost_equal(phys_pt, (0.5, 0.75))
-    phys_pt = m.get_physical_points(0, 0.75)
+    phys_pt = m.get_physical_point(0, 0.75)
     np.testing.assert_almost_equal(phys_pt, (-0.5, 0.75))
 
 def test_higher_order_jacobian():
     bf = BasisFunctions.from_degree(2)
     m = Mesh.circular_mesh(2, 1.0, bf)
     x_hat = np.linspace(0, 1, 100)
-    jacobian = m.get_element_jacobian(0, 0.5)
+    jacobian = m.get_jacobian(0, 0.5)
     np.testing.assert_almost_equal(jacobian, 2.0)
     # jacobian = np.zeros(100)
     # for i in range(100):
-    #     jacobian[i] = m.get_element_jacobian(0, x_hat[i])
+    #     jacobian[i] = m.get_jacobian(0, x_hat[i])
     # import matplotlib.pyplot as plt
     # plt.plot(x_hat, jacobian)
     # plt.show()

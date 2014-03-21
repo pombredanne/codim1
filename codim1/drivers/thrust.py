@@ -52,6 +52,8 @@ def plot_edge_dislocation():
 
 ux_exact, uy_exact = plot_edge_dislocation()
 
+start = time.time()
+
 # Elastic parameter
 shear_modulus = 1.0
 poisson_ratio = 0.25
@@ -66,7 +68,7 @@ quad_oneoverr = 12
 # than necessary, but nice for testing other components
 interior_quad_pts = 13
 
-n_elements = 24
+n_elements = 100
 
 # The four kernels of linear elasticity!
 # http://en.wikipedia.org/wiki/The_Three_Christs_of_Ypsilanti
@@ -108,8 +110,8 @@ soln = Solution(bf, dh, soln_coeffs)
 
 print("Performing Interior Computation")
 # TODO: Extract this interior point computation to some tool function.
-x_pts = 25
-y_pts = 25
+x_pts = 35
+y_pts = 35
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -130,6 +132,8 @@ for i in range(x_pts):
 #TODO: HACK to get the correct displacements for the dislocation
 int_ux -= np.flipud(int_ux)
 int_uy += np.flipud(int_uy)
+end = time.time()
+print("Took: " + str(end - start) + " seconds")
 
 plt.figure(3)
 plt.title(r'$u_x$')

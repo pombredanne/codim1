@@ -28,19 +28,9 @@ class Kernel(object):
         n is the unit normal vector to the solution surface.
         """
         cdef double dist = sqrt(r[0] ** 2 + r[1] ** 2)
-        cdef double drdm
-        #print r
-        #print dist
-        try:
-            drdm = (r[0] * m[0] + r[1] * m[1]) / dist
-        except ZeroDivisionError:
-            import ipdb; ipdb.set_trace()
-
-
-        cdef double drdn = (r[0] * n[0] + r[1] * n[1]) / dist
-        cdef np.ndarray[double, ndim=1] dr = np.zeros(2)
-        dr[0] = r[0] / dist
-        dr[1] = r[1] / dist
+        cdef np.ndarray[double, ndim=1] dr = r / dist
+        cdef double drdm = dr[0] * m[0] + dr[1] * m[1]
+        cdef double drdn = dr[0] * n[0] + dr[1] * n[1]
         return self._call(dist, drdn, drdm, dr, n, m)
 
     def _call(self, double dist, double drdn, double drdm,
@@ -62,7 +52,7 @@ class DisplacementKernel(Kernel):
                     np.ndarray[double, ndim=1] dr,
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m):
-        cdef np.ndarray[double, ndim = 2] Guu = np.zeros((2, 2))
+        cdef np.ndarray[double, ndim = 2] Guu = np.empty((2, 2))
         Guu[0, 0] = self.const3 * (-self.const4 * log(dist) +\
                 (dr[0] ** 2))
         Guu[1, 1] = self.const3 * (-self.const4 * log(dist) +\
@@ -85,7 +75,7 @@ class TractionKernel(Kernel):
                     np.ndarray[double, ndim=1] dr,
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m):
-        cdef np.ndarray[double, ndim = 2] T = np.zeros((2, 2))
+        cdef np.ndarray[double, ndim = 2] T = np.empty((2, 2))
         cdef double factor = (1 / dist) * self.const2
         T[0, 0] = factor * (-drdn * (self.const1 + 2 * dr[0] ** 2))
         T[1, 1] = factor * (-drdn * (self.const1 + 2 * dr[1] ** 2))
@@ -111,7 +101,7 @@ class AdjointTractionKernel(Kernel):
                     np.ndarray[double, ndim=1] dr,
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m):
-        cdef np.ndarray[double, ndim = 2] T = np.zeros((2, 2))
+        cdef np.ndarray[double, ndim = 2] T = np.empty((2, 2))
         cdef double factor = (1 / dist) * self.const2
         T[0, 0] = factor * (drdm * (self.const1 + 2 * dr[0] ** 2))
         T[1, 1] = factor * (drdm * (self.const1 + 2 * dr[1] ** 2))
@@ -136,7 +126,7 @@ class RegularizedHypersingularKernel(Kernel):
                     np.ndarray[double, ndim=1] dr,
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m):
-        cdef np.ndarray[double, ndim = 2] B = np.zeros((2, 2))
+        cdef np.ndarray[double, ndim = 2] B = np.empty((2, 2))
         B[0, 0] = self.const5 * (log(dist) - dr[0] * dr[0])
         B[1, 1] = self.const5 * (log(dist) - dr[1] * dr[1])
         B[1, 0] = self.const5 * (-dr[1] * dr[0])
@@ -174,7 +164,7 @@ class HypersingularKernel(Kernel):
                        double drdn,
                        np.ndarray[double, ndim=1] n):
         """ UGLY!!! """
-        Skij = self.shear_modulus / \
+        cdef double Skij = self.shear_modulus / \
                 (2 * pi * (1 - self.poisson_ratio)) * 1 / (r ** 2)
         Skij = Skij * ( 2 * drdn * ( self.const1 * (i==j) * dr[k] + \
             self.poisson_ratio * ( dr[j] * (k==i) + dr[i] * (j==k) ) - \

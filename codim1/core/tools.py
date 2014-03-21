@@ -31,7 +31,7 @@ def plot_mesh(msh, show = True, points_per_element = 5):
     x_hat = np.linspace(0, 1, points_per_element)
     for k in range(msh.n_elements):
         for i in range(points_per_element):
-            points.append(msh.get_physical_points(k, x_hat[i]))
+            points.append(msh.get_physical_point(k, x_hat[i]))
     lc = matplotlib.collections.LineCollection(zip(points[:-1], points[1:]))
     fig, ax = plt.subplots()
     ax.add_collection(lc)
@@ -73,7 +73,7 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
             dof_x = dof_handler.dof_map[0, k, i]
             dof_y = dof_handler.dof_map[1, k, i]
             ref_pt = basis_funcs.nodes[i]
-            node_pt = mesh.get_physical_points(k, ref_pt)
+            node_pt = mesh.get_physical_point(k, ref_pt)
             normal = mesh.get_normal(k, ref_pt)
             f_val = fnc(node_pt, normal)
             result[dof_x] = f_val[0]
@@ -94,7 +94,7 @@ def evaluate_boundary_solution(points_per_element, soln, mesh):
     y = []
     for k in range(mesh.n_elements):
         for pt in np.linspace(0.0, 1.0, points_per_element):
-            x.append(mesh.get_physical_points(k, pt))
+            x.append(mesh.get_physical_point(k, pt))
             u = evaluate_solution_on_element(k, pt, soln, mesh)
             y.append(u)
     x = np.array(x)
@@ -102,7 +102,7 @@ def evaluate_boundary_solution(points_per_element, soln, mesh):
     return x, y
 
 def evaluate_solution_on_element(element_idx, reference_point, soln, mesh):
-    phys_pt = mesh.get_physical_points(element_idx, reference_point)
+    phys_pt = mesh.get_physical_point(element_idx, reference_point)
     soln_x = 0.0
     soln_y = 0.0
     # The value is the sum over all the basis functions.

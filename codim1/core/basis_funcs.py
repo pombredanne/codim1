@@ -33,8 +33,8 @@ class Solution(object):
         dof_x = self.dof_handler.dof_map[0, element_idx, i]
         dof_y = self.dof_handler.dof_map[1, element_idx, i]
         basis_eval = self.basis.evaluate(element_idx, i, x_hat, x)
-        return [self.coeffs[dof_x] * basis_eval[0],
-                self.coeffs[dof_y] * basis_eval[1]]
+        return np.array([self.coeffs[dof_x] * basis_eval[0],
+                self.coeffs[dof_y] * basis_eval[1]])
 
     def chain_rule(self, element_idx, x_hat):
         return 1.0
@@ -119,4 +119,4 @@ class _GradientBasisFunctions(BasisFunctions):
     def chain_rule(self, element_idx, x_hat):
         # In 1D, all we need is the inverse of the element jacobian
         # determinant -- which is just the single dx/d\hat{x}
-        return 1.0 / self.mesh.get_element_jacobian(element_idx, x_hat)
+        return 1.0 / self.mesh.get_jacobian(element_idx, x_hat)
