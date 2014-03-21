@@ -1,6 +1,7 @@
 # cython: profile=True
 import numpy as np
 cimport numpy as np
+from codim1.fast.mesh cimport _get_normal, _get_jacobian, _get_physical_point
 
 # TODO: I think the future direction for speeding this up more would be
 # to create an "Integrator" class that stores most of the necessary info once
@@ -11,8 +12,7 @@ cimport numpy as np
 # standard. (kernel interior, solution basis exterior).
 # Flip it back to standard. Shouldn't matter, because the domains are 
 # independently defined, but conforming to standards is generally good.
-# TODO: For linear mappings, the jacobians and normal vectors are
-# constant. Take advantage of this and make this faster!
+# Maybe this isn't true. 
 # TODO: Chain rule should return a vector of derivatives. Currently, it 
 # returns a scalar. This is obviously wrong, but doesn't matter in many
 # simple cases.
@@ -30,6 +30,13 @@ def double_integral(mesh, kernel,
     """
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
+    # Just store some variables in a typed way to speed things up 
+    # inside the loop
+    cdef bint is_linear = mesh.is_linear
+    cdef np.ndarray[double, ndim = 3] mesh_coeffs = mesh.coefficients
+    cdef np.ndarray[double, ndim = 2] mesh_basis = mesh.basis_fncs.fncs
+    cdef np.ndarray[double, ndim = 2] mesh_derivs = mesh.basis_fncs.derivs
+
     # Jacobian determinants are necessary to scale the integral with the
     # change of variables. There may also be contributions from applying the
     # chain rule to derivatives of the basis functions.
@@ -42,43 +49,42 @@ def double_integral(mesh, kernel,
 
     # If the mesh is linear then the jacobian and normal vectors will be the
     # same at all quadrature points, so just grab them here once.
-    if mesh.is_linear:
-        src_jacobian = mesh.get_element_jacobian(k, 0.0) * \
+    if is_linear:
+        src_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, 0.0) * \
                        src_basis_fncs.chain_rule(k, 0.0)
-        k_normal = mesh.get_normal(k, 0.0)
-        soln_jacobian = mesh.get_element_jacobian(l, 0.0) * \
+        k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, 0.0)
+        soln_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, l, 0.0) * \
                         soln_basis_fncs.chain_rule(l, 0.0)
-        l_normal = mesh.get_normal(l, 0.0)
+        l_normal = _get_normal(mesh_derivs, mesh_coeffs, l, 0.0)
 
-    # Just store some variables in a typed way to speed things up 
-    # inside the loop
-    cdef np.ndarray[long, ndim = 2] element_to_vertex = mesh.element_to_vertex
-    cdef np.ndarray[double, ndim = 2] vertices = mesh.vertices
+    cdef int q_src_pt_index, q_soln_pt_index
+    cdef double q_pt_src, w_src, q_pt_soln, w_soln
+    cdef np.ndarray[double, ndim = 1] src_basis_fnc, soln_basis_fnc
+    cdef np.ndarray[double, ndim = 1] phys_src_pt, phys_soln_pt
+    cdef np.ndarray[double, ndim = 1] r
+    cdef np.ndarray[double, ndim = 2] k_val
+    cdef np.ndarray[double, ndim = 1] q_pts_soln, q_w_soln
+    cdef int idx_x, idx_y
 
     # The outer quadrature uses a standard nonsingular quadrature formula
     cdef np.ndarray[double, ndim = 1] q_pts = src_quadrature.x
     cdef np.ndarray[double, ndim = 1] w = src_quadrature.w
-    cdef int q_src_pt_index, q_soln_pt_index
-    cdef double q_pt_src, w_src, q_pt_soln, w_soln
-    cdef np.ndarray[double, ndim = 1] src_basis_fnc
-    cdef np.ndarray[double, ndim = 1] soln_basis_fnc
-    cdef np.ndarray[double, ndim = 1] phys_src_pt, phys_soln_pt
-    cdef np.ndarray[double, ndim = 1] r
-    cdef np.ndarray[double, ndim = 2] k_val
     for q_src_pt_index in range(q_pts.shape[0]):
         q_pt_src = q_pts[q_src_pt_index]
         w_src = w[q_src_pt_index]
 
-        if not mesh.is_linear:
+        if not is_linear:
             # Get the jacobian at this quad point
-            src_jacobian = mesh.get_element_jacobian(k, q_pt_src) * \
+            src_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs,
+                                         k, q_pt_src) * \
                            src_basis_fncs.chain_rule(k, q_pt_src)
             # Get the normal to this element at this quadrature point
-            k_normal = mesh.get_normal(k, q_pt_src)
+            k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, q_pt_src)
 
         # Translate from reference segment coordinates to 
         # real, physical coordinates
-        phys_src_pt = mesh.get_physical_points(k, q_pt_src)
+        phys_src_pt = _get_physical_point(mesh_basis, mesh_coeffs,
+                                          k, q_pt_src)
 
         # The basis functions should be evaluated on reference
         # coordinates
@@ -96,13 +102,16 @@ def double_integral(mesh, kernel,
             q_pt_soln = q_pts_soln[q_soln_pt_index]
             w_soln = q_w_soln[q_soln_pt_index]
 
-            if not mesh.is_linear:
-                soln_jacobian = mesh.get_element_jacobian(l, q_pt_soln) * \
+            if not is_linear:
+                soln_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs,
+                                              l, q_pt_soln) * \
                                 soln_basis_fncs.chain_rule(l, q_pt_soln)
-                l_normal = mesh.get_normal(l, q_pt_soln)
+                l_normal = _get_normal(mesh_derivs, mesh_coeffs,
+                                       l, q_pt_soln)
 
 
-            phys_soln_pt = mesh.get_physical_points(l, q_pt_soln)
+            phys_soln_pt = _get_physical_point(mesh_basis, mesh_coeffs,
+                                               l, q_pt_soln)
 
             soln_basis_fnc = soln_basis_fncs.evaluate(l, j, 
                                     q_pt_soln, phys_soln_pt)
@@ -140,27 +149,39 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
     """
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
+    cdef bint is_linear = mesh.is_linear
+    cdef np.ndarray[double, ndim = 3] mesh_coeffs = mesh.coefficients
+    cdef np.ndarray[double, ndim = 2] mesh_basis = mesh.basis_fncs.fncs
+    cdef np.ndarray[double, ndim = 2] mesh_derivs = mesh.basis_fncs.derivs
+
     cdef double jacobian    
     cdef np.ndarray[double, ndim = 1] k_normal
-    if mesh.is_linear:
-        jacobian = mesh.get_element_jacobian(k, 0.0) * \
+    cdef np.ndarray[double, ndim = 1] phys_pt
+    cdef np.ndarray[double, ndim = 1] src_basis_fnc, soln_basis_fnc
+    cdef np.ndarray[double, ndim = 2] k_val
+    cdef int idx_x, idx_y
+
+    if is_linear:
+        jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, 0.0) * \
                    src_basis_fncs.chain_rule(k, 0.0) * \
                    soln_basis_fncs.chain_rule(k, 0.0)
-        k_normal = mesh.get_normal(k, 0.0)
+        k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, 0.0)
 
     cdef np.ndarray[double, ndim = 1] q_pts = quadrature.x
     cdef np.ndarray[double, ndim = 1] wts = quadrature.w
     for (q_pt, w) in zip(q_pts, wts):
-        phys_pt = mesh.get_physical_points(k, q_pt)
+        phys_pt = _get_physical_point(mesh_basis, mesh_coeffs, k, q_pt)
 
-        if not mesh.is_linear:
-            jacobian = mesh.get_element_jacobian(k, q_pt) * \
+        if not is_linear:
+            jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, q_pt) * \
                        src_basis_fncs.chain_rule(k, q_pt) * \
                        soln_basis_fncs.chain_rule(k, q_pt)
-            k_normal = mesh.get_normal(k, q_pt)
+            k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, q_pt)
 
         src_basis_fnc = src_basis_fncs.evaluate(k, i, q_pt, phys_pt)
+        print src_basis_fnc
         soln_basis_fnc = soln_basis_fncs.evaluate(k, j, q_pt, phys_pt)
+        print soln_basis_fnc
 
         k_val = kernel(phys_pt, k_normal)
         k_val *= w

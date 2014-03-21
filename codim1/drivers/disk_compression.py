@@ -39,13 +39,13 @@ def disk(n_elements, element_deg, plot):
 
     # Quadrature points for the various circumstances
     quad_min = 4
-    quad_max = 20
-    quad_logr = 20
-    quad_oneoverr = 20
+    quad_max = 10
+    quad_logr = 10
+    quad_oneoverr = 10
     # I did some experiments and
     # 13 Quadrature points seems like it gives error like 1e-10, lower
     # than necessary, but nice for testing other components
-    interior_quad_pts = 20
+    interior_quad_pts = 13
 
     # Define the solution basis functions
     bf = BasisFunctions.from_degree(element_deg)
@@ -55,10 +55,8 @@ def disk(n_elements, element_deg, plot):
               element_deg if element_deg > 0 else 1)
 
     # A circle with radius one.
-    # TODO: The higher order mesh stuff doesn't quite work yet. Don't use it.
     mesh = Mesh.circular_mesh(n_elements, 1.0, mesh_bf)
-    tools.plot_mesh(mesh)
-    # mesh = Mesh.circular_mesh(n_elements, 1.0)
+    # tools.plot_mesh(mesh)
 
     # This object defines what type of quadrature to use for different
     # situations (log(r) singular, 1/r singular, adjacent elements, others)
@@ -188,7 +186,10 @@ def disk(n_elements, element_deg, plot):
     return int_strs_x[:, 0]
 
 if __name__ == "__main__":
-    sigma_xx = disk(25, 2, True)
+    start = time.time()
+    sigma_xx = disk(50, 0, True)
+    end = time.time()
+    print("Took: " + str(end - start) + " seconds")
     plt.show()
 
     # Calculate errors and compare with the crouch errors.

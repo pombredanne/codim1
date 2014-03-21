@@ -1,8 +1,8 @@
 import numpy as np
-from codim1.fast.get_physical_points import \
-    get_physical_points as _get_physical_points
 from codim1.core.segment_distance import segments_distance
 from codim1.core.basis_funcs import BasisFunctions
+from codim1.fast.mesh import _get_jacobian, _get_physical_point, \
+                             _get_normal
 
 class Mesh(object):
     """
@@ -196,6 +196,12 @@ class Mesh(object):
         self.neighbors = self.neighbors.astype(np.int)
 
     def is_neighbor(self, k, l, direction = 'both'):
+        """
+        Return whether elements k and l are neighbors in the direction
+        specified by "direction"
+        For example, if element l is to the right of element k, and
+        direction == 'right', this method will return true.
+        """
         # Check the right side
         if (direction is 'left' or direction is 'both') \
             and self.neighbors[k][0] == l:
@@ -206,45 +212,27 @@ class Mesh(object):
             return True
         return False
 
-    def get_physical_points(self, element_idx, x_hat):
+    def get_physical_point(self, element_idx, x_hat):
         """
         Use the mapping defined by the coefficients and basis functions
         to convert coordinates
         """
-        phys_pt = np.zeros(2)
-        for i in range(self.basis_fncs.num_fncs):
-            # I assume that the basis functions are defined on the reference
-            # interval and thus the physical point location is unnecesary.
-            phys_pt += self.coefficients[:, element_idx, i] *\
-                       self.basis_fncs.evaluate(element_idx, i, x_hat, 0.0)
-        return phys_pt
+        return _get_physical_point(self.basis_fncs.fncs, self.coefficients,
+                            element_idx, x_hat)
 
-    def get_element_jacobian(self, element_idx, x_hat):
+    def get_jacobian(self, element_idx, x_hat):
         """
         Use the derivative of the mapping defined by the coefficients/basis
         to get the determinant of the jacobian! This is used to change
         integration coordinates from physical to reference elements.
         """
-        deriv_pt = np.zeros(2)
-        for i in range(self.basis_fncs.num_fncs):
-            # I assume that the basis functions are defined on the reference
-            # interval and thus the physical point location is unnecesary.
-            deriv_pt += self.coefficients[:, element_idx, i] *\
-                self.basis_fncs.evaluate_derivative(element_idx, i,
-                                                    x_hat, 0.0)
-        return np.sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
+        return _get_jacobian(self.basis_fncs.derivs, self.coefficients,
+                             element_idx, x_hat)
 
     def get_normal(self, element_idx, x_hat):
         """
         Use the derivative of the mapping to determine the tangent vector
         and thus to determine the local normal vector.
         """
-        deriv_pt = np.zeros(2)
-        for i in range(self.basis_fncs.num_fncs):
-            # I assume that the basis functions are defined on the reference
-            # interval and thus the physical point location is unnecesary.
-            deriv_pt += self.coefficients[:, element_idx, i] *\
-                self.basis_fncs.evaluate_derivative(element_idx, i,
-                                                    x_hat, 0.0)
-        length = np.sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
-        return np.array([-deriv_pt[1], deriv_pt[0]]) / length
+        return _get_normal(self.basis_fncs.derivs, self.coefficients,
+                    element_idx, x_hat)

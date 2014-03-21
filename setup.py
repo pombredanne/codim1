@@ -7,8 +7,8 @@ cython_package = 'codim1.fast'
 ext = [
         Extension(cython_package + ".elastic_kernel",
             sources=["./codim1/fast/elastic_kernel.pyx"]),
-        Extension(cython_package + ".get_physical_points",
-            sources=["./codim1/fast/get_physical_points.pyx"]),
+        Extension(cython_package + ".mesh",
+            sources=["./codim1/fast/mesh.pyx"]),
         Extension(cython_package + ".integration",
             sources=["./codim1/fast/integration.pyx"]),
         Extension(cython_package + ".basis_funcs",
