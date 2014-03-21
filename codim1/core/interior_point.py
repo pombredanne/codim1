@@ -9,10 +9,10 @@ class InteriorPoint(object):
     def __init__(self,
                  mesh,
                  dof_handler,
-                 quadrature):
+                 quad_strategy):
         self.mesh = mesh
         self.dof_handler = dof_handler
-        self.quadrature = quadrature
+        self.quad_strategy = quad_strategy
 
     def compute(self, pt, pt_normal, kernel, solution):
         """
@@ -22,14 +22,14 @@ class InteriorPoint(object):
         """
         result = np.zeros(2)
 
-        # TODO: Vary quadrature order depending on distance to the point.
         kernel_fnc = lambda x, n: kernel.call(x - pt, pt_normal, n)
         one = Function(lambda x: np.ones(2))
         for k in range(self.mesh.n_elements):
+            # Vary quadrature order depending on distance to the point.
+            quadrature = self.quad_strategy.get_interior_quadrature(k, pt)
             for i in range(solution.num_fncs):
                 integral = single_integral(self.mesh, kernel_fnc,
-                                           one, solution,
-                                           self.quadrature,
+                                           one, solution, quadrature,
                                            k, 0, i)
                 result[0] += integral[0, 0]
                 result[0] += integral[0, 1]

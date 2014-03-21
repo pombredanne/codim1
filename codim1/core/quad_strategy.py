@@ -90,16 +90,40 @@ class QuadStrategy(object):
             inner = _make_inner(outer)
         return outer, inner
 
+    def get_interior_quadrature(self, k, pt):
+        which_nonsingular = self.choose_nonsingular_interior(k, pt)
+        return self.quad_nonsingular[which_nonsingular]
+
     def choose_nonsingular(self, k, l):
         dist = self.mesh.element_distances[k, l]
         # Is the source k or is the source l? Maybe I should use the average
         # of the two? Find some literature on choosing quadrature formulas.
         # The choice of which element to use in computing the width is
         # irrelevant until elements get highly variable in width.
+        return self._choose_nonsingular(k, dist)
+
+
+    def choose_nonsingular_interior(self, k, pt):
+        v1 = self.mesh.element_to_vertex[k, 0]
+        v2 = self.mesh.element_to_vertex[k, 1]
+        left_vertex_distance = self.mesh.vertices[v1, :] - pt
+        right_vertex_distance = self.mesh.vertices[v2, :] - pt
+        # Take the minimum of the distance from either vertex. Note that this
+        # will probably overestimate the distance for a higher order mesh.
+        dist = np.min([np.sqrt(np.sum(left_vertex_distance ** 2))
+                       ,np.sqrt(np.sum(right_vertex_distance ** 2))])
+        return self._choose_nonsingular(k, dist)
+
+
+    def _choose_nonsingular(self, k, dist):
+        """
+        Simple algorithm to choose how many points are necessary for good
+        accuracy of the integration. Better algorithms are available in the
+        literature. Try Sauter, Schwab 1998 or Telles 1987.
+        """
         source_width = self.mesh.element_widths[k]
         ratio = dist / source_width
         how_far = np.floor(ratio)
-
         points = self.max_points - how_far
         if points < self.min_points:
             points = self.min_points
