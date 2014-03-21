@@ -10,7 +10,7 @@ def simple_mass_matrix(n_elements = 2):
     q = quadrature.QuadGauss(2)
     dh = dof_handler.DiscontinuousDOFHandler(msh, 1)
     bf = basis_funcs.BasisFunctions.from_degree(1)
-    m = MassMatrix(msh, bf, dh, q)
+    m = MassMatrix(msh, bf, bf, dh, q)
     return m
 
 def test_mass_matrix():

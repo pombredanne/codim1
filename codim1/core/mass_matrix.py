@@ -14,12 +14,14 @@ class MassMatrix(object):
     """
     def __init__(self,
                  mesh,
-                 basis_funcs,
+                 src_basis_funcs,
+                 soln_basis_funcs,
                  dof_handler,
                  quadrature,
                  compute_on_init = False):
         self.mesh = mesh
-        self.basis_funcs = basis_funcs
+        self.src_basis_funcs = src_basis_funcs
+        self.soln_basis_funcs = soln_basis_funcs
         self.dof_handler = dof_handler
         self.quadrature = quadrature
         self.computed = False
@@ -30,20 +32,21 @@ class MassMatrix(object):
         if self.computed:
             return
 
-        # TODO: use the scipy sparse matrices here.
+        # TODO: use the scipy sparse matrices here. Not important until things
+        # get much bigger
         total_dofs = self.dof_handler.total_dofs
         self.M = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
-            for i in range(self.basis_funcs.num_fncs):
+            for i in range(self.src_basis_funcs.num_fncs):
                 i_dof_x = self.dof_handler.dof_map[0, k, i]
                 i_dof_y = self.dof_handler.dof_map[1, k, i]
-                for j in range(self.basis_funcs.num_fncs):
+                for j in range(self.soln_basis_funcs.num_fncs):
                     j_dof_x = self.dof_handler.dof_map[0, k, j]
                     j_dof_y = self.dof_handler.dof_map[1, k, j]
                     M_local = single_integral(self.mesh,
                                               self.mass_matrix_kernel,
-                                              self.basis_funcs,
-                                              self.basis_funcs,
+                                              self.src_basis_funcs,
+                                              self.soln_basis_funcs,
                                               self.quadrature,
                                               k, i, j)
                     self.M[i_dof_x, j_dof_x] = M_local[0, 0]

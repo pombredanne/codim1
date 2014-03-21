@@ -56,8 +56,9 @@ def main(n_elements, element_deg, plot):
 
     # A circle with radius one.
     # TODO: The higher order mesh stuff doesn't quite work yet. Don't use it.
-    # mesh = HigherOrderMesh.circular_mesh(mesh_bf, n_elements, 1.0)
-    mesh = Mesh.circular_mesh(n_elements, 1.0)
+    mesh = HigherOrderMesh.circular_mesh(mesh_bf, n_elements, 1.0)
+    tools.plot_mesh(mesh)
+    # mesh = Mesh.circular_mesh(n_elements, 1.0)
 
     # This object defines what type of quadrature to use for different
     # situations (log(r) singular, 1/r singular, adjacent elements, others)
@@ -97,7 +98,8 @@ def main(n_elements, element_deg, plot):
 
     # This mass matrix term arises from considering the cauchy singular form
     # of the Gup matrix.
-    mass_matrix = MassMatrix(mesh, bf, dh, QuadGauss(element_deg + 1),
+    mass_matrix = MassMatrix(mesh, bf, bf,
+                             dh, QuadGauss(element_deg + 1),
                              compute_on_init = True)
     Gup -= 0.5 * mass_matrix.M
 
@@ -186,11 +188,12 @@ def main(n_elements, element_deg, plot):
     return int_strs_x[:, 0]
 
 if __name__ == "__main__":
-    sigma_xx = main(50, 1, True)
+    sigma_xx = main(6, 4, True)
     plt.show()
 
     # Calculate errors and compare with the crouch errors.
-    sigma_xx_exact_perturbed = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
+    sigma_xx_exact_perturbed = np.array([0.0398, 0.0382,
+                                         0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004]) + np.random.rand(10) * 0.00005
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004])
