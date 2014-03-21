@@ -31,9 +31,10 @@ def test_continuous_dof_handler_quadratic():
     assert(dh.dof_map[0, 1, 1] == 3)
 
 def test_continuous_dof_handler_loop():
-    vertices = np.array([[0, 1], [1, 0]])
+    vp = np.array([0.0, 1.0])
+    vp_func = lambda x: np.array([x, 1.0 - x])
     element_to_vertex = np.array([[0, 1], [1, 0]])
-    msh = mesh.Mesh(vertices, element_to_vertex)
-    dh = ContinuousDOFHandler(msh, 1)
+    m = mesh.Mesh(vp_func, vp, element_to_vertex)
+    dh = ContinuousDOFHandler(m, 1)
     assert(dh.dof_map[0, 0, 0] == dh.dof_map[0, 1, 1])
     assert(dh.dof_map[0, 0, 1] == dh.dof_map[0, 1, 0])

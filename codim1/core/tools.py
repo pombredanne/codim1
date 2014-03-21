@@ -26,10 +26,13 @@ def L2_error(f1, f2):
     L2_f1_minus_f2 = np.sqrt(np.sum(((f1 - f2) ** 2)))
     return L2_f1_minus_f2 / L2_f2
 
-def plot_mesh(msh, show = True):
-    points1 = msh.vertices[msh.element_to_vertex[:, 0]]
-    points2 = msh.vertices[msh.element_to_vertex[:, 1]]
-    lc = matplotlib.collections.LineCollection(zip(points1, points2))
+def plot_mesh(msh, show = True, points_per_element = 5):
+    points = []
+    x_hat = np.linspace(0, 1, points_per_element)
+    for k in range(msh.n_elements):
+        for i in range(points_per_element):
+            points.append(msh.get_physical_points(k, x_hat[i]))
+    lc = matplotlib.collections.LineCollection(zip(points[:-1], points[1:]))
     fig, ax = plt.subplots()
     ax.add_collection(lc)
     ax.autoscale()

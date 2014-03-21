@@ -1,7 +1,11 @@
 import numpy as np
-from codim1.core.mesh import Mesh, HigherOrderMesh
+from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
+
+def test_mesh_linear():
+    m = Mesh.simple_line_mesh(2)
+    assert(m.is_linear)
 
 def test_simple_line_mesh():
     m = Mesh.simple_line_mesh(2)
@@ -55,9 +59,10 @@ def test_connectivity():
     assert(m.neighbors[2][1] == 3)
 
 def test_connectivity_loop():
-    vertices = np.array([[0, 1], [1, 0]])
+    vp = np.array([0.0, 1.0])
+    vp_func = lambda x: np.array([x, 1.0 - x])
     element_to_vertex = np.array([[0, 1], [1, 0]])
-    m = Mesh(vertices, element_to_vertex)
+    m = Mesh(vp_func, vp, element_to_vertex)
 
     assert(m.neighbors.dtype == np.int)
     assert(m.neighbors[0][0] == 1)
@@ -95,22 +100,28 @@ def test_element_distances():
             np.zeros_like(m.element_distances))
 
 def test_element_widths():
-    vertices = np.array([(0.0, 0.0), (1.0, 0.0), (3.0, 0.0)])
+    vp = np.array([0.0, 1.0, 3.0])
+    vp_func = lambda x: np.array([x, 0])
     etov = np.array([(0, 1), (1, 2)])
-    m = Mesh(vertices, etov)
+    m = Mesh(vp_func, vp, etov)
     assert(m.element_widths[0] == 1.0)
     assert(m.element_widths[1] == 2.0)
 
+def test_higher_mesh_not_linear():
+    bf = BasisFunctions.from_degree(2)
+    m = Mesh.circular_mesh(2, 1.0, bf)
+    assert(not m.is_linear)
+
 def test_higher_order_coeff_gen():
     bf = BasisFunctions.from_degree(2)
-    m = HigherOrderMesh.circular_mesh(bf, 2, 1.0)
+    m = Mesh.circular_mesh(2, 1.0, bf)
     coeffs_exact = np.array([[1.0, 0.0, -1.0],
                              [0.0, 1.0, 0.0]])
     np.testing.assert_almost_equal(m.coefficients[:, 0, :], coeffs_exact)
 
 def test_higher_order_phys_pt():
     bf = BasisFunctions.from_degree(2)
-    m = HigherOrderMesh.circular_mesh(bf, 2, 1.0)
+    m = Mesh.circular_mesh(2, 1.0, bf)
     phys_pt = m.get_physical_points(0, 0.5)
     np.testing.assert_almost_equal(phys_pt, (0.0, 1.0))
     phys_pt = m.get_physical_points(0, 0.25)
@@ -120,7 +131,7 @@ def test_higher_order_phys_pt():
 
 def test_higher_order_jacobian():
     bf = BasisFunctions.from_degree(2)
-    m = HigherOrderMesh.circular_mesh(bf, 2, 1.0)
+    m = Mesh.circular_mesh(2, 1.0, bf)
     x_hat = np.linspace(0, 1, 100)
     jacobian = m.get_element_jacobian(0, 0.5)
     np.testing.assert_almost_equal(jacobian, 2.0)
@@ -133,7 +144,7 @@ def test_higher_order_jacobian():
 
 def test_higher_order_normal():
     bf = BasisFunctions.from_degree(2)
-    m = HigherOrderMesh.circular_mesh(bf, 2, 1.0)
+    m = Mesh.circular_mesh(2, 1.0, bf)
     x_hat = np.linspace(0, 1, 100)
     normal = m.get_normal(0, 0.5)
     np.testing.assert_almost_equal(normal, (0.0, -1.0))

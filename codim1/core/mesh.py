@@ -1,29 +1,78 @@
 import numpy as np
-from codim1.fast.get_physical_points import get_physical_points as _get_physical_points
+from codim1.fast.get_physical_points import \
+    get_physical_points as _get_physical_points
 from codim1.core.segment_distance import segments_distance
+from codim1.core.basis_funcs import BasisFunctions
 
 class Mesh(object):
     """
     A class for managing a one dimensional mesh within a two dimensional
     boundary element code.
 
+    This mesh class can use higher order mappings.
+    Arbitrary order of mapping can be used by simply providing the proper
+    set of basis functions. This is unnecessary for problems with
+    straight boundaries.
+
+    Some of the functions that are simple for a linear boundary are much more
+    difficult for higher order boundaries. For example, computing the distance
+    between two elements is more involved.
+    Also, for a linear element, the jacobian determinant and the normal
+    vectors are constant. The calling code should account for this.
+
     Normal vectors are computed assuming that they point left of the vertex
     direction. Meaning, if \vec{r} = \vec{x}_1 - \vec{x}_0 and
     \vec{r} = (r_x, r_y) then \vec{n} = \frac{(r_x, -r_y)}{\norm{r}}. So,
     exterior domain boundaries should be traversed clockwise and
     interior domain boundaries should be traversed counterclockwise.
+
+    boundary_fnc is a function that defines the boundary.
     """
-    def __init__(self, vertices, element_to_vertex):
-        # vertices contains the position of each vertex in tuple form (x, y)
-        self.vertices = vertices
+    def __init__(self, boundary_fnc,
+                       vertex_params, element_to_vertex,
+                       basis_fncs = None,
+                       element_to_vertex_params = None):
+
+        # Default to linear mesh.
+        self.basis_fncs = basis_fncs
+        if self.basis_fncs is None:
+            self.basis_fncs = BasisFunctions.from_degree(1)
+
         # element_to_vertex contains pairs of indices referring the (x, y)
         # values in vertices
         self.element_to_vertex = element_to_vertex
-
-        self.n_vertices = vertices.shape[0]
         self.n_elements = element_to_vertex.shape[0]
 
+        # A linear mesh basis should be treated specially
+        if self.basis_fncs.num_fncs > 2:
+            self.is_linear = False
+        else:
+            self.is_linear = True
+        if self.basis_fncs.num_fncs < 2:
+            raise Exception("At least two basis functions are required to" +
+                            " describe a mesh edge.")
+
+        # Vertices contains the position of each vertex in tuple form (x, y)
+        self.vertex_params = vertex_params
+        self.boundary_fnc = boundary_fnc
+        self.n_vertices = self.vertex_params.shape[0]
+        self.vertices = np.empty((self.n_vertices, 2))
+        for (i, vp) in enumerate(vertex_params):
+            self.vertices[i, :] = boundary_fnc(vp)
+
+        # Default is that the parameters and vertices match up.
+        # See the circular mesh example for where this constraint is broken.
+        self.element_to_vertex_params = element_to_vertex_params
+        if self.element_to_vertex_params is None:
+            self.element_to_vertex_params = \
+                    self.vertex_params[element_to_vertex]
+
+        # Determine which elements touch.
         self.compute_connectivity()
+
+        # Compute the coefficients of the mesh basis.
+        self.compute_coefficients()
+
         self.compute_element_distances()
         self.compute_element_widths()
 
@@ -34,31 +83,53 @@ class Mesh(object):
         extending to +1 in x coordinate, y = 0.
         """
         n_vertices = n_elements + 1
-        vertices = np.zeros((n_vertices, 2))
-        x_vals = np.linspace(left_edge, right_edge, n_vertices)
-        vertices[:, 0] = x_vals
+        vertex_params = np.linspace(left_edge, right_edge, n_vertices)
+        vertex_function = lambda x: np.array([x, 0])
 
         element_to_vertex = np.zeros((n_elements, 2))
         for i in range(0, n_elements):
             element_to_vertex[i, :] = (i, i + 1)
         element_to_vertex = element_to_vertex.astype(int)
 
-        return cls(vertices, element_to_vertex)
+        return cls(vertex_function, vertex_params, element_to_vertex)
 
     @classmethod
-    def circular_mesh(cls, n_elements, radius):
+    def circular_mesh(cls, n_elements, radius, basis_fncs = None):
+        # Use linear basis by default
+        if basis_fncs is None:
+            basis_fncs = BasisFunctions.from_degree(1)
+
         n_vertices = n_elements
-        theta = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
-        vertices = np.zeros((n_vertices, 2))
-        vertices[:, 0] = radius * np.cos(theta)
-        vertices[:, 1] = radius * np.sin(theta)
+        vertex_params = np.linspace(0, 2 * np.pi, n_vertices + 1)
+        boundary_func = lambda t: radius * np.sin([np.pi / 2 - t, t])
 
         element_to_vertex = np.zeros((n_elements, 2))
-        for i in range(0, n_elements - 1):
+        element_to_vertex_params = np.zeros((n_elements, 2))
+        for i in range(0, n_elements):
             element_to_vertex[i, :] = (i, i + 1)
+            element_to_vertex_params[i, :] = (vertex_params[i],
+                                              vertex_params[i + 1])
         element_to_vertex[-1, :] = (n_elements - 1, 0)
         element_to_vertex = element_to_vertex.astype(int)
-        return cls(vertices, element_to_vertex)
+
+        C = cls(boundary_func,
+                vertex_params[:-1], element_to_vertex,
+                basis_fncs, element_to_vertex_params)
+        return C
+
+    def compute_coefficients(self):
+        # This is basically an interpolation of the boundary function
+        # onto the basis
+        coefficients = np.empty((2, self.n_elements,
+                                 self.basis_fncs.num_fncs))
+        for k in range(self.n_elements):
+            left_param = self.element_to_vertex_params[k, 0]
+            right_param = self.element_to_vertex_params[k, 1]
+            for (i, node) in enumerate(self.basis_fncs.nodes):
+                node_param = left_param + node * (right_param - left_param)
+                node_loc = self.boundary_fnc(node_param)
+                coefficients[:, k, i] = node_loc
+        self.coefficients = coefficients
 
     def compute_element_distances(self):
         """
@@ -137,115 +208,6 @@ class Mesh(object):
 
     def get_physical_points(self, element_idx, x_hat):
         """
-        Use a linear affine mapping to convert from the reference element
-        back to physical coordinates. Note that the reference element is
-        1D whereas physical space is 2D. So, the reference_pt input will be
-        scalar and the output will be a 2 element vector. The reference
-        element is a line segment from 0 to 1.
-        """
-        return _get_physical_points(self.element_to_vertex,
-                                    self.vertices, element_idx, x_hat)
-
-    def get_element_jacobian(self, element_idx, x_hat):
-        """
-        Returns the jacobian of the linear affine mapping from the
-        reference element to physical space.
-        Used for evaluating integrals on the reference element rather than in
-        physical coordinates.
-        """
-        vertex_list = self.element_to_vertex[element_idx, :]
-        pt1 = self.vertices[vertex_list[0]]
-        pt2 = self.vertices[vertex_list[1]]
-        pt2_minus_pt1 = pt2 - pt1
-        # Take the length of the line segment between the points. This
-        # is the relevant jacobian for a line integral change of variables.
-        j = np.sqrt(pt2_minus_pt1[0] ** 2 + pt2_minus_pt1[1] ** 2)
-        return j
-
-    def get_normal(self, element_idx, x_hat):
-        """
-        Return the normal to element_idx at reference location x_hat.
-        For linear elements, the normal is the same everywhere!
-        """
-        vertices = self.vertices[self.element_to_vertex[element_idx, :]]
-        r = (vertices[1, :] - vertices[0,:])
-        r_norm = np.sqrt(r[0] ** 2 + r[1] ** 2)
-        return np.array([-r[1], r[0]]) / r_norm
-
-class HigherOrderMesh(Mesh):
-    """
-    A mesh that uses higher order mappings. Arbitrary order of mapping can
-    be used by simply providing the proper set of basis functions. This
-    is unnecessary for problems with straight boundaries.
-
-    Some of the functions that are simple for a linear boundary are much more
-    difficult for higher order boundaries. For example, computing the distance
-    between two elements is more involved.
-    """
-    def __init__(self, basis_fncs, boundary_fnc,
-                       vertex_params, element_to_vertex):
-        vertices = boundary_fnc(vertex_params).T
-
-        self.vertex_params = vertex_params
-        self.boundary_fnc = boundary_fnc
-        self.basis_fncs = basis_fncs
-        if self.basis_fncs.num_fncs < 2:
-            raise Exception("At least two basis functions are required to" +
-                            " describe a mesh edge.")
-
-        super(HigherOrderMesh, self).__init__(vertices, element_to_vertex)
-
-        self.calculate_coefficients()
-
-    # @classmethod
-    # def circular_mesh(cls, n_elements, radius):
-    #     n_vertices = n_elements
-    #     theta = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
-    #     vertices = np.zeros((n_vertices, 2))
-    #     vertices[:, 0] = radius * np.cos(theta)
-    #     vertices[:, 1] = radius * np.sin(theta)
-
-    #     element_to_vertex = np.zeros((n_elements, 2))
-    #     for i in range(0, n_elements - 1):
-    #         element_to_vertex[i, :] = (i, i + 1)
-    #     element_to_vertex[-1, :] = (n_elements - 1, 0)
-    #     element_to_vertex = element_to_vertex.astype(int)
-    #     return cls(vertices, element_to_vertex)
-
-    @classmethod
-    def circular_mesh(cls, basis_fncs, n_elements, radius):
-        n_vertices = n_elements
-        vertex_params = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
-        boundary_func = lambda t: radius * np.sin([np.pi / 2 - t, t])
-        # vertices = boundary_func(vertex_params).T
-
-        element_to_vertex = np.zeros((n_elements, 2))
-        for i in range(0, n_elements - 1):
-            element_to_vertex[i, :] = (i, i + 1)
-        element_to_vertex[-1, :] = (n_elements - 1, 0)
-        element_to_vertex = element_to_vertex.astype(int)
-
-        return cls(basis_fncs, boundary_func,
-                   vertex_params, element_to_vertex)
-
-    def calculate_coefficients(self):
-        # This is basically an interpolation of the boundary function
-        # onto the basis
-        coefficients = np.empty((2, self.n_elements,
-                                 self.basis_fncs.num_fncs))
-        for k in range(self.n_elements):
-            left_vert = self.element_to_vertex[k, 0]
-            right_vert = self.element_to_vertex[k, 1]
-            left_param = self.vertex_params[left_vert]
-            right_param = self.vertex_params[right_vert]
-            for (i, node) in enumerate(self.basis_fncs.nodes):
-                node_param = left_param + node * (right_param - left_param)
-                node_loc = self.boundary_fnc(node_param)
-                coefficients[:, k, i] = node_loc
-        self.coefficients = coefficients
-
-    def get_physical_points(self, element_idx, x_hat):
-        """
         Use the mapping defined by the coefficients and basis functions
         to convert coordinates
         """
@@ -260,7 +222,8 @@ class HigherOrderMesh(Mesh):
     def get_element_jacobian(self, element_idx, x_hat):
         """
         Use the derivative of the mapping defined by the coefficients/basis
-        to get the determinant of the jacobian!
+        to get the determinant of the jacobian! This is used to change
+        integration coordinates from physical to reference elements.
         """
         deriv_pt = np.zeros(2)
         for i in range(self.basis_fncs.num_fncs):
@@ -274,7 +237,7 @@ class HigherOrderMesh(Mesh):
     def get_normal(self, element_idx, x_hat):
         """
         Use the derivative of the mapping to determine the tangent vector
-        and thus to determine the local normal vector
+        and thus to determine the local normal vector.
         """
         deriv_pt = np.zeros(2)
         for i in range(self.basis_fncs.num_fncs):
