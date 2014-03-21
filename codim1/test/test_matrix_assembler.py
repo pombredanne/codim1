@@ -54,7 +54,7 @@ def test_assemble_one_element_off_diagonal():
 
 
 def test_assemble_one_element_on_diagonal():
-    a = simple_assembler(nonsing_pts = 15, logr_pts = 16, oneoverr_pts = 10)
+    a = simple_assembler(nonsing_pts = 12, logr_pts = 17, oneoverr_pts = 10)
     k_d = TDispKernel()
     k_t = TTracKernel()
     G_local = a.assemble_one_interaction(k_d, 0, 0, 0, 0)
@@ -117,7 +117,7 @@ def test_simple_symmetric_linear():
 def realistic_assembler(n_elements = 4,
                         element_deg = 1,
                         quad_points_nonsingular = 5,
-                        quad_points_logr = 5,
+                        quad_points_logr = 6,
                         quad_points_oneoverr = 5,
                         left = -1.0,
                         right = 1.0):
@@ -132,7 +132,6 @@ def realistic_assembler(n_elements = 4,
                         quad_points_logr, quad_points_oneoverr)
     assembler = MatrixAssembler(msh, bf, dh, qs)
     return assembler
-
 
 
 def test_realistic_nan():
@@ -156,8 +155,8 @@ def test_realistic_symmetric_linear():
 
 
 def test_realistic_symmetric_quadratic():
-    a = realistic_assembler(quad_points_nonsingular = 14,
-                            quad_points_logr = 14,
+    a = realistic_assembler(quad_points_nonsingular = 10,
+                            quad_points_logr = 12,
                             quad_points_oneoverr = 10,
                             n_elements = 1, element_deg = 2)
     k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)

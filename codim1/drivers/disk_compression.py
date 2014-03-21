@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import DiscontinuousDOFHandler,\
                                     ContinuousDOFHandler
-from codim1.core.mesh import Mesh, HigherOrderMesh
+from codim1.core.mesh import Mesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions, Solution
@@ -32,20 +32,20 @@ def section_traction(x):
 # def exact_solution_on_x_axis():
 #     sigma_xx =
 
-def main(n_elements, element_deg, plot):
+def disk(n_elements, element_deg, plot):
     # Elastic parameters
     shear_modulus = 1.0
     poisson_ratio = 0.25
 
     # Quadrature points for the various circumstances
     quad_min = 4
-    quad_max = 12
-    quad_logr = 12
-    quad_oneoverr = 12
+    quad_max = 20
+    quad_logr = 20
+    quad_oneoverr = 20
     # I did some experiments and
     # 13 Quadrature points seems like it gives error like 1e-10, lower
     # than necessary, but nice for testing other components
-    interior_quad_pts = 13
+    interior_quad_pts = 20
 
     # Define the solution basis functions
     bf = BasisFunctions.from_degree(element_deg)
@@ -56,7 +56,7 @@ def main(n_elements, element_deg, plot):
 
     # A circle with radius one.
     # TODO: The higher order mesh stuff doesn't quite work yet. Don't use it.
-    mesh = HigherOrderMesh.circular_mesh(mesh_bf, n_elements, 1.0)
+    mesh = Mesh.circular_mesh(n_elements, 1.0, mesh_bf)
     tools.plot_mesh(mesh)
     # mesh = Mesh.circular_mesh(n_elements, 1.0)
 
@@ -188,13 +188,15 @@ def main(n_elements, element_deg, plot):
     return int_strs_x[:, 0]
 
 if __name__ == "__main__":
-    sigma_xx = main(6, 4, True)
+    sigma_xx = disk(25, 2, True)
     plt.show()
 
     # Calculate errors and compare with the crouch errors.
     sigma_xx_exact_perturbed = np.array([0.0398, 0.0382,
                                          0.0339, 0.0278, 0.0209,
-                      0.0144, 0.0089, 0.0047, 0.0019, 0.0004]) + np.random.rand(10) * 0.00005
+                                         0.0144, 0.0089, 0.0047,
+                                         0.0019, 0.0004]) + \
+                               np.random.rand(10) * 0.00005
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
                       0.0144, 0.0089, 0.0047, 0.0019, 0.0004])
     sigma_xx_crouch_100 = np.array([0.0393, 0.0378, 0.0335, 0.0274, 0.0206,
@@ -204,5 +206,6 @@ if __name__ == "__main__":
     print tools.L2_error(sigma_xx, sigma_xx_exact)
     print tools.L2_error(sigma_xx_crouch_100, sigma_xx_exact)
     print tools.L2_error(sigma_xx_crouch_200, sigma_xx_exact)
+
     plt.show()
 

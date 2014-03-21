@@ -5,7 +5,7 @@ from libc.math cimport sqrt, pow, log
 import math
 cdef double pi = math.pi
 
-# All the boundary kernel functions here are in Frangi and Novati 1996.
+# All the kernel functions here are in Frangi and Novati 1996.
 ############################################################################
 # SURFACE KERNELS (Displacement and tractions)
 ############################################################################
@@ -28,7 +28,15 @@ class Kernel(object):
         n is the unit normal vector to the solution surface.
         """
         cdef double dist = sqrt(r[0] ** 2 + r[1] ** 2)
-        cdef double drdm = (r[0] * m[0] + r[1] * m[1]) / dist
+        cdef double drdm
+        #print r
+        #print dist
+        try:
+            drdm = (r[0] * m[0] + r[1] * m[1]) / dist
+        except ZeroDivisionError:
+            import ipdb; ipdb.set_trace()
+
+
         cdef double drdn = (r[0] * n[0] + r[1] * n[1]) / dist
         cdef np.ndarray[double, ndim=1] dr = np.zeros(2)
         dr[0] = r[0] / dist

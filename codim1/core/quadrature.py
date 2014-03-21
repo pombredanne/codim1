@@ -61,19 +61,19 @@ class QuadSingularTelles(object):
         gamma = gauss_quadrature.x
         gamma_weights = gauss_quadrature.w
         self.x = ((gamma - gamma_bar) ** 3 + gamma_bar * (gamma_bar ** 2 + 3))\
-                / (2 * (1 + 3 * gamma_bar ** 2))\
-                + 0.5
+                / (2 * (1 + 3 * gamma_bar ** 2)) + 0.5
+
+        self.w = gamma_weights * (3 * (gamma - gamma_bar) ** 2) \
+                / (2 * (1 + 3 * gamma_bar ** 2))
 
         # If we accidentally choose a Gaussian integration scheme that
         # exactly sample the singularity, this method will fail. This can
         # be easily remedied by simply increasing the order of
         # For example, this happens if x0 == 0 and N is odd.
-        if (self.x == x0).any():
+        if (np.abs(self.x - x0) < 1e-12).any():
             raise Exception("Telles integration has sampled the " +
                     "singularity. Choose a different order of integration.")
 
-        self.w = gamma_weights * (3 * (gamma - gamma_bar) ** 2) \
-                / (2 * (1 + 3 * gamma_bar ** 2))
 
 class QuadOneOverR(object):
     """
