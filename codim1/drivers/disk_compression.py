@@ -27,10 +27,8 @@ def section_traction(x):
         return -x / x_length
     return np.array((0.0, 0.0))
 
-# # The exact solution extracted from Frangi, Novati 1996
-# # For r = 1, alpha from above
-# def exact_solution_on_x_axis():
-#     sigma_xx =
+# Found the exact solution in Frangi, Novati 1996 -- could copy that over to
+# do better convergence tests, etc.
 
 def disk(n_elements, element_deg, plot):
     # Elastic parameters
@@ -42,10 +40,6 @@ def disk(n_elements, element_deg, plot):
     quad_max = 10
     quad_logr = 10
     quad_oneoverr = 10
-    # I did some experiments and
-    # 13 Quadrature points seems like it gives error like 1e-10, lower
-    # than necessary, but nice for testing other components
-    interior_quad_pts = 13
 
     # Define the solution basis functions
     bf = BasisFunctions.from_degree(element_deg)
@@ -128,8 +122,7 @@ def disk(n_elements, element_deg, plot):
     # Use a slightly higher order quadrature for interior point
     # computations just to avoid problems in testing. Could be reduced
     # in the future.
-    interior_quadrature = QuadGauss(interior_quad_pts)
-    ip = InteriorPoint(mesh, dh, interior_quadrature)
+    ip = InteriorPoint(mesh, dh, qs)
 
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
     # where the normal is n_x=1, n_y=0

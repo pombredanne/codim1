@@ -38,8 +38,8 @@ def plot_edge_dislocation():
     X, Y = np.meshgrid(x, y)
     ux, uy = exact_edge_dislocation(X + 1, Y)
     ux2, uy2 = exact_edge_dislocation(X - 1, Y)
-    ux -= ux2
-    uy -= uy2
+    ux = ux2 - ux
+    uy = uy2 - uy
     plt.figure(1)
     plt.imshow(ux)
     plt.colorbar()
@@ -66,7 +66,7 @@ quad_oneoverr = 12
 # than necessary, but nice for testing other components
 interior_quad_pts = 13
 
-n_elements = 300
+n_elements = 30
 
 # The four kernels of linear elasticity!
 # http://en.wikipedia.org/wiki/The_Three_Christs_of_Ypsilanti
@@ -82,6 +82,8 @@ qs_rhs = qs
 dh = ContinuousDOFHandler(mesh, 1)
 
 print('Assembling kernel matrix, Guu')
+# TODO: Take the symmetry of Guu into account in its assembly.
+# Cut it in half!
 matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
 Guu = matrix_assembler.assemble_matrix(k_d)
 
@@ -108,15 +110,14 @@ soln = Solution(bf, dh, soln_coeffs)
 
 print("Performing Interior Computation")
 # TODO: Extract this interior point computation to some tool function.
-x_pts = 50
-y_pts = 50
+x_pts = 20
+y_pts = 20
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
 int_ux = np.zeros((x_pts, y_pts))
 int_uy = np.zeros((x_pts, y_pts))
-interior_quadrature = QuadGauss(interior_quad_pts)
-ip = InteriorPoint(mesh, dh, interior_quadrature)
+ip = InteriorPoint(mesh, dh, qs)
 for i in range(x_pts):
     for j in range(y_pts):
         print i, j
@@ -129,7 +130,9 @@ for i in range(x_pts):
 
 #TODO: HACK to get the correct displacements for the dislocation
 int_ux -= np.flipud(int_ux)
+int_ux /= 2.0
 int_uy += np.flipud(int_uy)
+int_uy /= 2.0
 end = time.time()
 print("Took: " + str(end - start) + " seconds")
 
