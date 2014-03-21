@@ -22,6 +22,7 @@ class InteriorPoint(object):
         """
         result = np.zeros(2)
 
+        # TODO: Vary quadrature order depending on distance to the point.
         kernel_fnc = lambda x, n: kernel.call(x - pt, pt_normal, n)
         one = Function(lambda x: np.ones(2))
         for k in range(self.mesh.n_elements):

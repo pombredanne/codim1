@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import ContinuousDOFHandler
@@ -15,8 +16,6 @@ from codim1.core.mass_matrix import MassMatrix
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
-
-
 def exact_edge_dislocation(X, Y):
     # The analytic solution for the
     # displacement fields due to an edge dislocation.
@@ -28,7 +27,6 @@ def exact_edge_dislocation(X, Y):
     uy = factor * ((((1 - 2 * nu) / (2 * (1 - nu))) * np.log(1.0 / R)) + \
                    (1.0 / (2 * (1 - nu))) * ((X ** 2) / (R ** 2)))
     return ux, uy
-
 
 def plot_edge_dislocation():
     # Plot the solution for an edge dislocation with burgers
@@ -68,7 +66,7 @@ quad_oneoverr = 12
 # than necessary, but nice for testing other components
 interior_quad_pts = 13
 
-n_elements = 100
+n_elements = 300
 
 # The four kernels of linear elasticity!
 # http://en.wikipedia.org/wiki/The_Three_Christs_of_Ypsilanti
@@ -110,8 +108,8 @@ soln = Solution(bf, dh, soln_coeffs)
 
 print("Performing Interior Computation")
 # TODO: Extract this interior point computation to some tool function.
-x_pts = 35
-y_pts = 35
+x_pts = 50
+y_pts = 50
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)

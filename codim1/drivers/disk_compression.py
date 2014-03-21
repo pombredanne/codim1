@@ -87,7 +87,6 @@ def disk(n_elements, element_deg, plot):
 
     # Assemble the matrix of displacements induced by displacements at
     # another location.
-    # FYI
     # Gup multiplies displacements
     # Guu mutliplies tractions
     print('Assembling kernel matrix, Gup')

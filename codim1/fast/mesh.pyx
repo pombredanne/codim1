@@ -11,10 +11,12 @@ _get_physical_point(np.ndarray[double, ndim = 2] basis_fncs,
                     double x_hat):
     """see core/mesh.py for documentation."""
     cdef np.ndarray[double, ndim = 1] phys_pt = np.zeros(2)
+    cdef np.ndarray[double, ndim = 1] basis
     cdef int i
     for i in range(basis_fncs.shape[0]):
-        phys_pt += coefficients[:, element_idx, i] *\
-                   evaluate_basis(basis_fncs, i, x_hat)
+        basis = evaluate_basis(basis_fncs, i, x_hat)
+        phys_pt[0] += coefficients[0, element_idx, i] * basis[0]
+        phys_pt[1] += coefficients[1, element_idx, i] * basis[1]
     return phys_pt
 
 
@@ -25,10 +27,12 @@ _get_jacobian(np.ndarray[double, ndim = 2] basis_derivs,
               double x_hat):
     """see core/mesh.py for documentation."""
     cdef np.ndarray[double, ndim = 1] deriv_pt = np.zeros(2)
+    cdef np.ndarray[double, ndim = 1] basis
     cdef int i
     for i in range(basis_derivs.shape[0]):
-        deriv_pt += coefficients[:, element_idx, i] *\
-                   evaluate_basis(basis_derivs, i, x_hat)
+        basis = evaluate_basis(basis_derivs, i, x_hat)
+        deriv_pt[0] += coefficients[0, element_idx, i] * basis[0]
+        deriv_pt[1] += coefficients[1, element_idx, i] * basis[1]
     return sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
 
 cpdef np.ndarray[double, ndim = 1] \
@@ -38,9 +42,11 @@ _get_normal(np.ndarray[double, ndim = 2] basis_derivs,
             double x_hat):
     """see core/mesh.py for documentation."""
     cdef np.ndarray[double, ndim = 1] deriv_pt = np.zeros(2)
+    cdef np.ndarray[double, ndim = 1] basis
     cdef int i
     for i in range(basis_derivs.shape[0]):
-        deriv_pt += coefficients[:, element_idx, i] *\
-                    evaluate_basis(basis_derivs, i, x_hat)
+        basis = evaluate_basis(basis_derivs, i, x_hat)
+        deriv_pt[0] += coefficients[0, element_idx, i] * basis[0]
+        deriv_pt[1] += coefficients[1, element_idx, i] * basis[1]
     cdef double length = sqrt(deriv_pt[0] ** 2 + deriv_pt[1] ** 2)
-    return np.array([-deriv_pt[1], deriv_pt[0]]) / length
+    return np.array([-deriv_pt[1] / length, deriv_pt[0] / length])

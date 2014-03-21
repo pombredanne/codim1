@@ -61,7 +61,7 @@ def double_integral(mesh, kernel,
     cdef double q_pt_src, w_src, q_pt_soln, w_soln
     cdef np.ndarray[double, ndim = 1] src_basis_fnc, soln_basis_fnc
     cdef np.ndarray[double, ndim = 1] phys_src_pt, phys_soln_pt
-    cdef np.ndarray[double, ndim = 1] r
+    cdef np.ndarray[double, ndim = 1] r = np.empty(2)
     cdef np.ndarray[double, ndim = 2] k_val
     cdef np.ndarray[double, ndim = 1] q_pts_soln, q_w_soln
     cdef int idx_x, idx_y
@@ -119,20 +119,20 @@ def double_integral(mesh, kernel,
             # Separation of the two quadrature points, use real,
             # physical coordinates!
             # From source to solution.
-            r = phys_soln_pt - phys_src_pt
+            r[0] = phys_soln_pt[0] - phys_src_pt[0]
+            r[1] = phys_soln_pt[1] - phys_src_pt[1]
 
             # Actually evaluate the kernel.
             k_val = kernel.call(r, k_normal, l_normal)
 
-            # Weight by the quadrature values
-            k_val *= w_soln * w_src
-
             # Account for the vector form of the problem.
+            # and weight by the quadrature values and the jacobian
             for idx_x in range(2):
                 for idx_y in range(2):
                     result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
                             src_basis_fnc[idx_x] * soln_basis_fnc[idx_y] * \
-                            src_jacobian * soln_jacobian
+                            src_jacobian * soln_jacobian * \
+                            w_soln * w_src
     return result
 
 def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
@@ -179,16 +179,13 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
             k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, q_pt)
 
         src_basis_fnc = src_basis_fncs.evaluate(k, i, q_pt, phys_pt)
-        print src_basis_fnc
         soln_basis_fnc = soln_basis_fncs.evaluate(k, j, q_pt, phys_pt)
-        print soln_basis_fnc
 
         k_val = kernel(phys_pt, k_normal)
-        k_val *= w
 
         for idx_x in range(2):
             for idx_y in range(2):
                 result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
                         src_basis_fnc[idx_x] * soln_basis_fnc[idx_y] *\
-                        jacobian
+                        jacobian * w
     return result
