@@ -1,4 +1,6 @@
+import cPickle
 import time
+import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core.dof_handler import ContinuousDOFHandler
@@ -15,6 +17,35 @@ from codim1.core.quadrature import QuadGauss
 from codim1.core.mass_matrix import MassMatrix
 from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
+
+from matplotlib import rcParams
+rcParams['axes.labelsize'] = 9
+rcParams['xtick.labelsize'] = 9
+rcParams['ytick.labelsize'] = 9
+rcParams['legend.fontsize'] = 9
+rcParams['font.family'] = 'serif'
+rcParams['font.serif'] = ['Computer Modern Roman']
+# rcParams['text.usetex'] = True
+
+
+# Elastic parameter
+shear_modulus = 1.0
+poisson_ratio = 0.25
+
+# Quadrature points for the various circumstances
+quad_min = 4
+quad_max = 12
+quad_logr = 12
+quad_oneoverr = 12
+# I did some experiments and
+# 13 Quadrature points seems like it gives error like 1e-10, lower
+# than necessary, but nice for testing other components
+interior_quad_pts = 13
+# How many interior points to use.
+x_pts = 40
+y_pts = 40
+
+n_elements = 80
 
 def exact_edge_dislocation(X, Y):
     # The analytic solution for the
@@ -48,25 +79,40 @@ def plot_edge_dislocation():
     plt.colorbar()
     return ux, uy
 
+def reload_and_postprocess():
+    f = open('data/dislocation2/int_u.pkl', 'rb')
+    int_u = cPickle.load(f)
+    x = np.linspace(-5, 5, x_pts)
+    # Doesn't sample 0.0!
+    y = np.linspace(-5, 5, y_pts)
+    X, Y = np.meshgrid(x, y)
+
+    # Quiver plot
+    quiver_plot = plt.quiver(X[::2, ::2], Y[::2, ::2],
+                            int_u[0, ::2, ::2], int_u[1, ::2, ::2])
+    plt.quiverkey(quiver_plot, 0.60, 0.95, 0.25, r'0.25', labelpos='W')
+    plt.plot([-1, 1], [0, 0], 'r-', linewidth=4)
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.xlim([-5, 5])
+    plt.title(r'Displacement vectors for an edge dislocation ' +
+              'from $x = 1$ to $x = -1$.')
+
+    # Streamline plot
+    plt.figure()
+    quiver_plot = plt.streamplot(X, Y, int_u[0, :, :], int_u[1, :, :])
+    plt.plot([-1, 1], [0, 0], 'r-', linewidth=4)
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.title(r'Displacement streamlines for an edge dislocation ' +
+              'from $x = 1$ to $x = -1$.')
+    plt.show()
+    sys.exit()
+reload_and_postprocess()
+
 ux_exact, uy_exact = plot_edge_dislocation()
 
 start = time.time()
-
-# Elastic parameter
-shear_modulus = 1.0
-poisson_ratio = 0.25
-
-# Quadrature points for the various circumstances
-quad_min = 4
-quad_max = 12
-quad_logr = 12
-quad_oneoverr = 12
-# I did some experiments and
-# 13 Quadrature points seems like it gives error like 1e-10, lower
-# than necessary, but nice for testing other components
-interior_quad_pts = 13
-
-n_elements = 30
 
 # The four kernels of linear elasticity!
 # http://en.wikipedia.org/wiki/The_Three_Christs_of_Ypsilanti
@@ -82,7 +128,7 @@ qs_rhs = qs
 dh = ContinuousDOFHandler(mesh, 1)
 
 print('Assembling kernel matrix, Guu')
-# TODO: Take the symmetry of Guu into account in its assembly.
+# TODO: Take the symmetry of Guu, Gpp into account in its assembly.
 # Cut it in half!
 matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
 Guu = matrix_assembler.assemble_matrix(k_d)
@@ -110,8 +156,6 @@ soln = Solution(bf, dh, soln_coeffs)
 
 print("Performing Interior Computation")
 # TODO: Extract this interior point computation to some tool function.
-x_pts = 20
-y_pts = 20
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -129,10 +173,16 @@ for i in range(x_pts):
         int_uy[j, i] = traction_effect[1] + displacement_effect[1]
 
 #TODO: HACK to get the correct displacements for the dislocation
+# doing the correct thing probably involves accounting for the displacements
+# on both sides of the surface.
 int_ux -= np.flipud(int_ux)
 int_ux /= 2.0
 int_uy += np.flipud(int_uy)
 int_uy /= 2.0
+int_u = np.array([int_ux, int_uy])
+with open('int_u.pkl', 'wb') as f:
+    cPickle.dump(int_u, f)
+
 end = time.time()
 print("Took: " + str(end - start) + " seconds")
 
