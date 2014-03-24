@@ -73,6 +73,8 @@ class MatrixAssembler(object):
         return G
 
     def assemble_row(self, kernel, k, i):
+        src_dof_x = self.dof_handler.dof_map[0, k, i]
+        src_dof_y = self.dof_handler.dof_map[1, k, i]
         G_row_x = np.zeros(self.dof_handler.total_dofs)
         G_row_y = np.zeros(self.dof_handler.total_dofs)
         for l in range(self.mesh.n_elements):

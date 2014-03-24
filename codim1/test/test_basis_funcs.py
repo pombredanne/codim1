@@ -67,8 +67,8 @@ def test_gradient_chainrule():
     msh = Mesh.simple_line_mesh(1)
     bf = BasisFunctions([0.0, 1.0])
     gradient = bf.get_gradient_basis(msh)
-    import ipdb; ipdb.set_trace()
     assert(gradient.chain_rule(0, 0)[0] == 0.5)
+    assert(gradient.chain_rule(0, 0)[1] == 0.0)
     np.testing.assert_almost_equal(gradient.evaluate(0, 0, 0.5, 0.0),
                                    bf.evaluate_derivative(0, 0, 0.5, 0.0))
     assert(bf.chain_rule(0, 0)[0] == 1.0)

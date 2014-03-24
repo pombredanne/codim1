@@ -32,8 +32,6 @@ class MassMatrix(object):
         if self.computed:
             return
 
-        # TODO: use the scipy sparse matrices here. Not important until things
-        # get much bigger
         total_dofs = self.dof_handler.total_dofs
         self.M = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):

@@ -45,6 +45,7 @@ class DisplacementKernel(Kernel):
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.singularity_type = 'logr'
+        self.symmetric_matrix = True
         self.const3 = 1.0 / (8.0 * pi * shear_modulus * (1 - poisson_ratio))
         self.const4 = (3.0 - 4.0 * poisson_ratio)
 
@@ -67,6 +68,7 @@ class TractionKernel(Kernel):
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.singularity_type = 'oneoverr'
+        self.symmetric_matrix = False
         # Unhelpful constant names are unhelpful...
         self.const1 = (1 - 2 * poisson_ratio)
         self.const2 = 1.0 / (4 * pi * (1 - poisson_ratio))
@@ -93,6 +95,7 @@ class AdjointTractionKernel(Kernel):
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.singularity_type = 'oneoverr'
+        self.symmetric_matrix = False
         # Unhelpful constant names are unhelpful...
         self.const1 = (1 - 2 * poisson_ratio)
         self.const2 = 1.0 / (4 * pi * (1 - poisson_ratio))
@@ -120,6 +123,7 @@ class RegularizedHypersingularKernel(Kernel):
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.singularity_type = 'logr'
+        self.symmetric_matrix = True
         self.const5 = shear_modulus / (2 * pi * (1 - poisson_ratio))
 
     def _call(self, double dist, double drdn, double drdm,

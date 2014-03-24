@@ -45,10 +45,7 @@ assembler = MatrixAssembler(mesh, bf, dh, qs)
 # We used the basis function derivatives for the regularized Gpp kernel
 # This is derived using integration by parts and moving part of the 1/r^3
 # singularity onto the basis functions.
-# TODO: This construct could be extended to handle regularizations of the
-# cauchy singular kernels by allowing different sets of basis functions
-# for the source and solution in the assembler.
-derivs_assembler = MatrixAssembler(mesh, bf.derivs, dh, qs)
+derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 mass_matrix = MassMatrix(mesh, bf, dh, QuadGauss(2),
                          compute_on_init = True)
 
@@ -78,7 +75,6 @@ x, s = tools.evaluate_boundary_solution(5, soln, mesh)
 # plt.show()
 
 # Compute some interior values.
-# TODO: Extract this interior point computation to some tool function.
 x_pts = 98
 y_pts = 98
 x = np.linspace(-5, 5, x_pts)

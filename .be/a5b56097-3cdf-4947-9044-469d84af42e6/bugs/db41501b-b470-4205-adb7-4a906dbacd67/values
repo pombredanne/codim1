@@ -26,21 +26,21 @@
 
 
 
-    "status": "closed", 
+    "status": "open", 
 
 
 
 
 
 
-    "summary": "Use scipy sparse matrices for the mass matrix.", 
+    "summary": "Consider using regularized versions of the traction kernels.", 
 
 
 
 
 
 
-    "time": "Mon, 24 Mar 2014 02:30:52 +0000"
+    "time": "Mon, 24 Mar 2014 21:53:46 +0000"
 
 
 
