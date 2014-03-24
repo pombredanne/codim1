@@ -122,6 +122,10 @@ class _GradientBasisFunctions(BasisFunctions):
         Returns the vector of derivatives (d\hat{x} / d\vec{x})
         Needed for integration of basis function gradients.
         """
-        return 1.0 / _get_deriv_point(self.mesh.basis_fncs.derivs,
+        dx_dxhat = _get_deriv_point(self.mesh.basis_fncs.derivs,
                                 self.mesh.coefficients,
                                 element_idx, x_hat)
+        dxhat_dx = np.empty(2)
+        dxhat_dx[0] = 1.0 / dx_dxhat[0] if dx_dxhat[0] != 0 else 0
+        dxhat_dx[1] = 1.0 / dx_dxhat[1] if dx_dxhat[1] != 0 else 0
+        return dxhat_dx

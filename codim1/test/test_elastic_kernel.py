@@ -92,3 +92,25 @@ def test_hypersingular_nonregularized():
 
     np.testing.assert_almost_equal(S_exact, S)
 
+def test_hypersingular_vs_regularized():
+    from codim1.core.dof_handler import ContinuousDOFHandler
+    from codim1.core.mesh import Mesh
+    from codim1.core.basis_funcs import BasisFunctions, Solution
+    from codim1.core.quad_strategy import QuadStrategy
+    from codim1.fast.integration import double_integral
+
+    k_rh = RegularizedHypersingularKernel(1.0, 0.25)
+    k_h = HypersingularKernel(1.0, 0.25)
+
+    mesh = Mesh.simple_line_mesh(10)
+    bf = BasisFunctions.from_degree(1)
+    grad_bf = bf.get_gradient_basis(mesh)
+    qs = QuadStrategy(mesh, 10, 10, 10, 10)
+    dh = ContinuousDOFHandler(mesh, 1)
+
+    # By the regularization of the hypersingular integral, these two
+    # integrations should give the same result.
+    o_q, i_q = qs.get_quadrature('logr', 0, 9)
+    a = double_integral(mesh, k_rh, grad_bf, grad_bf, o_q, i_q, 8, 0, 9, 0)
+    b = double_integral(mesh, k_h, bf, bf, o_q, i_q, 8, 0, 9, 0)
+    np.testing.assert_almost_equal(a, b)

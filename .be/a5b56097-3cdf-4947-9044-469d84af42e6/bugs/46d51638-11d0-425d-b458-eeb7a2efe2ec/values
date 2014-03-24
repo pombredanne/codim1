@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "Reduce the double integral method to get single components of the matrix kernel in order to be able to do implement symmetry efficiently.", 
+
+
+
+
+
+
+    "time": "Mon, 24 Mar 2014 21:27:59 +0000"
+
+
+
+
+
+
+}

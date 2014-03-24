@@ -8,14 +8,6 @@ from codim1.fast.mesh cimport _get_normal, _get_jacobian, _get_physical_point
 # so that all the python statements in the core of the loop can be removed.
 # A c++ implementation could use templates to adapt the integraton
 # to matrix entries vs. rhs values, linear elements, high order, etc.
-# TODO: I think this function has reversed the order of integration from the
-# standard. (kernel interior, solution basis exterior).
-# Flip it back to standard. Shouldn't matter, because the domains are 
-# independently defined, but conforming to standards is generally good.
-# Maybe this isn't true. 
-# TODO: Chain rule should return a vector of derivatives. Currently, it 
-# returns a scalar. This is obviously wrong, but doesn't matter in many
-# simple cases.
 def double_integral(mesh, kernel, 
                     src_basis_fncs, soln_basis_fncs, 
                     src_quadrature, soln_quadrature, 
