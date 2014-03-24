@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "Speed up the integration procedures. Idea: write a C++ extension module.", 
+
+
+
+
+
+
+    "time": "Mon, 24 Mar 2014 02:31:38 +0000"
+
+
+
+
+
+
+}

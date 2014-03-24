@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "open", 
+
+
+
+
+
+
+    "summary": "Write a test to compare the regularized hypersingular integral to the non-regularized version. Will confirm that the chain rule stuff works.", 
+
+
+
+
+
+
+    "time": "Mon, 24 Mar 2014 20:58:25 +0000"
+
+
+
+
+
+
+}

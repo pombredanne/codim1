@@ -77,6 +77,7 @@ def test_hypersingular_regularized():
                     np.array([0, 0.0]))
     W_exact = np.array([[2 * (np.log(2) + 1) / (3 * np.pi), 0],
                         [0, 2 * np.log(2) / (3 * np.pi)]])
+
 def test_hypersingular_nonregularized():
     kernel = HypersingularKernel(1.0, 0.25)
     S = kernel.call(np.array([2.0, 0.0]),
