@@ -2,6 +2,7 @@ import numpy as np
 import scipy.interpolate as spi
 import copy
 from codim1.fast.basis_funcs import evaluate_basis as _evaluate_basis
+from codim1.fast.mesh import _get_deriv_point
 
 class Function(object):
     """
@@ -16,7 +17,7 @@ class Function(object):
         return self.f(x)
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 class Solution(object):
     """
@@ -37,7 +38,7 @@ class Solution(object):
                 self.coeffs[dof_y] * basis_eval[1]])
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 
 class BasisFunctions(object):
@@ -99,7 +100,7 @@ class BasisFunctions(object):
         return _evaluate_basis(self.derivs, i, x_hat)
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 class _GradientBasisFunctions(BasisFunctions):
     """
@@ -117,6 +118,10 @@ class _GradientBasisFunctions(BasisFunctions):
         self.fncs = fncs
 
     def chain_rule(self, element_idx, x_hat):
-        # In 1D, all we need is the inverse of the element jacobian
-        # determinant -- which is just the single dx/d\hat{x}
-        return 1.0 / self.mesh.get_jacobian(element_idx, x_hat)
+        """
+        Returns the vector of derivatives (d\hat{x} / d\vec{x})
+        Needed for integration of basis function gradients.
+        """
+        return 1.0 / _get_deriv_point(self.mesh.basis_fncs.derivs,
+                                self.mesh.coefficients,
+                                element_idx, x_hat)

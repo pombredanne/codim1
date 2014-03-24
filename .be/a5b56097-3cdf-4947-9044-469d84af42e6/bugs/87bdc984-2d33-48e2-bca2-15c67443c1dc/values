@@ -1,0 +1,50 @@
+{
+
+
+
+
+
+
+    "creator": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "reporter": "Ben Thompson <t.ben.thompson@gmail.com>", 
+
+
+
+
+
+
+    "severity": "minor", 
+
+
+
+
+
+
+    "status": "closed", 
+
+
+
+
+
+
+    "summary": "Chain rule stuff is broken, returns a scalar of derivatves rather than a vector of derivatives.", 
+
+
+
+
+
+
+    "time": "Sun, 23 Mar 2014 18:47:53 +0000"
+
+
+
+
+
+
+}
