@@ -101,6 +101,7 @@ def test_hypersingular_vs_regularized():
 
     k_rh = RegularizedHypersingularKernel(1.0, 0.25)
     k_h = HypersingularKernel(1.0, 0.25)
+    # k_h = AdjointTractionKernel(1.0, 0.25)
 
     mesh = Mesh.simple_line_mesh(10)
     bf = BasisFunctions.from_degree(1)
@@ -111,6 +112,6 @@ def test_hypersingular_vs_regularized():
     # By the regularization of the hypersingular integral, these two
     # integrations should give the same result.
     o_q, i_q = qs.get_quadrature('logr', 0, 9)
-    a = double_integral(mesh, k_rh, grad_bf, grad_bf, o_q, i_q, 8, 0, 9, 0)
-    b = double_integral(mesh, k_h, bf, bf, o_q, i_q, 8, 0, 9, 0)
+    a = double_integral(mesh, k_rh, grad_bf, grad_bf, o_q, i_q, 9, 0, 1, 0)
+    b = double_integral(mesh, k_h, bf, bf, o_q, i_q, 9, 0, 1, 0)
     np.testing.assert_almost_equal(a, b)

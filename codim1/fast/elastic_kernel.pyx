@@ -153,8 +153,6 @@ class HypersingularKernel(Kernel):
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m):
         cdef np.ndarray[double, ndim = 2] S = np.zeros((2, 2))
-        # TODO: Do the math to reduce that ugly expression down to one
-        # including the source normal m
         for i in range(2):
             for j in range(2):
                 for k in range(2):
@@ -165,8 +163,7 @@ class HypersingularKernel(Kernel):
 
     def _hypersingular(self, int i, int j, int k, 
                        double r, np.ndarray[double, ndim=1] dr,
-                       double drdn,
-                       np.ndarray[double, ndim=1] n):
+                       double drdn, np.ndarray[double, ndim=1] n):
         """ UGLY!!! """
         cdef double Skij = self.shear_modulus / \
                 (2 * pi * (1 - self.poisson_ratio)) * 1 / (r ** 2)
