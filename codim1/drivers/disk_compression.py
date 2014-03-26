@@ -11,7 +11,8 @@ from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions, Solution
 from codim1.fast.elastic_kernel import DisplacementKernel, TractionKernel, \
-        AdjointTractionKernel, HypersingularKernel
+                        AdjointTractionKernel, HypersingularKernel, \
+                        RegularizedHypersingularKernel
 from codim1.core.quad_strategy import QuadStrategy
 from codim1.core.quadrature import QuadGauss
 from codim1.core.mass_matrix import MassMatrix
@@ -72,6 +73,7 @@ def disk(n_elements, element_deg, plot):
     k_d = DisplacementKernel(shear_modulus, poisson_ratio)
     k_t = TractionKernel(shear_modulus, poisson_ratio)
     k_ta = AdjointTractionKernel(shear_modulus, poisson_ratio)
+    k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
     k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 
     # For a problem where the unknowns are displacements, use
@@ -133,9 +135,15 @@ def disk(n_elements, element_deg, plot):
             [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
              for x_v in x_vals])
     # Negative contribution of the hypersingular kernel
-    int_strs_x -= np.array(
+    int_strs_x2 = -np.array(
             [ip.compute((x_v, 0.0), normal, k_h, soln)
              for x_v in x_vals])
+    # soln_deriv = Solution(bf.get_gradient_basis(mesh), dh, soln_coeffs)
+    # int_strs_x2 = -np.array(
+    #         [ip.compute((x_v, 0.0), normal, k_rh, soln_deriv)
+    #          for x_v in x_vals])
+    print int_strs_x2
+    int_strs_x += int_strs_x2
 
     # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
     normal = np.array([0.0, 1.0])

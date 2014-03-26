@@ -31,11 +31,8 @@ def double_integral(mesh, kernel,
 
     # Jacobian determinants are necessary to scale the integral with the
     # change of variables. 
-    cdef double src_jacobian, soln_jacobian
-
-    # There will also be a multiplicative contribution from taking the 
-    # derivative of a basis function. 
-    cdef np.ndarray[double, ndim = 1] src_chain_rule, soln_chain_rule
+    cdef double src_jacobian = 1.0
+    cdef double soln_jacobian = 1.0
 
     # The l_normal is needed for the traction kernel -- the solution normal.
     # The k_normal is normally needed for the adjoint traction kernel
@@ -46,10 +43,8 @@ def double_integral(mesh, kernel,
     # same at all quadrature points, so just grab them here once.
     if is_linear:
         src_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, 0.0)
-        src_chain_rule = src_basis_fncs.chain_rule(k, 0.0)
-        k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, 0.0)
         soln_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, l, 0.0)
-        soln_chain_rule = soln_basis_fncs.chain_rule(l, 0.0)
+        k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, 0.0)
         l_normal = _get_normal(mesh_derivs, mesh_coeffs, l, 0.0)
 
     cdef int q_src_pt_index, q_soln_pt_index
@@ -68,19 +63,19 @@ def double_integral(mesh, kernel,
         q_pt_src = q_pts[q_src_pt_index]
         w_src = w[q_src_pt_index]
 
+        # Translate from reference segment coordinates to 
+        # real, physical coordinates
+        phys_src_pt = _get_physical_point(mesh_basis, mesh_coeffs,
+                                          k, q_pt_src)
+
         if not is_linear:
             # Get the jacobian at this quad point
             # The basis derivative chain rule at this point.
             src_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs,
                                          k, q_pt_src)
-            src_chain_rule = src_basis_fncs.chain_rule(k, q_pt_src)
             # Get the normal to this element at this quadrature point
             k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, q_pt_src)
 
-        # Translate from reference segment coordinates to 
-        # real, physical coordinates
-        phys_src_pt = _get_physical_point(mesh_basis, mesh_coeffs,
-                                          k, q_pt_src)
 
         # The basis functions should be evaluated on reference
         # coordinates
@@ -98,17 +93,16 @@ def double_integral(mesh, kernel,
             q_pt_soln = q_pts_soln[q_soln_pt_index]
             w_soln = q_w_soln[q_soln_pt_index]
 
+            phys_soln_pt = _get_physical_point(mesh_basis, mesh_coeffs,
+                                               l, q_pt_soln)
+
             if not is_linear:
-                soln_jacobian = _get_jacobian(
-                                              mesh_derivs, mesh_coeffs,
+                soln_jacobian = _get_jacobian(mesh_derivs, mesh_coeffs,
                                               l, q_pt_soln)
-                soln_chain_rule = src_basis_fncs.chain_rule(k, q_pt_soln)
                 l_normal = _get_normal(mesh_derivs, mesh_coeffs,
                                        l, q_pt_soln)
 
 
-            phys_soln_pt = _get_physical_point(mesh_basis, mesh_coeffs,
-                                               l, q_pt_soln)
 
             soln_basis_fnc = soln_basis_fncs.evaluate(l, j, 
                                     q_pt_soln, phys_soln_pt)
@@ -127,8 +121,8 @@ def double_integral(mesh, kernel,
             for idx_x in range(2):
                 for idx_y in range(2):
                     result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
-                            src_basis_fnc[idx_x] * src_chain_rule[idx_x] * \
-                            soln_basis_fnc[idx_y] * soln_chain_rule[idx_y] * \
+                            src_basis_fnc[idx_x] * \
+                            soln_basis_fnc[idx_y] * \
                             src_jacobian * soln_jacobian * \
                             w_soln * w_src
     return result
@@ -153,7 +147,6 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
     cdef np.ndarray[double, ndim = 2] mesh_derivs = mesh.basis_fncs.derivs
 
     cdef double jacobian    
-    cdef np.ndarray[double, ndim = 1] src_chain_rule, soln_chain_rule
     cdef np.ndarray[double, ndim = 1] k_normal
     cdef np.ndarray[double, ndim = 1] phys_pt
     cdef np.ndarray[double, ndim = 1] src_basis_fnc, soln_basis_fnc
@@ -163,8 +156,6 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
     if is_linear:
         jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, 0.0)
         k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, 0.0)
-        soln_chain_rule = soln_basis_fncs.chain_rule(k, 0.0)
-        src_chain_rule = src_basis_fncs.chain_rule(k, 0.0)
 
     cdef np.ndarray[double, ndim = 1] q_pts = quadrature.x
     cdef np.ndarray[double, ndim = 1] wts = quadrature.w
@@ -174,8 +165,6 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
         if not is_linear:
             jacobian = _get_jacobian(mesh_derivs, mesh_coeffs, k, q_pt)
             k_normal = _get_normal(mesh_derivs, mesh_coeffs, k, q_pt)
-            soln_chain_rule = soln_basis_fncs.chain_rule(k, q_pt)
-            src_chain_rule = src_basis_fncs.chain_rule(k, q_pt)
 
         src_basis_fnc = src_basis_fncs.evaluate(k, i, q_pt, phys_pt)
         soln_basis_fnc = soln_basis_fncs.evaluate(k, j, q_pt, phys_pt)
@@ -185,7 +174,6 @@ def single_integral(mesh, kernel, src_basis_fncs, soln_basis_fncs,
         for idx_x in range(2):
             for idx_y in range(2):
                 result[idx_x, idx_y] += k_val[idx_x, idx_y] * \
-                        src_basis_fnc[idx_x] * src_chain_rule[idx_x] * \
-                        soln_basis_fnc[idx_y] * soln_chain_rule[idx_y] * \
+                        src_basis_fnc[idx_x] * soln_basis_fnc[idx_y] * \
                         jacobian * w
     return result

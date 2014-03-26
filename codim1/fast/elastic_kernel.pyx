@@ -154,6 +154,7 @@ class HypersingularKernel(Kernel):
                     np.ndarray[double, ndim=1] n,
                     np.ndarray[double, ndim=1] m_normal):
         cdef np.ndarray[double, ndim = 2] S = np.zeros((2, 2))
+        cdef np.ndarray[double, ndim = 3] S2 = np.zeros((2, 2, 2))
         cdef double Slkm
         for l in range(2):
             for k in range(2):
@@ -161,6 +162,8 @@ class HypersingularKernel(Kernel):
                     Slkm = self._hypersingular(l, k, m, dist, 
                                                      dr, drdn, n)
                     S[l, m] += Slkm * m_normal[k]
+                    S2[l, k, m] = Slkm
+        #print S2
         return S
 
     def _hypersingular(self, int l, int k, int m, 
