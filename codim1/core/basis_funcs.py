@@ -16,9 +16,6 @@ class Function(object):
     def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
 
-    def chain_rule(self, element_idx, x_hat):
-        return np.ones(2)
-
 class Solution(object):
     """
     Represents a solution by some coefficients multiplied by a set of
@@ -36,9 +33,6 @@ class Solution(object):
         basis_eval = self.basis.evaluate(element_idx, i, x_hat, x)
         return np.array([self.coeffs[dof_x] * basis_eval[0],
                 self.coeffs[dof_y] * basis_eval[1]])
-
-    def chain_rule(self, element_idx, x_hat):
-        return np.ones(2)
 
 
 class BasisFunctions(object):
@@ -99,9 +93,6 @@ class BasisFunctions(object):
         """
         return _evaluate_basis(self.derivs, i, x_hat)
 
-    def chain_rule(self, element_idx, x_hat):
-        return np.ones(2)
-
 class _GradientBasisFunctions(BasisFunctions):
     """
     Stores the derivatives of the basis functions. For internal use only.
@@ -117,22 +108,25 @@ class _GradientBasisFunctions(BasisFunctions):
         self.nodes = nodes
         self.fncs = fncs
 
-    def chain_rule(self, element_idx, x_hat):
+    def evaluate(self, element_idx, i, x_hat, x):
         """
-        Returns the scaling to convert a arc length derivative to a basis
+        Returns the basis derivative including the
+        scaling to convert a arc length derivative to a basis
         function derivative.
         """
-        grad = _get_deriv_point(self.mesh.basis_fncs.derivs,
+        jac = _get_deriv_point(self.mesh.basis_fncs.derivs,
                                     self.mesh.coefficients,
                                     element_idx,
                                     x_hat)
+
         n = self.mesh.get_normal(element_idx, x_hat)
-        j = self.mesh.get_jacobian(element_idx, x_hat)
 
-        # The physical arc length -- "surface curl"
-        result = -n[0] * grad[1] + n[1] * grad[0]
+        grad = super(_GradientBasisFunctions, self).\
+                      evaluate(element_idx, i, x_hat, x)
+        curlx = (jac[0] * n[1] - jac[1] * n[0])
 
-        # Scale to reference arc length using jacobian
-        result = np.array([result, result]) / j
+        curlx /= (self.mesh.get_jacobian(element_idx, x_hat) ** 2)
+
+        result = np.array([curlx * grad[0], curlx * grad[1]])
 
         return result

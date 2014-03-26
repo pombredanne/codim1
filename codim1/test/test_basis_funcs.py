@@ -63,14 +63,12 @@ def test_function():
     assert(f_val[0] == 1.0)
     assert(f_val[1] == 11.1)
 
-def test_gradient_chainrule():
+def test_gradient():
     msh = Mesh.circular_mesh(200, 1.0)
     bf = BasisFunctions([0.0, 1.0])
     gradient = bf.get_gradient_basis(msh)
-    np.testing.assert_almost_equal(gradient.chain_rule(0, 0)[0], 1.0)
-    np.testing.assert_almost_equal(gradient.evaluate(0, 0, 0.5, 0.0),
-                                   bf.evaluate_derivative(0, 0, 0.5, 0.0))
-    assert(bf.chain_rule(0, 0)[1] == 1.0)
+    np.testing.assert_almost_equal(gradient.evaluate(57, 0, 0.5, 0.0),
+                                   -31.83229765 * np.ones(2))
 
 def test_solution():
     msh = Mesh.simple_line_mesh(1)
