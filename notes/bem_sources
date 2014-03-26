@@ -22,6 +22,10 @@ Implementation of BEM methods:
 BETL
 BEM++
 HYENA @ http://portal.tugraz.at/portal/page/portal/Files/i2610/files/Forschung/Software/HyENA/html/index.html
+-- HYENA is an excellent source of information... and uses the same style of
+    implementation used here.
+-- lovely quote: "Up to now only integration routines for three space dimensions are implemented. The reason is that no to us known coordinate transformation is available for the integration of weakly singular kernels in two space dimensions. Beside that the respective regularized fundamental solutions are missing too."
+
 EPSBEM -- super high order approximations using matlab (p > 10000!!!!)
        -- http://apfel.mathematik.uni-ulm.de/~mbantle/epsBEM/index.html
 BEMLIB -- http://dehesa.freeshell.org/BEMLIB/

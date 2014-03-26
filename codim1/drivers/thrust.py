@@ -128,8 +128,6 @@ qs_rhs = qs
 dh = ContinuousDOFHandler(mesh, 1)
 
 print('Assembling kernel matrix, Guu')
-# TODO: Take the symmetry of Guu, Gpp into account in its assembly.
-# Cut it in half!
 matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
 Guu = matrix_assembler.assemble_matrix(k_d)
 
@@ -155,7 +153,6 @@ soln_coeffs = np.linalg.solve(Guu, rhs)
 soln = Solution(bf, dh, soln_coeffs)
 
 print("Performing Interior Computation")
-# TODO: Extract this interior point computation to some tool function.
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -172,7 +169,7 @@ for i in range(x_pts):
         int_ux[j, i] = traction_effect[0] + displacement_effect[0]
         int_uy[j, i] = traction_effect[1] + displacement_effect[1]
 
-#TODO: HACK to get the correct displacements for the dislocation
+# HACK to get the correct displacements for the dislocation
 # doing the correct thing probably involves accounting for the displacements
 # on both sides of the surface.
 int_ux -= np.flipud(int_ux)

@@ -147,33 +147,34 @@ class HypersingularKernel(Kernel):
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
         self.const1 = (1 - 2 * poisson_ratio)
+        self.const5 = shear_modulus / (2 * pi * (1 - poisson_ratio))
 
     def _call(self, double dist, double drdn, double drdm,
                     np.ndarray[double, ndim=1] dr,
                     np.ndarray[double, ndim=1] n,
-                    np.ndarray[double, ndim=1] m):
+                    np.ndarray[double, ndim=1] m_normal):
         cdef np.ndarray[double, ndim = 2] S = np.zeros((2, 2))
-        for i in range(2):
-            for j in range(2):
-                for k in range(2):
-                    value = self._hypersingular(i, j, k, dist, 
+        cdef double Slkm
+        for l in range(2):
+            for k in range(2):
+                for m in range(2):
+                    Slkm = self._hypersingular(l, k, m, dist, 
                                                      dr, drdn, n)
-                    S[j, k] += value * m[i]
+                    S[l, m] += Slkm * m_normal[k]
         return S
 
-    def _hypersingular(self, int i, int j, int k, 
+    def _hypersingular(self, int l, int k, int m, 
                        double r, np.ndarray[double, ndim=1] dr,
                        double drdn, np.ndarray[double, ndim=1] n):
-        """ UGLY!!! """
-        cdef double Skij = self.shear_modulus / \
-                (2 * pi * (1 - self.poisson_ratio)) * 1 / (r ** 2)
-        Skij = Skij * ( 2 * drdn * ( self.const1 * (i==j) * dr[k] + \
-            self.poisson_ratio * ( dr[j] * (k==i) + dr[i] * (j==k) ) - \
-            4 * dr[i] * dr[j] * dr[k] ) + \
-            2 * self.poisson_ratio * ( n[i] * dr[j] * dr[k] + \
-            n[j] * dr[i] * dr[k] ) + \
+        """ UGLY!!! From SGBEM book page 33."""
+        cdef double Slkm = self.const5 / (r ** 2)
+        Slkm = Slkm * ( 2 * drdn * ( self.const1 * (l==k) * dr[m] + \
+            self.poisson_ratio * ( dr[l] * (k==m) + dr[k] * (l==m) ) - \
+            4 * dr[l] * dr[k] * dr[m] ) + \
+            2 * self.poisson_ratio * ( n[l] * dr[k] * dr[m] + \
+            n[k] * dr[l] * dr[m] ) + \
             self.const1 * \
-            ( 2 * n[k] * dr[i] * dr[j] + n[j] * (k==i) + \
-                n[i] * (j==k) ) \
-            - (1 - 4 * self.poisson_ratio) * n[k] * (i==j))
-        return Skij
+            ( 2 * n[m] * dr[l] * dr[k] + n[k] * (l==m) + \
+                n[l] * (k==m) ) \
+            - (1 - 4 * self.poisson_ratio) * n[m] * (l==k))
+        return Slkm
