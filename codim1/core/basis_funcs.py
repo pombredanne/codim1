@@ -2,6 +2,7 @@ import numpy as np
 import scipy.interpolate as spi
 import copy
 from codim1.fast.basis_funcs import evaluate_basis as _evaluate_basis
+from codim1.fast.mesh import _get_deriv_point, _get_normal
 
 class Function(object):
     """
@@ -16,7 +17,7 @@ class Function(object):
         return self.f(x)
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 class Solution(object):
     """
@@ -37,7 +38,7 @@ class Solution(object):
                 self.coeffs[dof_y] * basis_eval[1]])
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 
 class BasisFunctions(object):
@@ -99,7 +100,7 @@ class BasisFunctions(object):
         return _evaluate_basis(self.derivs, i, x_hat)
 
     def chain_rule(self, element_idx, x_hat):
-        return 1.0
+        return np.ones(2)
 
 class _GradientBasisFunctions(BasisFunctions):
     """
@@ -121,4 +122,17 @@ class _GradientBasisFunctions(BasisFunctions):
         Returns the scaling to convert a arc length derivative to a basis
         function derivative.
         """
-        return 1.0 / self.mesh.get_jacobian(element_idx, x_hat)
+        grad = _get_deriv_point(self.mesh.basis_fncs.derivs,
+                                    self.mesh.coefficients,
+                                    element_idx,
+                                    x_hat)
+        n = self.mesh.get_normal(element_idx, x_hat)
+        j = self.mesh.get_jacobian(element_idx, x_hat)
+
+        # The physical arc length -- "surface curl"
+        result = -n[0] * grad[1] + n[1] * grad[0]
+
+        # Scale to reference arc length using jacobian
+        result = np.array([result, result]) / j
+
+        return result

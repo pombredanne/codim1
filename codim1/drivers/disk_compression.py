@@ -177,38 +177,38 @@ def disk(n_elements, element_deg, plot):
         plt.legend()
 
     # Collect the displacements at an array of interior points.
-    # TODO: Work on saving all the data from every run.
-    x_pts = 20
-    y_pts = 22
-    x = np.linspace(-0.95, 0.95, x_pts)
-    y = np.linspace(-0.95, 0.95, y_pts)
-    int_ux = np.zeros((y_pts, x_pts))
-    int_uy = np.zeros((y_pts, x_pts))
-    # TODO: This code is in two places -- disk_compression and thrust.
-    # it should be extracted into a tool function.
-    for i in range(x_pts):
-        for j in range(y_pts):
-            print i, j
-            x_val = x[i]
-            y_val = y[j]
-            if ((x_val ** 2) + (y_val ** 2)) > 0.99:
-                int_ux[j, i] = 0
-                int_uy[j, i] = 0
-                continue
-            traction_effect = ip.compute((x_val, y_val), np.zeros(2),
-                                         k_d, traction_function)
-            displacement_effect = -ip.compute((x_val, y_val),
-                                              np.zeros(2),
-                                              k_t, soln)
-            int_ux[j, i] = traction_effect[0] + displacement_effect[0]
-            int_uy[j, i] = traction_effect[1] + displacement_effect[1]
-    int_u = np.array([int_ux, int_uy])
-    with open('int_u_disk.pkl', 'wb') as f:
-        cPickle.dump(int_u, f)
+    save_interior = False
+    if save_interior:
+        x_pts = 20
+        y_pts = 22
+        x = np.linspace(-0.95, 0.95, x_pts)
+        y = np.linspace(-0.95, 0.95, y_pts)
+        int_ux = np.zeros((y_pts, x_pts))
+        int_uy = np.zeros((y_pts, x_pts))
+        for i in range(x_pts):
+            for j in range(y_pts):
+                print i, j
+                x_val = x[i]
+                y_val = y[j]
+                if ((x_val ** 2) + (y_val ** 2)) > 0.99:
+                    int_ux[j, i] = 0
+                    int_uy[j, i] = 0
+                    continue
+                traction_effect = ip.compute((x_val, y_val), np.zeros(2),
+                                             k_d, traction_function)
+                displacement_effect = -ip.compute((x_val, y_val),
+                                                  np.zeros(2),
+                                                  k_t, soln)
+                int_ux[j, i] = traction_effect[0] + displacement_effect[0]
+                int_uy[j, i] = traction_effect[1] + displacement_effect[1]
+        int_u = np.array([int_ux, int_uy])
+        with open('int_u_disk.pkl', 'wb') as f:
+            cPickle.dump(int_u, f)
 
     return int_strs_x[:, 0]
 
 def reload_and_postprocess():
+    # Creates a pretty picture =)
     f = open('data/disk_compression/int_u_disk.pkl', 'rb')
     int_u = cPickle.load(f)
     x_pts = 20
@@ -227,15 +227,6 @@ def reload_and_postprocess():
     circ = plt.Circle((0, 0), radius = 1.0, color = 'g', fill = False)
     ax.add_patch(circ)
     plt.title(r'Displacement vectors for a disk compressed in plane strain')
-
-    # fig = plt.figure()
-    # ax = fig.add_subplot(1, 1, 1)
-    # plt.streamplot(X, Y, int_u[0, :, :], int_u[1, :, :])
-    # plt.xlabel('X')
-    # plt.ylabel('Y')
-    # circ = plt.Circle((0, 0), radius = 1.0, color = 'g', fill = False)
-    # ax.add_patch(circ)
-    # plt.title(r'Displacement streamlines for a disk compressed in plane strain')
     plt.show()
 
 
@@ -245,7 +236,7 @@ if __name__ == "__main__":
         sys.exit()
 
     start = time.time()
-    sigma_xx = disk(50, 0, False)
+    sigma_xx = disk(50, 0, True)
     end = time.time()
     print("Took: " + str(end - start) + " seconds")
     plt.show()
