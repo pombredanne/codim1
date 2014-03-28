@@ -42,6 +42,16 @@ def test_traction_mirror_symmety():
                     np.zeros(2), np.array([-1.0, 0.0]))
     np.testing.assert_almost_equal(a, b)
 
+def test_reverse_normal():
+    kernel = TractionKernel(1.0, 0.25)
+    a = kernel.call(np.array([1.0, 0.5]),
+                    np.zeros(2), np.array([1.0, 0.0]))
+    # Only symmetric if we reverse the normal vector too!
+    kernel.reverse_normal = True
+    b = kernel.call(np.array([-1.0, -0.5]),
+                    np.zeros(2), np.array([1.0, 0.0]))
+    np.testing.assert_almost_equal(a, b)
+
 def test_displacement():
     kernel = DisplacementKernel(1.0, 0.25)
     G = kernel.call(np.array([2.0, 0.0]),

@@ -124,9 +124,6 @@ class _GradientBasisFunctions(BasisFunctions):
         grad = super(_GradientBasisFunctions, self).\
                       evaluate(element_idx, i, x_hat, x)
         curlx = (jac[0] * n[1] - jac[1] * n[0])
-
         curlx /= (self.mesh.get_jacobian(element_idx, x_hat) ** 2)
-
         result = np.array([curlx * grad[0], curlx * grad[1]])
-
         return result
