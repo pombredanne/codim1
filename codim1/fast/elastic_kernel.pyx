@@ -17,6 +17,7 @@ class Kernel(object):
     def __init__(self, double shear_modulus, double poisson_ratio):
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
+        self.reverse_normal = False
 
     def call(self, np.ndarray[double, ndim = 1] r,
                    np.ndarray[double, ndim = 1] m,
@@ -27,6 +28,8 @@ class Kernel(object):
         m is the unit normal vector to the source surface.
         n is the unit normal vector to the solution surface.
         """
+        if self.reverse_normal:
+            n = -n
         cdef double dist = sqrt(r[0] ** 2 + r[1] ** 2)
         cdef np.ndarray[double, ndim=1] dr = r / dist
         cdef double drdm = dr[0] * m[0] + dr[1] * m[1]
@@ -44,6 +47,7 @@ class DisplacementKernel(Kernel):
     Guu -- log(r) singular in 2D
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
+        self.reverse_normal = False
         self.singularity_type = 'logr'
         self.symmetric_matrix = True
         self.const3 = 1.0 / (8.0 * pi * shear_modulus * (1 - poisson_ratio))
@@ -67,6 +71,7 @@ class TractionKernel(Kernel):
     Gup -- 1/r singular in 2D
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
+        self.reverse_normal = False
         self.singularity_type = 'oneoverr'
         self.symmetric_matrix = False
         # Unhelpful constant names are unhelpful...
@@ -94,6 +99,7 @@ class AdjointTractionKernel(Kernel):
     a different sign and the relevant normal being m instead of n.
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
+        self.reverse_normal = False
         self.singularity_type = 'oneoverr'
         self.symmetric_matrix = False
         # Unhelpful constant names are unhelpful...
@@ -122,6 +128,7 @@ class RegularizedHypersingularKernel(Kernel):
     A derivation of this regularization is given in Frangi, Novati, 1996.
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
+        self.reverse_normal = False
         self.singularity_type = 'logr'
         self.symmetric_matrix = True
         self.const5 = shear_modulus / (2 * pi * (1 - poisson_ratio))
@@ -144,6 +151,7 @@ class HypersingularKernel(Kernel):
     is very close to the boundary.
     """
     def __init__(self, double shear_modulus, double poisson_ratio):
+        self.reverse_normal = False
         self.shear_modulus = shear_modulus
         self.poisson_ratio = poisson_ratio
         self.const1 = (1 - 2 * poisson_ratio)
