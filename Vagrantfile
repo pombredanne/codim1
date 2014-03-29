@@ -68,6 +68,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Setup ansible provisioning.
   config.vm.provision "ansible" do |ansible|
     ansible.inventory_path = "./deploy/vagrant_ansible_inventory_default"
-    ansible.playbook = "./deploy/ansible_playbook.yml"
+    ansible.playbook = "./deploy/ansible_dev.yml"
   end
 end
