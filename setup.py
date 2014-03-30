@@ -26,7 +26,7 @@ ext = cythonize(ext)
 
 # -g compiles with debugging information.
 # -O0 means compile with no optimization, try -O5 for happiness and joy
-ext.append(Extension(fast_package + '.fast_package',
+ext.append(Extension(fast_package + '_lib',
                   ['codim1/fast/python_interface.cpp'],
                   include_dirs=['codim1/fast'],
                   library_dirs=['/'],

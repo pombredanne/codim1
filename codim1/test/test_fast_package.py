@@ -1,5 +1,5 @@
 import numpy as np
-import codim1.fast.fast_package as fp
+import codim1.fast_lib as fp
 from codim1.core.basis_funcs import BasisFunctions
 from time import time
 

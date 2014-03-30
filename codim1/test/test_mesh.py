@@ -32,12 +32,6 @@ def test_get_phys_pts():
     np.testing.assert_almost_equal(pts[0], 0.5)
     np.testing.assert_almost_equal(pts[1], 0.0)
 
-def test_get_one_phys_pts():
-    m = Mesh.simple_line_mesh(4)
-    # Element 2 should lie from 0 to 0.5
-    pts = m.get_physical_point(2, np.array([0.5]))
-    np.testing.assert_almost_equal(pts[0], 0.25)
-
 def test_jacobian():
     m = Mesh.simple_line_mesh(4)
     j = m.get_jacobian(1, 0.0)
