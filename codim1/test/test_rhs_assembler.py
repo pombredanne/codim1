@@ -1,7 +1,7 @@
 import numpy as np
 from codim1.core.rhs_assembler import RHSAssembler
 import codim1.core.basis_funcs as basis_funcs
-import codim1.fast.elastic_kernel as elastic_kernel
+from codim1.fast_lib import TractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
 import codim1.core.quad_strategy as quad_strategy
@@ -31,7 +31,7 @@ def rhs_assembler():
 
 def test_rhs_row_not_shared():
     a = rhs_assembler()
-    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
+    kernel = TractionKernel(1.0, 0.25)
     row_correct_x = np.sum(correct_matrix[0, :])
     row_correct_y = np.sum(correct_matrix[3, :])
 
@@ -45,7 +45,7 @@ def test_rhs_row_not_shared():
 
 def test_rhs_row_shared():
     a = rhs_assembler()
-    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
+    kernel = TractionKernel(1.0, 0.25)
     row_correct_x = np.sum(correct_matrix[1, :])
     row_correct_y = np.sum(correct_matrix[4, :])
 
@@ -63,7 +63,7 @@ def test_rhs_row_shared():
 
 def test_rhs():
     a = rhs_assembler()
-    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
+    kernel = TractionKernel(1.0, 0.25)
     # If we sum across rows, we should get the RHS value for
     # a function that is 1 everywhere
     rhs_correct = np.sum(correct_matrix, axis = 1)

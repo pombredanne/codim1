@@ -17,7 +17,7 @@ void expose_kernel(const char* type_string)
     class_<T>(type_string, init<double, double>())
         .def("call", &T::call_all)
         .def("_call", &T::call)
-        .def_readonly("reverse_normal", &T::reverse_normal)
+        .def_readwrite("reverse_normal", &T::reverse_normal)
         .def_readonly("symmetric_matrix", &T::symmetric_matrix)
         .def_readonly("singularity_type", &T::singularity_type);
 }
@@ -49,9 +49,12 @@ BOOST_PYTHON_MODULE(fast_lib)
             init<std::vector<std::vector<double> >,
             std::vector<std::vector<double> >,
             std::vector<std::vector<std::vector<double> > > >())
+        .def("eval_function", &MeshEval::eval_function)
         .def("get_physical_point", &MeshEval::get_physical_point)
         .def("get_jacobian", &MeshEval::get_jacobian)
-        .def("get_normal", &MeshEval::get_normal);
+        .def("get_normal", &MeshEval::get_normal)
+        .def_readonly("basis_eval", &MeshEval::basis_eval)
+        .def_readonly("deriv_eval", &MeshEval::deriv_eval);
 
     expose_kernel<DisplacementKernel>("DisplacementKernel");
     expose_kernel<TractionKernel>("TractionKernel");

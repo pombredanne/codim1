@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.interpolate as spi
 import copy
-from codim1.fast.mesh import _get_deriv_point, _get_normal
 from codim1.fast_lib import BasisEval
 
 class Function(object):
@@ -124,10 +123,10 @@ class _GradientBasisFunctions(BasisFunctions):
         scaling to convert a arc length derivative to a basis
         function derivative.
         """
-        jac = _get_deriv_point(self.mesh.basis_fncs.derivs,
-                                    self.mesh.coefficients,
-                                    element_idx,
-                                    x_hat)
+        jac = self.mesh.mesh_eval.eval_function(
+                    self.mesh.mesh_eval.deriv_eval,
+                    element_idx,
+                    x_hat)
 
         n = self.mesh.get_normal(element_idx, x_hat)
 
