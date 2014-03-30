@@ -3,6 +3,7 @@ from codim1.core.segment_distance import segments_distance
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.fast.mesh import _get_jacobian, _get_physical_point, \
                              _get_normal
+from codim1.fast_lib import MeshEval
 
 class Mesh(object):
     """
@@ -75,6 +76,10 @@ class Mesh(object):
 
         self.compute_element_distances()
         self.compute_element_widths()
+
+        self.mesh_eval = MeshEval(self.basis_fncs.fncs,
+                                  self.basis_fncs.derivs,
+                                  self.coefficients)
 
     @classmethod
     def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
@@ -217,8 +222,7 @@ class Mesh(object):
         Use the mapping defined by the coefficients and basis functions
         to convert coordinates
         """
-        return _get_physical_point(self.basis_fncs.fncs, self.coefficients,
-                            element_idx, x_hat)
+        return self.mesh_eval.get_physical_point(element_idx, x_hat)
 
     def get_jacobian(self, element_idx, x_hat):
         """
@@ -226,13 +230,11 @@ class Mesh(object):
         to get the determinant of the jacobian! This is used to change
         integration coordinates from physical to reference elements.
         """
-        return _get_jacobian(self.basis_fncs.derivs, self.coefficients,
-                             element_idx, x_hat)
+        return self.mesh_eval.get_jacobian(element_idx, x_hat)
 
     def get_normal(self, element_idx, x_hat):
         """
         Use the derivative of the mapping to determine the tangent vector
         and thus to determine the local normal vector.
         """
-        return _get_normal(self.basis_fncs.derivs, self.coefficients,
-                    element_idx, x_hat)
+        return self.mesh_eval.get_normal(element_idx, x_hat)

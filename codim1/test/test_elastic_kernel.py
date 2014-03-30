@@ -1,4 +1,8 @@
-from codim1.fast.elastic_kernel import *
+from codim1.fast_lib import DisplacementKernel,\
+                            TractionKernel,\
+                            AdjointTractionKernel,\
+                            HypersingularKernel,\
+                            RegularizedHypersingularKernel
 from codim1.core.dof_handler import ContinuousDOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions, Solution
@@ -250,3 +254,6 @@ def test_hypersingular_vs_regularized_across_elements():
     a = a1 + a2 + a3 + a4
     b = b1 + b2 + b3 + b4
     np.testing.assert_almost_equal(a, b)
+
+if __name__ == "__main__":
+    test_traction()

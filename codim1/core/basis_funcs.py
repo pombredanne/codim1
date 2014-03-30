@@ -2,7 +2,7 @@ import numpy as np
 import scipy.interpolate as spi
 import copy
 from codim1.fast.mesh import _get_deriv_point, _get_normal
-from codim1.fast.fast_package import BasisEval
+from codim1.fast_lib import BasisEval
 
 class Function(object):
     """

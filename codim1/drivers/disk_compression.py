@@ -134,15 +134,9 @@ def disk(n_elements, element_deg, plot):
             [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
              for x_v in x_vals])
     # Negative contribution of the hypersingular kernel
-    int_strs_x2 = -np.array(
+    int_strs_x += -np.array(
             [ip.compute((x_v, 0.0), normal, k_h, soln)
              for x_v in x_vals])
-    # soln_deriv = Solution(bf.get_gradient_basis(mesh), dh, soln_coeffs)
-    # int_strs_x2 = -np.array(
-    #         [ip.compute((x_v, 0.0), normal, k_rh, soln_deriv)
-    #          for x_v in x_vals])
-    print int_strs_x2
-    int_strs_x += int_strs_x2
 
     # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
     normal = np.array([0.0, 1.0])
@@ -246,6 +240,7 @@ if __name__ == "__main__":
     sigma_xx = disk(50, 0, True)
     end = time.time()
     print("Took: " + str(end - start) + " seconds")
+    sys.exit()
     plt.show()
 
     # Calculate errors and compare with the crouch errors.
