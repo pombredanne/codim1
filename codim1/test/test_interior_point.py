@@ -1,6 +1,6 @@
 import numpy as np
 import codim1.core.basis_funcs as basis_funcs
-import codim1.fast.elastic_kernel as elastic_kernel
+from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
 from codim1.core.quad_strategy import QuadStrategy
@@ -21,7 +21,7 @@ def test_interior_point_hypersingular():
         -3.29088619e-03,  -1.41159451e-02,  -4.68710442e-02,
         -1.41159451e-02,  -3.29088619e-03])
     soln = basis_funcs.Solution(bf, dh, coeffs)
-    kernel = elastic_kernel.HypersingularKernel(1.0, 0.25)
+    kernel = HypersingularKernel(1.0, 0.25)
     ip = InteriorPoint(msh, dh, qs)
     result = ip.compute(np.array([0.5, 0.0]), np.array([1.0, 0.0]),
                         kernel, soln)
@@ -40,7 +40,7 @@ def test_interior_point_traction_adjoint():
         return np.array((0.0, 0.0))
     traction_function = basis_funcs.BasisFunctions.\
             from_function(section_traction)
-    kernel = elastic_kernel.AdjointTractionKernel(1.0, 0.25)
+    kernel = AdjointTractionKernel(1.0, 0.25)
     ip = InteriorPoint(msh, dh, qs)
     result = ip.compute(np.array([0.5, 0.0]), np.array([1.0, 0.0]), kernel,
                 traction_function)

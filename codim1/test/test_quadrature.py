@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.core.quadrature import QuadGauss, QuadSingularTelles, QuadOneOverR
-from codim1.fast.elastic_kernel import DisplacementKernel
+from codim1.fast_lib import DisplacementKernel
 import codim1.core.gaussian_quad as gaussian_quad
 
 ################################################################################

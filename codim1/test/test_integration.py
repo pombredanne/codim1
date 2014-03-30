@@ -3,7 +3,7 @@ import codim1.core.mesh as mesh
 import codim1.core.quad_strategy as quad_strategy
 import codim1.core.quadrature as quadrature
 import codim1.core.basis_funcs as basis_funcs
-import codim1.fast.elastic_kernel as elastic_kernel
+from codim1.fast_lib import TractionKernel, DisplacementKernel
 from codim1.fast.integration import double_integral
 from codim1.fast.integration import single_integral
 
@@ -12,7 +12,7 @@ def test_exact_dbl_integrals_H_same_element():
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     bf = basis_funcs.BasisFunctions.from_degree(1)
 
-    kernel = elastic_kernel.TractionKernel(1.0, 0.25)
+    kernel = TractionKernel(1.0, 0.25)
     H_00 = double_integral(msh, kernel, bf, bf, qs.get_simple(),
             qs.quad_oneoverr, 0, 0, 0, 0)
     np.testing.assert_almost_equal(H_00, np.zeros((2, 2)), 3)
@@ -37,7 +37,7 @@ def test_exact_dbl_integrals_G_same_element():
     msh = mesh.Mesh.simple_line_mesh(1)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
+    kernel = DisplacementKernel(1.0, 0.25)
     G_00 = double_integral(msh, kernel, bf, bf, qs.get_simple(),
             qs.quad_logr, 0, 0, 0, 0)
     np.testing.assert_almost_equal(G_00, [[0.165187, 0], [0, 0.112136]], 4)
@@ -55,7 +55,7 @@ def test_exact_dbl_integrals_G_different_element():
     msh = mesh.Mesh.simple_line_mesh(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
+    kernel = DisplacementKernel(1.0, 0.25)
     q = [qs.quad_shared_edge_left] * \
             len(qs.get_simple().x)
     G_00 = double_integral(msh, kernel, bf, bf, qs.get_simple(), q, 0, 0, 1, 0)
@@ -73,7 +73,7 @@ def test_realistic_double_integral_symmetry():
     msh = mesh.Mesh.simple_line_mesh(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    kernel = elastic_kernel.DisplacementKernel(1.0, 0.25)
+    kernel = DisplacementKernel(1.0, 0.25)
 
     # fnc = lambda r, n: 1 / r[0]
     one = double_integral(msh, kernel, bf, bf, qs.get_simple(),

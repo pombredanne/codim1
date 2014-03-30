@@ -10,7 +10,7 @@ from codim1.core.mesh import Mesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.fast.elastic_kernel import DisplacementKernel, TractionKernel, \
+from codim1.fast_lib import DisplacementKernel, TractionKernel, \
                         AdjointTractionKernel, HypersingularKernel, \
                         RegularizedHypersingularKernel
 from codim1.core.quad_strategy import QuadStrategy

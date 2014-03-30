@@ -115,7 +115,7 @@ DisplacementKernel::DisplacementKernel(double shear_modulus,
 
 double DisplacementKernel::call(KernelData d, int p, int q)
 {
-    return const4 * (((p == q) * -const4 * log(d.dist)) + 
+    return const3 * (((p == q) * -const4 * log(d.dist)) + 
                      d.dr[p] * d.dr[q]);
 }
 

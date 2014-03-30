@@ -1,7 +1,7 @@
 import numpy as np
 from codim1.core.matrix_assembler import MatrixAssembler
 import codim1.core.basis_funcs as basis_funcs
-import codim1.fast.elastic_kernel as elastic_kernel
+from codim1.fast_lib import DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
 import codim1.core.tools as tools
@@ -136,8 +136,8 @@ def realistic_assembler(n_elements = 4,
 
 def test_realistic_nan():
     a = realistic_assembler()
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    k_t = elastic_kernel.TractionKernel(1.0, 0.25)
+    k_d = DisplacementKernel(1.0, 0.25)
+    k_t = TractionKernel(1.0, 0.25)
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     assert(not np.isnan(np.sum(H)))
@@ -146,8 +146,8 @@ def test_realistic_nan():
 
 def test_realistic_symmetric_linear():
     a = realistic_assembler()
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    k_t = elastic_kernel.TractionKernel(1.0, 0.25)
+    k_d = DisplacementKernel(1.0, 0.25)
+    k_t = TractionKernel(1.0, 0.25)
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     np.testing.assert_almost_equal((G - G.T) /
@@ -159,8 +159,8 @@ def test_realistic_symmetric_quadratic():
                             quad_points_logr = 12,
                             quad_points_oneoverr = 10,
                             n_elements = 1, element_deg = 2)
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    k_t = elastic_kernel.TractionKernel(1.0, 0.25)
+    k_d = DisplacementKernel(1.0, 0.25)
+    k_t = TractionKernel(1.0, 0.25)
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G), 4)
@@ -168,8 +168,8 @@ def test_realistic_symmetric_quadratic():
 
 def test_reciprocal_effects():
     a = realistic_assembler(n_elements = 2)
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    k_t = elastic_kernel.TractionKernel(1.0, 0.25)
+    k_d = DisplacementKernel(1.0, 0.25)
+    k_t = TractionKernel(1.0, 0.25)
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     # The influence of u_x(0) on u_y(1) should be the opposite of the
@@ -185,8 +185,8 @@ def test_reciprocal_effects():
 
 def test_realistic_zero_discontinuity():
     a = realistic_assembler(element_deg = 1)
-    k_d = elastic_kernel.DisplacementKernel(1.0, 0.25)
-    k_t = elastic_kernel.TractionKernel(1.0, 0.25)
+    k_d = DisplacementKernel(1.0, 0.25)
+    k_t = TractionKernel(1.0, 0.25)
     G = a.assemble_matrix(k_d)
     H = a.assemble_matrix(k_t)
     fnc = lambda x, n: (0.0, 1.0)
