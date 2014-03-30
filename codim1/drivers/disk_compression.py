@@ -76,11 +76,10 @@ def disk(n_elements, element_deg, plot):
     k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
     k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 
-    # For a problem where the unknowns are displacements, use
-    # a discontinuous basis. If the unknowns were tractions, a
-    # continuous basis is used. These are constraints that follow from
-    # some functional analysis fiddle-diddle
-    dh = DiscontinuousDOFHandler(mesh, element_deg)
+    # If I am using the displacement BIE, I use a discontinuous basis
+    # If I am using the traction BIE (hypersingular), I use a continuous
+    # basis
+    dh = DiscontinuousDOFHandler(mesh, bf)
 
     # Assemble the matrix of displacements induced by displacements at
     # another location.

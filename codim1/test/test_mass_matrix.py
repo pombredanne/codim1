@@ -6,10 +6,10 @@ import codim1.core.dof_handler as dof_handler
 import codim1.core.quadrature as quadrature
 
 def simple_mass_matrix(n_elements = 2):
+    bf = basis_funcs.BasisFunctions.from_degree(1)
     msh = mesh.Mesh.simple_line_mesh(n_elements)
     q = quadrature.QuadGauss(2)
-    dh = dof_handler.DiscontinuousDOFHandler(msh, 1)
-    bf = basis_funcs.BasisFunctions.from_degree(1)
+    dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
     m = MassMatrix(msh, bf, bf, dh, q)
     return m
 

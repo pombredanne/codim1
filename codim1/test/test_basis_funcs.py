@@ -72,8 +72,8 @@ def test_gradient():
 
 def test_solution():
     msh = Mesh.simple_line_mesh(1)
-    dh = dof_handler.DiscontinuousDOFHandler(msh, 1)
     bf = BasisFunctions([0.0, 1.0])
+    dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
     coeffs = np.array([0.0, 1.0, 1.0, 0.0])
     soln = Solution(bf, dh, coeffs)
 
