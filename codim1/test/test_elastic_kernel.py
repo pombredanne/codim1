@@ -129,7 +129,7 @@ def test_hypersingular_vs_regularized():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = ContinuousDOFHandler(mesh, 2)
+    dh = ContinuousDOFHandler(mesh, bf)
 
     el1 = 15
     # pp0 = mesh.get_physical_point(el1, 0.5)
@@ -221,7 +221,7 @@ def test_hypersingular_vs_regularized_across_elements():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = ContinuousDOFHandler(mesh, 2)
+    dh = ContinuousDOFHandler(mesh, bf)
 
     el1a = 15
     el1b = 14

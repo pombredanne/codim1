@@ -1,5 +1,5 @@
 - name: Install required system packages.
-  apt: pkg={{ item }} state=installed update-cache=yes
+  apt: pkg={{ item }}
   sudo: yes
   with_items:
   - python-pip
@@ -22,7 +22,7 @@
   - python-tk
   - tk
   - tk-dev
-
+  - libboost-python-dev
 - name: Install required Python packages.
   pip: name={{ item }} state=latest
   sudo: yes

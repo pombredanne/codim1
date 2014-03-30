@@ -164,7 +164,7 @@ mesh = Mesh.simple_line_mesh(n_elements)
 bf = BasisFunctions.from_degree(1)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 qs_rhs = qs
-dh = ContinuousDOFHandler(mesh, 1)
+dh = ContinuousDOFHandler(mesh, bf)
 
 print('Assembling kernel matrix, Guu')
 matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)

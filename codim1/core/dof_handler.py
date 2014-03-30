@@ -10,41 +10,39 @@ class DiscontinuousDOFHandler(object):
     mesh is not used here, but added to the constructor to conform to
     the interface
     """
-    def __init__(self, mesh, element_deg):
+    def __init__(self, mesh, bf):
         self.dim = 2
-        self.element_deg = element_deg
+        self.basis_fncs = bf
         self.mesh = mesh
 
         # element_deg + 1 degrees of freedom per element.
         # A 1st order polynomial (ax + b) has 2 coefficients
         # also one dof per dimension
-        self.total_dofs = self.dim * self.mesh.n_elements * (element_deg + 1)
+        num_fncs = self.basis_fncs.num_fncs
+        self.total_dofs = self.dim * self.mesh.n_elements * num_fncs
 
         # Making a dof_map in 1D is super simple! Its just a folded over
         # list of all the dofs
         self.dof_map = np.arange(self.total_dofs)\
-                       .reshape(self.dim,
-                                self.mesh.n_elements,
-                                element_deg + 1)
+                       .reshape(self.dim, self.mesh.n_elements, num_fncs)
 
 class ContinuousDOFHandler(object):
     """
     As opposed to DiscontinuousDOFHandler, the ContinuousDOFHandler makes
     sure that adjacent elements share DOFs.
     """
-    def __init__(self, mesh, element_deg):
+    def __init__(self, mesh, bf):
         self.dim = 2
-        if element_deg < 1:
+        self.basis_fncs = bf
+
+        num_fncs = self.basis_fncs.num_fncs
+        if num_fncs < 2:
             raise Exception("Continuous element degree must be at least 1.")
 
-        self.element_deg = element_deg
         self.mesh = mesh
 
         # Loop over elements and attach local dofs to the global dofs vector
-
-        self.dof_map = np.empty((2,
-                                self.mesh.n_elements,
-                                self.element_deg + 1),
+        self.dof_map = np.empty((2, self.mesh.n_elements, num_fncs),
                                 dtype = np.int)
         self.total_dofs = 0
         d = 0
@@ -60,7 +58,7 @@ class ContinuousDOFHandler(object):
                 self.dof_map[d, k, 0] = self.dof_map[d, nghbr_left, -1]
 
             # Handle internal dofs.
-            for i in range(1, self.element_deg):
+            for i in range(1, num_fncs - 1):
                 self.dof_map[d, k, i] = self.total_dofs
                 self.total_dofs += 1
 

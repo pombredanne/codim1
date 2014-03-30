@@ -11,7 +11,7 @@ from codim1.core.interior_point import InteriorPoint
 def test_interior_point_hypersingular():
     msh = mesh.Mesh.circular_mesh(10, 1.0)
     bf = basis_funcs.BasisFunctions.from_degree(0)
-    dh = dof_handler.DiscontinuousDOFHandler(msh, 0)
+    dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
     qs = QuadStrategy(msh, 6, 12, 2, 2)
     coeffs = np.array([ -1.51048858e-02,  -6.11343409e-03,  -1.97679606e-11,
          6.11343405e-03,   1.51048857e-02,   1.51048857e-02,
@@ -31,7 +31,7 @@ def test_interior_point_hypersingular():
 def test_interior_point_traction_adjoint():
     msh = mesh.Mesh.circular_mesh(50, 1.0)
     bf = basis_funcs.BasisFunctions.from_degree(0)
-    dh = dof_handler.DiscontinuousDOFHandler(msh, 0)
+    dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
     qs = QuadStrategy(msh, 6, 12, 2, 2)
     def section_traction(x):
         if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
