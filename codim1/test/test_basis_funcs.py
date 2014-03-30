@@ -21,9 +21,9 @@ def test_from_degree():
 def test_basis_nodes():
     bf = BasisFunctions([-1.0, 0.0, 1.0])
     # Check to make sure the nodes are right
-    np.testing.assert_almost_equal(bf.evaluate(0, 0, -1.0, 1.0), 1.0)
-    np.testing.assert_almost_equal(bf.evaluate(0, 0, 0.0, 1.0), 0.0)
-    np.testing.assert_almost_equal(bf.evaluate(0, 0, 1.0, 1.0), 0.0)
+    # np.testing.assert_almost_equal(bf.evaluate(0, 0, -1.0, 1.0), 1.0)
+    # np.testing.assert_almost_equal(bf.evaluate(0, 0, 0.0, 1.0), 0.0)
+    # np.testing.assert_almost_equal(bf.evaluate(0, 0, 1.0, 1.0), 0.0)
     np.testing.assert_almost_equal(bf.evaluate(0, 1, 0.0, 1.0), 1.0)
     np.testing.assert_almost_equal(bf.evaluate(0, 2, 1.0, 1.0), 1.0)
 
@@ -82,3 +82,6 @@ def test_solution():
 
     value = soln.evaluate(0, 1, 1.0, -1.0)
     np.testing.assert_almost_equal(value, [1.0, 0.0])
+
+if __name__ == "__main__":
+    test_basis_nodes()

@@ -22,7 +22,8 @@
   - python-tk
   - tk
   - tk-dev
-  - libboost-python-dev
+  - libboost-all-dev
+  - gdb
 - name: Install required Python packages.
   pip: name={{ item }} state=latest
   sudo: yes
@@ -36,3 +37,4 @@
   - scipy
   - pytest
   - cython
+  - pyublas
