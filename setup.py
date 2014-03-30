@@ -1,7 +1,13 @@
+from imp import find_module
+from os.path import join
 import setuptools
 from distutils.extension import Extension
 from Cython.Build import cythonize
 import numpy as np
+
+def pyublas_headers():
+    file, pathname, descr = find_module("pyublas")
+    return join(pathname, "include")
 
 # Cython packaging. This will be phased out in favor of a straight c++
 # extension.
@@ -18,18 +24,20 @@ ext = [
       ]
 ext = cythonize(ext)
 
+# -g compiles with debugging information.
+# -O0 means compile with no optimization, try -O5 for happiness and joy
 ext.append(Extension(fast_package + '.fast_package',
                   ['codim1/fast/python_interface.cpp'],
                   include_dirs=['codim1/fast'],
                   library_dirs=['/'],
                   libraries=['boost_python'],
-                  extra_compile_args=['-g']))
+                  extra_compile_args=['-g', '-O0']))
 
 setuptools.setup(
    name = "codim1",
    version = '0.0.0',
    author = 'Ben Thompson',
    packages = ['codim1'],
-   include_dirs = [np.get_include()],
+   include_dirs = [np.get_include(), pyublas_headers()],
    ext_modules=ext
 )

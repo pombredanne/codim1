@@ -1,8 +1,8 @@
 import numpy as np
 import scipy.interpolate as spi
 import copy
-from codim1.fast.basis_funcs import evaluate_basis as _evaluate_basis
 from codim1.fast.mesh import _get_deriv_point, _get_normal
+from codim1.fast.fast_package import BasisEval
 
 class Function(object):
     """
@@ -65,9 +65,9 @@ class BasisFunctions(object):
             points specified.
         """
         self.num_fncs = len(nodes)
+        self.nodes = copy.copy(nodes)
         self.fncs = np.empty((self.num_fncs, self.num_fncs))
         self.derivs = np.empty((self.num_fncs, self.num_fncs))
-        self.nodes = copy.copy(nodes)
         for (i, n) in enumerate(nodes):
             w = np.zeros_like(nodes)
             w[i] = 1.0
@@ -77,12 +77,20 @@ class BasisFunctions(object):
             self.fncs[i, :] = poly.c
             self.derivs[i, 0] = 0.0
             self.derivs[i, 1:] = poly.deriv().c
+        self._basis_eval = BasisEval(self.fncs)
+        self._deriv_eval = BasisEval(self.derivs)
 
     def get_gradient_basis(self, mesh):
         return _GradientBasisFunctions(self.nodes, self.derivs, mesh)
 
     def evaluate(self, element_idx, i, x_hat, x):
-        return _evaluate_basis(self.fncs, i, x_hat)
+        """
+        Evaluate a basis function at a point in reference space.
+
+        Calls into the fast c++ extension.
+        """
+        val = self._basis_eval.evaluate(i, x_hat)
+        return np.array([val, val])
 
     def evaluate_derivative(self, element_idx, i, x_hat, x):
         """
@@ -91,7 +99,8 @@ class BasisFunctions(object):
         taken in physical space. Use _GradientBasisFunctions for that
         purpose.
         """
-        return _evaluate_basis(self.derivs, i, x_hat)
+        val = self._deriv_eval.evaluate(i, x_hat)
+        return np.array([val, val])
 
 class _GradientBasisFunctions(BasisFunctions):
     """
@@ -107,6 +116,7 @@ class _GradientBasisFunctions(BasisFunctions):
         self.num_fncs = len(fncs)
         self.nodes = nodes
         self.fncs = fncs
+        self._basis_eval = BasisEval(self.fncs)
 
     def evaluate(self, element_idx, i, x_hat, x):
         """

@@ -1,1 +1,19 @@
 http://robotics.usc.edu/~ampereir/wordpress/?p=202
+
+A common pitfall is that boost python expects classes to have copy 
+constructors. If the class isn't copyable, use boost::noncopyable.
+
+Computational Infrastructure for Geodynamics has a tools called CIGMA
+that does some boost python numpy work. Look here, for some useful
+functions.
+https://geodynamics.org/svn/cig/cs/cigma/trunk/src/numpy_util.cpp
+
+PyUblas seems like a useful way of bridging the gap between numpy arrays
+and c++ fast data access.
+http://documen.tician.de/pyublas/
+
+There is some slow down for array access... but negligible compared to 
+the value added. And seemingly fixable.
+PyUblas still looks like it makes it easier to get the raw double array
+out of numpy anyway.
+http://documen.tician.de/pyublas/faq.html#speed-faq
