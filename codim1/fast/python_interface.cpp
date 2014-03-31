@@ -8,13 +8,14 @@
 #include "basis_eval.h"
 #include "mesh_eval.h"
 #include "elastic_kernel.h"
+#include "integrator.h"
 
 using namespace boost::python;
 
 template<typename T>
 void expose_kernel(const char* type_string)
 {
-    class_<T>(type_string, init<double, double>())
+    class_<T, bases<Kernel> >(type_string, init<double, double>())
         .def("call", &T::call_all)
         .def("_call", &T::call)
         .def_readwrite("reverse_normal", &T::reverse_normal)
@@ -22,14 +23,19 @@ void expose_kernel(const char* type_string)
         .def_readonly("singularity_type", &T::singularity_type);
 }
 
+// In order to subclass Kernel in the python layer, this wrapper struct
+// must be created. See:
+// http://www.boost.org/doc/libs/1_55_0/libs/python/doc/tutorial/doc/html/python/exposing.html
+struct KernelWrap: Kernel, wrapper<Kernel>
+{
+    virtual double call(KernelData d, int p, int q)
+    {
+        return this->get_override("_call")(d, p, q);
+    }
+};
+
 BOOST_PYTHON_MODULE(fast_lib)
 {
-    // Setup a converter to allow iterable python objects to be converted to
-    // std:vector
-    iterable_converter()
-        .from_python<std::vector<double> >()
-        .from_python<std::vector<std::vector<double> > >()
-        .from_python<std::vector<std::vector<std::vector<double> > > >();
 
     //Expose the std::vector interface so it acts like a list
     boost::python::class_<std::vector<double> >("PyVec")
@@ -56,6 +62,11 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def_readonly("basis_eval", &MeshEval::basis_eval)
         .def_readonly("deriv_eval", &MeshEval::deriv_eval);
 
+    // Expose the elastic kernels.
+    class_<KernelWrap, boost::noncopyable>("Kernel")
+        .def("_call", pure_virtual(&Kernel::call));
+    class_<KernelData>("KernelData", no_init)
+        .def_readonly("dist", &KernelData::dist);
     expose_kernel<DisplacementKernel>("DisplacementKernel");
     expose_kernel<TractionKernel>("TractionKernel");
     expose_kernel<AdjointTractionKernel>("AdjointTractionKernel");
@@ -63,6 +74,22 @@ BOOST_PYTHON_MODULE(fast_lib)
     expose_kernel<RegularizedHypersingularKernel>
                                 ("RegularizedHypersingularKernel");
 
+    //Expose the integration functions.
+    class_<QuadratureInfo, boost::noncopyable>("QuadratureInfo", 
+            init<std::vector<double>, std::vector<double> >())
+        .def_readonly("x", &QuadratureInfo::x)
+        .def_readonly("w", &QuadratureInfo::x);
+    def("double_integral", double_integral);
+
+    //Misc
     def("basis_speed_test", basis_speed_test);
+
+    // Setup a converter to allow iterable python objects to be converted to
+    // std:vector
+    iterable_converter()
+        .from_python<std::vector<double> >()
+        .from_python<std::vector<std::vector<double> > >()
+        .from_python<std::vector<std::vector<std::vector<double> > > >()
+        .from_python<std::vector<QuadratureInfo> >();
 }
 

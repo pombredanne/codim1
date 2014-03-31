@@ -1,31 +1,33 @@
 import numpy as np
 from codim1.core.matrix_assembler import MatrixAssembler
 import codim1.core.basis_funcs as basis_funcs
-from codim1.fast_lib import DisplacementKernel, TractionKernel
+from codim1.fast_lib import Kernel, DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
 import codim1.core.tools as tools
 import codim1.core.quad_strategy as quad_strategy
 
-class TDispKernel(object):
+class TDispKernel(Kernel):
     """
     This class exists to assist with testing matrix assembly.
     The normal kernels are too complex to make testing easy.
     """
     def __init__(self):
         self.singularity_type = 'logr'
+        super(TDispKernel, self).__init__()
 
-    def call(self, r, m, n):
-        dist = np.sqrt(r[0] ** 2 + r[1] ** 2)
-        return np.array([[np.log(1.0 / dist), 1.0],
-                         [1.0, np.log(1.0 / dist)]])
+    def _call(self, data, p, q):
+        if p == q:
+            return np.log(1.0 / data.dist)
+        return 1.0
 
-class TTracKernel(object):
+class TTracKernel(Kernel):
     def __init__(self):
         self.singularity_type = 'oneoverr'
+        super(TTracKernel, self).__init__()
 
-    def call(self, r, m, n):
-        return np.ones((2, 2))
+    def _call(self, data, p, q):
+        return 1.0
 
 def simple_assembler(degree = 0,
                      nonsing_pts = 2,

@@ -36,6 +36,13 @@ struct KernelData
 class Kernel
 {
     public:
+        Kernel() 
+        {
+            shear_modulus = 1.0;
+            poisson_ratio = 0.25;
+            reverse_normal = false;
+        }
+
         // All a kernel needs to know are the elastic parameters.
         Kernel(double shear_modulus, double poisson_ratio);
 
