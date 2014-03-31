@@ -1,5 +1,5 @@
 import numpy as np
-import codim1.fast.integration as integration
+import codim1.fast_lib as fl
 
 class RHSAssembler(object):
     """
@@ -39,16 +39,18 @@ class RHSAssembler(object):
         for l in range(self.mesh.n_elements):
             (quad_outer, quad_inner) = self.quad_strategy.get_quadrature(
                                             kernel.singularity_type, k, l)
-            value = integration.double_integral(
-                            self.mesh,
+            quad_outer_info = quad_outer.quad_info
+            quad_inner_info = [q.quad_info for q in quad_inner]
+            value = fl.double_integral(
+                            self.mesh.mesh_eval,
+                            self.mesh.is_linear,
                             kernel,
-                            self.basis_funcs,
-                            fnc,
-                            quad_outer,
-                            quad_inner,
+                            self.basis_funcs._basis_eval,
+                            fnc._eval,
+                            quad_outer_info, quad_inner_info,
                             k, i, l, 0)
-            row_x += value[0, 0]
-            row_x += value[0, 1]
-            row_y += value[1, 0]
-            row_y += value[1, 1]
+            row_x += value[0][0]
+            row_x += value[0][1]
+            row_y += value[1][0]
+            row_y += value[1][1]
         return row_x, row_y

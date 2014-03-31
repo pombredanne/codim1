@@ -35,7 +35,7 @@ def test_rhs_row_not_shared():
     row_correct_x = np.sum(correct_matrix[0, :])
     row_correct_y = np.sum(correct_matrix[3, :])
 
-    f = lambda x: np.array((1.0, 1.0))
+    f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = basis_funcs.BasisFunctions.from_function(f)
     row_x, row_y = a.assemble_row(fnc, kernel, 0, 0)
@@ -49,7 +49,7 @@ def test_rhs_row_shared():
     row_correct_x = np.sum(correct_matrix[1, :])
     row_correct_y = np.sum(correct_matrix[4, :])
 
-    f = lambda x: np.array((1.0, 1.0))
+    f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = basis_funcs.BasisFunctions.from_function(f)
     row_x, row_y = a.assemble_row(fnc, kernel, 0, 1)
@@ -68,7 +68,7 @@ def test_rhs():
     # a function that is 1 everywhere
     rhs_correct = np.sum(correct_matrix, axis = 1)
 
-    f = lambda x: np.array((1.0, 1.0))
+    f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = basis_funcs.BasisFunctions.from_function(f)
     rhs = a.assemble_rhs(fnc, kernel)

@@ -8,12 +8,20 @@ that does some boost python numpy work. Look here, for some useful
 functions.
 https://geodynamics.org/svn/cig/cs/cigma/trunk/src/numpy_util.cpp
 
-PyUblas seems like a useful way of bridging the gap between numpy arrays
-and c++ fast data access.
-http://documen.tician.de/pyublas/
+Old:
+    PyUblas seems like a useful way of bridging the gap between numpy arrays
+    and c++ fast data access.
+    http://documen.tician.de/pyublas/
+    There is some slow down for array access... but negligible compared to 
+    the value added. And seemingly fixable.
+    PyUblas still looks like it makes it easier to get the raw double array
+    out of numpy anyway.
+    http://documen.tician.de/pyublas/faq.html#speed-faq
 
-There is some slow down for array access... but negligible compared to 
-the value added. And seemingly fixable.
-PyUblas still looks like it makes it easier to get the raw double array
-out of numpy anyway.
-http://documen.tician.de/pyublas/faq.html#speed-faq
+I ended up using std::vector and a converter to a python visible array type.
+
+
+
+Consider using CodePy for JIT of c code.
+
+Templates are faster than polymorphism. Try it out...
