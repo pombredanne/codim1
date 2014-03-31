@@ -1,5 +1,5 @@
 import numpy as np
-import codim1.fast.integration as integration
+import codim1.fast_lib as fl
 
 class MatrixAssembler(object):
     """
@@ -62,8 +62,8 @@ class MatrixAssembler(object):
         total_dofs = self.dof_handler.total_dofs
         G = np.zeros((total_dofs, total_dofs))
         for k in range(self.mesh.n_elements):
-            if k % 25 == 0:
-                print "Assembling element " + str(k)
+            # if k % 25 == 0:
+            #     print "Assembling element " + str(k)
             for i in range(self.basis_funcs.num_fncs):
                 dof_x = self.dof_handler.dof_map[0, k, i]
                 dof_y = self.dof_handler.dof_map[1, k, i]
@@ -99,15 +99,17 @@ class MatrixAssembler(object):
         """
         Compute one pair of element interactions
         """
-        (G_quad_outer, G_quad_inner) = self.quad_strategy.get_quadrature(
+        (quad_outer, quad_inner) = self.quad_strategy.get_quadrature(
                                             kernel.singularity_type, k, l)
-        G_local = integration.double_integral(
-                        self.mesh,
+        quad_outer_info = quad_outer.quad_info
+        quad_inner_info = [q.quad_info for q in quad_inner]
+        local = fl.double_integral(
+                        self.mesh.mesh_eval,
+                        self.mesh.is_linear,
                         kernel,
-                        self.basis_funcs,
-                        self.basis_funcs,
-                        G_quad_outer,
-                        G_quad_inner,
+                        self.basis_funcs._basis_eval,
+                        self.basis_funcs._basis_eval,
+                        quad_outer_info, quad_inner_info,
                         k, i, l, j)
-        return G_local
+        return np.array(local)
 

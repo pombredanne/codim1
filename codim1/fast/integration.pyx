@@ -21,22 +21,12 @@ def double_integral(mesh, kernel,
     """
     cdef np.ndarray[double, ndim = 2] result = np.zeros((2, 2))
 
-    # Just store some variables in a typed way to speed things up 
-    # inside the loop
     cdef bint is_linear = mesh.is_linear
 
-    # Jacobian determinants are necessary to scale the integral with the
-    # change of variables. 
     cdef double src_jacobian = 1.0
     cdef double soln_jacobian = 1.0
 
-    # The l_normal is needed for the traction kernel -- the solution normal.
-    # The k_normal is normally needed for the adjoint traction kernel
-    # and for the hypersingular kernel -- the source normal.
     cdef np.ndarray[double, ndim = 1] k_normal, l_normal
-
-    # If the mesh is linear then the jacobian and normal vectors will be the
-    # same at all quadrature points, so just grab them here once.
     if is_linear:
         src_jacobian = np.array(mesh.get_jacobian(k, 0.0))
         soln_jacobian = np.array(mesh.get_jacobian(l, 0.0))
@@ -98,17 +88,12 @@ def double_integral(mesh, kernel,
             soln_basis_fnc = soln_basis_fncs.evaluate(l, j, 
                                     q_pt_soln, phys_soln_pt)
 
-            # Separation of the two quadrature points, use real,
-            # physical coordinates!
-            # From source to solution.
             r[0] = phys_soln_pt[0] - phys_src_pt[0]
             r[1] = phys_soln_pt[1] - phys_src_pt[1]
 
             # Actually evaluate the kernel.
             k_val = np.array(kernel.call(r, k_normal, l_normal))
 
-            # Account for the vector form of the problem.
-            # and weight by the quadrature values and the jacobian
             for idx_x in range(2):
                 for idx_y in range(2):
                     result[idx_x, idx_y] += k_val[idx_x, idx_y] * \

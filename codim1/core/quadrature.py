@@ -1,8 +1,17 @@
 import numpy as np
 import copy
 import codim1.core.gaussian_quad as gaussian_quad
+from codim1.fast_lib import QuadratureInfo
 
-class QuadGauss(object):
+class QuadBase(object):
+    """
+    Base class for quadrature formulae. Make sure self.x and self.w are
+    defined before calling the constructor.
+    """
+    def __init__(self):
+        self.quad_info = QuadratureInfo(self.x, self.w)
+
+class QuadGauss(QuadBase):
     """
     Simple wrapper of gaussian quadrature. Returns points and weights for
     quadrature on [a, b]. Default is a = 0, b = 1.0
@@ -10,9 +19,10 @@ class QuadGauss(object):
     def __init__(self, N, a = 0.0, b = 1.0):
         self.N = N
         self.x, self.w = gaussian_quad.gaussxwab(self.N, a, b)
+        super(QuadGauss, self).__init__()
 
 
-class QuadSingularTelles(object):
+class QuadSingularTelles(QuadBase):
     """
     Use a cubic polynomial transformation to turn a 1D cauchy principal value
     integral into a easily integrable form.
@@ -73,9 +83,10 @@ class QuadSingularTelles(object):
         if (np.abs(self.x - x0) < 1e-12).any():
             raise Exception("Telles integration has sampled the " +
                     "singularity. Choose a different order of integration.")
+        super(QuadSingularTelles, self).__init__()
 
 
-class QuadOneOverR(object):
+class QuadOneOverR(QuadBase):
     """
     Quadrature points and weights for integrating a function with form
     f(x) / (x - x0)
@@ -132,6 +143,7 @@ class QuadOneOverR(object):
         # Finished!
         self.x = np.append(self.x, self.x_sing)
         self.w = np.append(self.w, self.w_sing)
+        super(QuadOneOverR, self).__init__()
 
     @staticmethod
     def longman_method(N, pv_start, pv_length):

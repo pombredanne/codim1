@@ -14,7 +14,7 @@ class MeshEval
         MeshEval(std::vector<std::vector<double> > mesh_basis,
             std::vector<std::vector<double> > mesh_derivs,
             std::vector<std::vector<std::vector<double> > > mesh_coeffs);
-        std::vector<double> eval_function(BasisEval evaluator,
+        std::vector<double> eval_function(BasisEval &evaluator,
                 int element_idx, double x_hat);
         std::vector<double>
             get_physical_point(int element_idx, double x_hat);
@@ -36,7 +36,7 @@ MeshEval::MeshEval(std::vector<std::vector<double> > mesh_basis,
 }
 
 std::vector<double>
-    MeshEval::eval_function(BasisEval evaluator, 
+    MeshEval::eval_function(BasisEval& evaluator, 
             int element_idx, double x_hat)
 {
     std::vector<double> val(2);

@@ -16,9 +16,9 @@ struct iterable_converter
     template <typename Container> iterable_converter& from_python()
     {
         bp::converter::registry::push_back(
-        &iterable_converter::convertible,
-        &iterable_converter::construct<Container>,
-        bp::type_id<Container>());
+                &iterable_converter::convertible,
+                &iterable_converter::construct<Container>, 
+                bp::type_id<Container>());
         return *this;
     }
 
@@ -36,9 +36,8 @@ struct iterable_converter
     ///   * Container can be constructed and populated with two iterators.
     ///     I.e. Container(begin, end)
     template <typename Container>
-    static void construct(
-    PyObject* object,
-    bp::converter::rvalue_from_python_stage1_data* data)
+    static void construct(PyObject* object,
+            bp::converter::rvalue_from_python_stage1_data* data)
     {
         namespace python = bp;
         // Object is a borrowed reference, so create a handle indicting 

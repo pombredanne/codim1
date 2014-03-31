@@ -12,6 +12,7 @@ class BasisEval
         /* Evaluate a basis function at a point.
          */
         double evaluate(int i, double x);
+        std::vector<double> evaluate_vector(int i, double x);
 
         std::vector<std::vector<double> > basis;
         int order;
@@ -35,14 +36,24 @@ double BasisEval::evaluate(int i, double x)
     return retval;
 }
 
+std::vector<double> BasisEval::evaluate_vector(int i, double x)
+{
+    std::vector<double> retval(2);
+    retval[0] = evaluate(i, x);
+    retval[1] = retval[0];
+    return retval;
+}
+
 //A simple test to determine how much overhead the python function calling
 //costs
-void basis_speed_test(std::vector<std::vector<double> > basis)
+double basis_speed_test(std::vector<std::vector<double> > basis)
 {
     BasisEval b(basis);
+    double a;
     for(int i = 0; i < 1000000; i++)
     {
-        double a = b.evaluate(1, 0.5);
+        a = b.evaluate(1, 0.5);
     }
+    return a;
 }
 #endif
