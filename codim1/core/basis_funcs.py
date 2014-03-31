@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.interpolate as spi
 import copy
-from codim1.fast_lib import BasisEval
+from codim1.fast_lib import PolyBasisEval, FuncEval
 
 class Function(object):
     """
@@ -11,6 +11,7 @@ class Function(object):
     def __init__(self, f):
         self.f = f
         self.num_fncs = 1
+        self._eval = FuncEval(f)
 
     def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
@@ -76,8 +77,8 @@ class BasisFunctions(object):
             self.fncs[i, :] = poly.c
             self.derivs[i, 0] = 0.0
             self.derivs[i, 1:] = poly.deriv().c
-        self._basis_eval = BasisEval(self.fncs)
-        self._deriv_eval = BasisEval(self.derivs)
+        self._basis_eval = PolyBasisEval(self.fncs)
+        self._deriv_eval = PolyBasisEval(self.derivs)
 
     def get_gradient_basis(self, mesh):
         return _GradientBasisFunctions(self.nodes, self.derivs, mesh)
@@ -88,7 +89,7 @@ class BasisFunctions(object):
 
         Calls into the fast c++ extension.
         """
-        val = self._basis_eval.evaluate(i, x_hat)
+        val = self._basis_eval.evaluate(i, x_hat, [0, 0], 0)
         return np.array([val, val])
 
     def evaluate_derivative(self, element_idx, i, x_hat, x):
@@ -98,7 +99,7 @@ class BasisFunctions(object):
         taken in physical space. Use _GradientBasisFunctions for that
         purpose.
         """
-        val = self._deriv_eval.evaluate(i, x_hat)
+        val = self._deriv_eval.evaluate(i, x_hat, [0, 0], 0)
         return np.array([val, val])
 
 class _GradientBasisFunctions(BasisFunctions):
@@ -115,7 +116,7 @@ class _GradientBasisFunctions(BasisFunctions):
         self.num_fncs = len(fncs)
         self.nodes = nodes
         self.fncs = fncs
-        self._basis_eval = BasisEval(self.fncs)
+        self._basis_eval = PolyBasisEval(self.fncs)
 
     def evaluate(self, element_idx, i, x_hat, x):
         """

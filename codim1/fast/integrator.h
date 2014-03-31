@@ -82,7 +82,7 @@ double_integral(MeshEval& mesh_eval,
 
         // The basis functions should be evaluated on reference
         // coordinates
-        k_basis_val = k_basis_eval.evaluate_vector(i, q_pt_k);
+        k_basis_val = k_basis_eval.evaluate_vector(i, q_pt_k, k_phys_pt);
 
         // If the integrand is singular, we need to use the appropriate
         // inner quadrature method. Which points the inner quadrature
@@ -110,7 +110,7 @@ double_integral(MeshEval& mesh_eval,
 
             // The basis functions should be evaluated on reference
             // coordinates
-            l_basis_val = l_basis_eval.evaluate_vector(j, q_pt_l);
+            l_basis_val = l_basis_eval.evaluate_vector(j, q_pt_l, l_phys_pt);
 
             // Separation of the two quadrature points, use real,
             // physical coordinates!

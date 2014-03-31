@@ -1,9 +1,9 @@
 import time
 import sys
-
 import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
+
 from codim1.core.dof_handler import DiscontinuousDOFHandler,\
                                     ContinuousDOFHandler
 from codim1.core.mesh import Mesh
@@ -21,13 +21,21 @@ import codim1.core.tools as tools
 
 # The theta width over which to apply the load to our cylinder.
 alpha = (1 / 50.) * np.pi
+alpha = np.cos((np.pi / 2) - alpha)
 
-def section_traction(x):
+def section_traction(x, d):
     # Only apply tractions over the arcs near y=1, y=-1
-    if np.abs(x[0]) < np.cos((np.pi / 2) - alpha):
-        x_length = np.sqrt(x.dot(x))
-        return -x / x_length
-    return np.array((0.0, 0.0))
+    if np.abs(x[0]) < alpha:
+        x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
+        return -x[d] / x_length
+    return 0.0
+
+# Less accurate, because it doesn't scale the return value, but it's faster
+def less_accurate_section_traction(x, d):
+    # Only apply tractions over the arcs near y=1, y=-1
+    if abs(x[0]) < alpha:
+        return -x[d]
+    return 0.0
 
 # Found the exact solution in Frangi, Novati 1996 -- could copy that over to
 # do better convergence tests, etc.
@@ -100,7 +108,8 @@ def disk(n_elements, element_deg, plot):
     # Make the input function behave like a basis -- for internal reasons,
     # this makes assembly easier.
     # TODO: Could be moved inside assemble_rhs
-    traction_function = BasisFunctions.from_function(section_traction)
+    traction_function = BasisFunctions.from_function(
+            less_accurate_section_traction)
 
     # Assemble the rhs, composed of the displacements induced by the
     # traction inputs.
@@ -112,6 +121,7 @@ def disk(n_elements, element_deg, plot):
     soln_coeffs = np.linalg.solve(Gup, rhs)
 
     # Create a solution object that pairs the coefficients with the basis
+    print("Solving System")
     soln = Solution(bf, dh, soln_coeffs)
 
     # Evaluate that solution at 400 points around the circle
@@ -125,7 +135,9 @@ def disk(n_elements, element_deg, plot):
     # computations just to avoid problems in testing. Could be reduced
     # in the future.
     ip = InteriorPoint(mesh, dh, qs)
-
+    traction_function = BasisFunctions.from_function(
+            lambda x: np.array((less_accurate_section_traction(x, 0),
+                                less_accurate_section_traction(x, 1))))
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
     # where the normal is n_x=1, n_y=0
     normal = np.array([1.0, 0.0])
@@ -240,7 +252,6 @@ if __name__ == "__main__":
     sigma_xx = disk(50, 0, True)
     end = time.time()
     print("Took: " + str(end - start) + " seconds")
-    sys.exit()
     plt.show()
 
     # Calculate errors and compare with the crouch errors.

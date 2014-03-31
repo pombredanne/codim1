@@ -21,14 +21,17 @@ class MeshEval
         double get_jacobian(int element_idx, double x_hat);
         std::vector<double> get_normal(int element_idx,
                 double x_hat);
-        BasisEval basis_eval;
-        BasisEval deriv_eval;
+
+        const std::vector<double> empty_vec;
+        PolyBasisEval basis_eval;
+        PolyBasisEval deriv_eval;
         std::vector<std::vector<std::vector<double> > > coeffs;
 };
 
 MeshEval::MeshEval(std::vector<std::vector<double> > mesh_basis,
             std::vector<std::vector<double> > mesh_derivs,
             std::vector<std::vector<std::vector<double> > > mesh_coeffs):
+    empty_vec(2),
     basis_eval(mesh_basis),
     deriv_eval(mesh_derivs)
 {
@@ -43,7 +46,9 @@ std::vector<double>
     double basis;
     for(int i = 0; i < basis_eval.order; i++)
     {
-        basis = evaluator.evaluate(i, x_hat);
+        // This is assuming that the basis is the same for both dimensions
+        // in the mesh. This is a reasonable assumption.
+        basis = evaluator.evaluate(i, x_hat, empty_vec, 0);
         val[0] += coeffs[0][element_idx][i] * basis;
         val[1] += coeffs[1][element_idx][i] * basis;
     }

@@ -37,20 +37,23 @@ struct KernelWrap: Kernel, wrapper<Kernel>
 BOOST_PYTHON_MODULE(fast_lib)
 {
 
-    //Expose the std::vector interface so it acts like a list
-    boost::python::class_<std::vector<double> >("PyVec")
-            .def(boost::python::vector_indexing_suite<
-                    std::vector<double> >());
+    //Expose the std::vector interface so it acts like a list/vector/array
+    class_<std::vector<double> >("PyVec")
+        .def(vector_indexing_suite<std::vector<double> >());
+    class_<std::vector<std::vector<double> > >("PyArray")
+        .def(vector_indexing_suite<std::vector<std::vector<double> > >());
 
-    boost::python::class_<std::vector<std::vector<double> > >("PyArray")
-            .def(boost::python::vector_indexing_suite<
-                    std::vector<std::vector<double> > >());
-
-    //Expose the evaluation classes.
-    class_<BasisEval>("BasisEval", 
+    // Expose the basis evaluation classes.
+    class_<BasisEval, boost::noncopyable>("BasisEval", no_init)
+        .def("evaluate", pure_virtual(&BasisEval::evaluate));
+    class_<PolyBasisEval, bases<BasisEval> >("PolyBasisEval", 
             init<std::vector<std::vector<double> > >())
-        .def("evaluate", &BasisEval::evaluate);
+        .def("evaluate", &PolyBasisEval::evaluate);
+    class_<FuncEval, bases<BasisEval> >("FuncEval", 
+            init<object>())
+        .def("evaluate", &FuncEval::evaluate);
 
+    // Expose mesh calculation functions
     class_<MeshEval>("MeshEval",
             init<std::vector<std::vector<double> >,
             std::vector<std::vector<double> >,
