@@ -13,6 +13,7 @@ struct QuadratureInfo
     std::vector<double> w;
 };
         
+//TODO: Play with some strategy pattern ideas for making this flexible
 std::vector<std::vector<double> >
 double_integral(MeshEval& mesh_eval, 
                 bool linear_mesh,
