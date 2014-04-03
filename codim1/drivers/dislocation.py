@@ -28,6 +28,9 @@ rcParams['font.family'] = 'serif'
 rcParams['font.serif'] = ['Computer Modern Roman']
 # rcParams['text.usetex'] = True
 
+# TODO: Is this problem even well posed? I don't think I've ever seen anyone
+# solve for the tractions from the displacement discontinuities using a
+# boundary element method...
 
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
