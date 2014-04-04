@@ -46,7 +46,7 @@ class RHSAssembler(object):
                             self.mesh.is_linear,
                             kernel,
                             self.basis_funcs._basis_eval,
-                            fnc._eval,
+                            fnc._basis_eval,
                             quad_outer_info, quad_inner_info,
                             k, i, l, 0)
             row_x += value[0][0]

@@ -1,33 +1,21 @@
 from imp import find_module
 from os.path import join
 import setuptools
-from distutils.extension import Extension
-from Cython.Build import cythonize
+from setuptools.extension import Extension
 import numpy as np
 
-# Cython packaging. This will be phased out in favor of a straight c++
-# extension.
-fast_package = 'codim1.fast'
-ext = [
-        Extension(fast_package + ".elastic_kernel",
-            sources=["codim1/fast/elastic_kernel.pyx"]),
-        Extension(fast_package + ".mesh",
-            sources=["codim1/fast/mesh.pyx"]),
-        Extension(fast_package + ".integration",
-            sources=["codim1/fast/integration.pyx"]),
-        Extension(fast_package + ".basis_funcs",
-            sources=["codim1/fast/basis_funcs.pyx"])
-      ]
-ext = cythonize(ext)
-
 # -g compiles with debugging information.
-# -O0 means compile with no optimization, try -O5 for happiness and joy
+# -O0 means compile with no optimization, try -O3 for blazing speed
+compile_args = ['-g', '-O3']
+fast_package = 'codim1.fast'
+ext = []
 ext.append(Extension(fast_package + '_lib',
-                  ['codim1/fast/python_interface.cpp'],
+                  ['codim1/fast/python_interface.cpp',
+                    'codim1/fast/basis_eval.cpp'],
                   include_dirs=['codim1/fast'],
                   library_dirs=['/'],
                   libraries=['boost_python'],
-                  extra_compile_args=['-g', '-O0']))
+                  extra_compile_args=compile_args))
 
 setuptools.setup(
    name = "codim1",

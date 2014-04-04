@@ -1,11 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from codim1.core.dof_handler import ContinuousDOFHandler
+from codim1.core.dof_handler import ContinuousDOFHandler,\
+    DiscontinuousDOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
 from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.fast.elastic_kernel import AdjointTractionKernel,\
+from codim1.fast_lib import AdjointTractionKernel,\
                                        RegularizedHypersingularKernel,\
                                        DisplacementKernel,\
                                        TractionKernel
@@ -46,10 +47,13 @@ dh = ContinuousDOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
 
 # Build the rhs
-fnc = lambda x: np.array([0.0, 1.0])
+def fnc(x, d):
+    if d == 1:
+        return 1.0
+    return 0.0
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
-                         QuadGauss(2), compute_on_init = True)
+                         QuadGauss(3), compute_on_init = True)
 rhs = -np.sum(mass_matrix.M, axis = 1)
 
 print('Assembling kernel matrix, Gpp')
@@ -59,6 +63,11 @@ print('Assembling kernel matrix, Gpp')
 # singularity onto the basis functions.
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 Gpp = derivs_assembler.assemble_matrix(k_h)
+dof_x_initial_point =
+Gpp[0, 0] = 1.0
+Gpp[0, 1:] = 0.0
+rhs[0] = 0.0
+import ipdb;ipdb.set_trace()
 
 soln_coeffs = np.linalg.solve(Gpp, rhs)
 

@@ -1,7 +1,8 @@
 import numpy as np
 import scipy.interpolate as spi
 import copy
-from codim1.fast_lib import PolyBasisEval, FuncEval
+from codim1.fast_lib import PolyBasisEval, FuncEval,\
+                            GradientBasisEval, SolutionEval
 
 class Function(object):
     """
@@ -11,7 +12,7 @@ class Function(object):
     def __init__(self, f):
         self.f = f
         self.num_fncs = 1
-        self._eval = FuncEval(f)
+        self._basis_eval = FuncEval(f)
 
     def evaluate(self, element_idx, i, x_hat, x):
         return self.f(x)
@@ -26,14 +27,13 @@ class Solution(object):
         self.basis = basis
         self.coeffs = coeffs
         self.num_fncs = basis.num_fncs
+        self._basis_eval = SolutionEval(self.basis._basis_eval, self.coeffs,
+                                        self.dof_handler.dof_map)
 
     def evaluate(self, element_idx, i, x_hat, x):
-        dof_x = self.dof_handler.dof_map[0, element_idx, i]
-        dof_y = self.dof_handler.dof_map[1, element_idx, i]
-        basis_eval = self.basis.evaluate(element_idx, i, x_hat, x)
-        return np.array([self.coeffs[dof_x] * basis_eval[0],
-                self.coeffs[dof_y] * basis_eval[1]])
-
+        val_x = self._basis_eval.evaluate(element_idx, i, x_hat, x, 0)
+        val_y = self._basis_eval.evaluate(element_idx, i, x_hat, x, 1)
+        return np.array([val_x, val_y])
 
 class BasisFunctions(object):
     """
@@ -89,8 +89,11 @@ class BasisFunctions(object):
 
         Calls into the fast c++ extension.
         """
-        val = self._basis_eval.evaluate(i, x_hat, [0, 0], 0)
+        val = self._basis_eval.evaluate(element_idx, i, x_hat, [0, 0], 0)
         return np.array([val, val])
+
+    def chain_rule(self, jacobian):
+        return self._basis_eval.chain_rule(jacobian)
 
     def evaluate_derivative(self, element_idx, i, x_hat, x):
         """
@@ -99,7 +102,7 @@ class BasisFunctions(object):
         taken in physical space. Use _GradientBasisFunctions for that
         purpose.
         """
-        val = self._deriv_eval.evaluate(i, x_hat, [0, 0], 0)
+        val = self._deriv_eval.evaluate(element_idx, i, x_hat, [0, 0], 0)
         return np.array([val, val])
 
 class _GradientBasisFunctions(BasisFunctions):
@@ -116,24 +119,4 @@ class _GradientBasisFunctions(BasisFunctions):
         self.num_fncs = len(fncs)
         self.nodes = nodes
         self.fncs = fncs
-        self._basis_eval = PolyBasisEval(self.fncs)
-
-    def evaluate(self, element_idx, i, x_hat, x):
-        """
-        Returns the basis derivative including the
-        scaling to convert a arc length derivative to a basis
-        function derivative.
-        """
-        jac = self.mesh.mesh_eval.eval_function(
-                    self.mesh.mesh_eval.deriv_eval,
-                    element_idx,
-                    x_hat)
-
-        n = self.mesh.get_normal(element_idx, x_hat)
-
-        grad = super(_GradientBasisFunctions, self).\
-                      evaluate(element_idx, i, x_hat, x)
-        curlx = (jac[0] * n[1] - jac[1] * n[0])
-        curlx /= (self.mesh.get_jacobian(element_idx, x_hat) ** 2)
-        result = np.array([curlx * grad[0], curlx * grad[1]])
-        return result
+        self._basis_eval = GradientBasisEval(self.fncs)
