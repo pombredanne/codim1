@@ -33,16 +33,19 @@ def test_interior_point_traction_adjoint():
     bf = basis_funcs.BasisFunctions.from_degree(0)
     dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
     qs = QuadStrategy(msh, 6, 12, 2, 2)
-    def section_traction(x):
+    def section_traction(x, d):
         if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
-            x_length = np.sqrt(x.dot(x))
-            return -x / x_length
-        return np.array((0.0, 0.0))
+            x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
+            return -x[d] / x_length
+        return 0.0
     traction_function = basis_funcs.BasisFunctions.\
             from_function(section_traction)
     kernel = AdjointTractionKernel(1.0, 0.25)
     ip = InteriorPoint(msh, dh, qs)
     result = ip.compute(np.array([0.5, 0.0]), np.array([1.0, 0.0]), kernel,
                 traction_function)
-    np.testing.assert_almost_equal(result[0], 0.002094,4)
+    np.testing.assert_almost_equal(result[0], -0.002094,4)
     np.testing.assert_almost_equal(result[1], 0.0)
+
+if __name__ == "__main__":
+    test_interior_point_traction_adjoint()

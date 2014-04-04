@@ -136,24 +136,23 @@ def disk(n_elements, element_deg, plot):
     # in the future.
     ip = InteriorPoint(mesh, dh, qs)
     traction_function = BasisFunctions.from_function(
-            lambda x: np.array((less_accurate_section_traction(x, 0),
-                                less_accurate_section_traction(x, 1))))
+                            less_accurate_section_traction)
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
     # where the normal is n_x=1, n_y=0
     normal = np.array([1.0, 0.0])
     # Positive contribution of the AdjointTraction kernel
-    int_strs_x = np.array(
+    int_strs_x = -np.array(
             [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
              for x_v in x_vals])
     # Negative contribution of the hypersingular kernel
-    int_strs_x += -np.array(
+    int_strs_x -= np.array(
             [ip.compute((x_v, 0.0), normal, k_h, soln)
              for x_v in x_vals])
 
     # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
     normal = np.array([0.0, 1.0])
     # Negative contribution of the AdjointTraction kernel
-    int_strs_y = np.array(
+    int_strs_y = -np.array(
             [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
              for x_v in x_vals])
 
@@ -249,7 +248,7 @@ if __name__ == "__main__":
         sys.exit()
 
     start = time.time()
-    sigma_xx = disk(50, 0, True)
+    sigma_xx = disk(1000, 0, True)
     end = time.time()
     print("Took: " + str(end - start) + " seconds")
     plt.show()

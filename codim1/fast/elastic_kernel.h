@@ -12,25 +12,6 @@ struct KernelData
     double dr[2];
     double n[2];
     double m[2];
-
-    KernelData(std::vector<double> r, std::vector<double> m, 
-                                      std::vector<double> n)
-    {
-        this->r[0] = r[0];
-        this->r[1] = r[1];
-        this->m[0] = m[0];
-        this->m[1] = m[1];
-        this->n[0] = n[0];
-        this->n[1] = n[1];
-        dist = sqrt(pow(r[0], 2) + pow(r[1], 2));
-        // grad(r)
-        dr[0] = r[0] / dist;
-        dr[1] = r[1] / dist;
-        // grad(r) dot m
-        drdm = dr[0] * m[0] + dr[1] * m[1];
-        // grad(r) dot n
-        drdn = dr[0] * n[0] + dr[1] * n[1];
-    }
 };
 
 class Kernel
@@ -55,6 +36,19 @@ class Kernel
         //Returns only one of the kernel elements.
         virtual double call(KernelData d, int p, int q) = 0;
 
+        virtual KernelData get_double_integral_data(std::vector<double> r,
+                                            std::vector<double> m, 
+                                            std::vector<double> n);
+
+        virtual KernelData get_interior_integral_data(std::vector<double> r,
+                                              std::vector<double> m);
+        
+        void set_interior_data(std::vector<double> soln_point,
+                               std::vector<double> soln_normal);
+        // These are used when computing interior integrals.
+        std::vector<double> soln_point;
+        std::vector<double> soln_normal;
+
         double shear_modulus;
         double poisson_ratio;
 
@@ -71,6 +65,44 @@ class Kernel
         std::string singularity_type;
 };
 
+KernelData Kernel::get_double_integral_data(std::vector<double> r,
+                                    std::vector<double> m, 
+                                    std::vector<double> n)
+{
+    KernelData kd;
+    kd.r[0] = r[0];
+    kd.r[1] = r[1];
+    kd.m[0] = m[0];
+    kd.m[1] = m[1];
+    kd.n[0] = n[0];
+    kd.n[1] = n[1];
+    kd.dist = sqrt(pow(r[0], 2) + pow(r[1], 2));
+    // grad(r)
+    kd.dr[0] = r[0] / kd.dist;
+    kd.dr[1] = r[1] / kd.dist;
+    // grad(r) dot m
+    kd.drdm = kd.dr[0] * m[0] + kd.dr[1] * m[1];
+    // grad(r) dot n
+    kd.drdn = kd.dr[0] * n[0] + kd.dr[1] * n[1];
+    return kd;
+}
+
+KernelData Kernel::get_interior_integral_data(std::vector<double> phys_pt,
+                                              std::vector<double> m)
+{
+    std::vector<double> r(2);
+    r[0] = soln_point[0] - phys_pt[0];
+    r[1] = soln_point[1] - phys_pt[1];
+    return get_double_integral_data(r, soln_normal, m);
+}
+
+void Kernel::set_interior_data(std::vector<double> soln_point,
+                       std::vector<double> soln_normal)
+{
+    this->soln_point = soln_point;
+    this->soln_normal = soln_normal;
+}
+
 Kernel::Kernel(double shear_modulus, double poisson_ratio)
 {
     this->shear_modulus = shear_modulus;
@@ -83,7 +115,7 @@ Kernel::call_all(std::vector<double> r,
              std::vector<double> m, 
              std::vector<double> n)
 {
-    KernelData params(r, m, n);
+    KernelData params = get_double_integral_data(r, m, n);
     std::vector<std::vector<double> > retval(2);
     std::vector<double> retval_x(2);
     std::vector<double> retval_y(2);
@@ -95,6 +127,32 @@ Kernel::call_all(std::vector<double> r,
     retval[0] = retval_x;
     retval[1] = retval_y;
     return retval;
+}
+
+class MassMatrixKernel: public Kernel
+{
+    public:
+        MassMatrixKernel(double s, double p) {}
+        virtual double call(KernelData d, int p, int q);
+        virtual KernelData get_interior_integral_data(
+                                std::vector<double> r,
+                                std::vector<double> m);
+};
+
+double MassMatrixKernel::call(KernelData d, int p, int q)
+{
+    if(p == q)
+    {
+        return 1.0;
+    }
+    return 0.0;
+}
+
+KernelData MassMatrixKernel::get_interior_integral_data(std::vector<double> r,
+                              std::vector<double> m)
+{
+    KernelData data;
+    return data;
 }
 
 /*
@@ -250,8 +308,8 @@ HypersingularKernel::HypersingularKernel(double shear_modulus,
 
 double HypersingularKernel::call(KernelData d, int p, int q)
 {
-    double i0 = call_inner(d, p, q, 0);
-    double i1 = call_inner(d, p, q, 1);
+    double i0 = call_inner(d, p, 0, q);
+    double i1 = call_inner(d, p, 1, q);
 
     return i0 * d.m[0] + i1 * d.m[1];
 }

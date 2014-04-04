@@ -2,13 +2,13 @@ from codim1.fast_lib import DisplacementKernel,\
                             TractionKernel,\
                             AdjointTractionKernel,\
                             HypersingularKernel,\
-                            RegularizedHypersingularKernel
+                            RegularizedHypersingularKernel,\
+                            double_integral
 from codim1.core.dof_handler import ContinuousDOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions, Solution
 from codim1.core.quad_strategy import QuadStrategy
 from codim1.core.quadrature import QuadGauss
-from codim1.fast.integration import double_integral
 import numpy as np
 
 def test_traction_kernel_elements():
@@ -155,11 +155,15 @@ def test_hypersingular_vs_regularized():
         i = 1
         j = 1
         o_q, i_q = qs.get_quadrature('logr', el1, el2)
-        a[el2, :, :] = double_integral(mesh, k_rh,
-                                             grad_bf, grad_bf,
+        o_q = o_q.quad_info
+        i_q = [q.quad_info for q in i_q]
+        a[el2, :, :] = double_integral(mesh.mesh_eval, True, k_rh,
+                                             grad_bf._basis_eval,
+                                             grad_bf._basis_eval,
                                              o_q, i_q, el1, i,
                                              el2, j)
-        b[el2, :, :] = double_integral(mesh, k_h, bf, bf,
+        b[el2, :, :] = double_integral(mesh.mesh_eval, True, k_h,
+                            bf._basis_eval, bf._basis_eval,
                             o_q, i_q, el1, i, el2, j)
         # qq[el2, :, :] = double_integral(mesh, k_rh, bf, bf,
         #                     o_q, i_q, el1, 1, el2, 1)
@@ -232,27 +236,37 @@ def test_hypersingular_vs_regularized_across_elements():
     el2a = 25
     el2b = 26
     o_q, i_q = qs.get_quadrature('logr', el1a, el2a)
+    o_q = o_q.quad_info
+    i_q = [q.quad_info for q in i_q]
 
     # Four integrals for this matrix term. Two choices of source element
     # and two choices of solution element.
-    a1 = double_integral(mesh, k_rh, grad_bf, grad_bf,
+    a1 = double_integral(mesh.mesh_eval, True, k_rh,
+            grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1a, 0, el2a, 2)
-    a2 = double_integral(mesh, k_rh, grad_bf, grad_bf,
+    a2 = double_integral(mesh.mesh_eval, True, k_rh,
+            grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1a, 0, el2b, 0)
-    a3 = double_integral(mesh, k_rh, grad_bf, grad_bf,
+    a3 = double_integral(mesh.mesh_eval, True, k_rh,
+            grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1b, 2, el2a, 2)
-    a4 = double_integral(mesh, k_rh, grad_bf, grad_bf,
+    a4 = double_integral(mesh.mesh_eval, True, k_rh,
+            grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
-    b1 = double_integral(mesh, k_h, bf, bf,
+    b1 = double_integral(mesh.mesh_eval, True, k_h,
+            bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2a, 2)
-    b2 = double_integral(mesh, k_h, bf, bf,
+    b2 = double_integral(mesh.mesh_eval, True, k_h,
+            bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2b, 0)
-    b3 = double_integral(mesh, k_h, bf, bf,
+    b3 = double_integral(mesh.mesh_eval, True, k_h,
+            bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2a, 2)
-    b4 = double_integral(mesh, k_h, bf, bf,
+    b4 = double_integral(mesh.mesh_eval, True, k_h,
+            bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
-    a = a1 + a2 + a3 + a4
-    b = b1 + b2 + b3 + b4
+    a = np.array(a1) + np.array(a2) + np.array(a3) + np.array(a4)
+    b = np.array(b1) + np.array(b2) + np.array(b3) + np.array(b4)
     np.testing.assert_almost_equal(a, b)
 
 if __name__ == "__main__":

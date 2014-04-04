@@ -21,15 +21,15 @@ def nothing_outer():
 def test_fast_basis_eval():
     myarray = np.random.rand(2, 2)
     bf = BasisFunctions.from_degree(2)
-    be = fp.BasisEval(bf.fncs)
+    be = fp.PolyBasisEval(bf.fncs)
 
     def one():
         for i in range(1000000):
             bf.evaluate(1, 1, 0.5, 0.5)
 
     def two():
-        for i in range(1000000):
-            be.evaluate(1, 0.5)
+        for i in range(2000000):
+            be.evaluate(1, 1, 0.5, [0.0, 0.0], 0)
 
     print_extime(one)
     print_extime(two)

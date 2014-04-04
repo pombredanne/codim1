@@ -48,7 +48,7 @@ std::vector<double>
     {
         // This is assuming that the basis is the same for both dimensions
         // in the mesh. This is a reasonable assumption.
-        basis = evaluator.evaluate(i, x_hat, empty_vec, 0);
+        basis = evaluator.evaluate(element_idx, i, x_hat, empty_vec, 0);
         val[0] += coeffs[0][element_idx][i] * basis;
         val[1] += coeffs[1][element_idx][i] * basis;
     }

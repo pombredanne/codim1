@@ -67,7 +67,9 @@ def test_gradient():
     msh = Mesh.circular_mesh(200, 1.0)
     bf = BasisFunctions([0.0, 1.0])
     gradient = bf.get_gradient_basis(msh)
-    np.testing.assert_almost_equal(gradient.evaluate(57, 0, 0.5, 0.0),
+    chain_rule = gradient.chain_rule(msh.get_jacobian(0, 0.0))
+    np.testing.assert_almost_equal(chain_rule *
+                                    gradient.evaluate(57, 0, 0.5, 0.0),
                                    -31.83229765 * np.ones(2))
 
 def test_solution():
@@ -77,10 +79,10 @@ def test_solution():
     coeffs = np.array([0.0, 1.0, 1.0, 0.0])
     soln = Solution(bf, dh, coeffs)
 
-    value = soln.evaluate(0, 0, 0.0, -1.0)
+    value = soln.evaluate(0, 0, 0.0, [-1.0, 0.0])
     np.testing.assert_almost_equal(value, [0.0, 1.0])
 
-    value = soln.evaluate(0, 1, 1.0, -1.0)
+    value = soln.evaluate(0, 1, 1.0, [-1.0, 0.0])
     np.testing.assert_almost_equal(value, [1.0, 0.0])
 
 if __name__ == "__main__":

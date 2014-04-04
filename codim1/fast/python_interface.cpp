@@ -17,6 +17,7 @@ void expose_kernel(const char* type_string)
 {
     class_<T, bases<Kernel> >(type_string, init<double, double>())
         .def("call", &T::call_all)
+        .def("set_interior_data", &T::set_interior_data)
         .def("_call", &T::call)
         .def_readwrite("reverse_normal", &T::reverse_normal)
         .def_readonly("symmetric_matrix", &T::symmetric_matrix)
@@ -45,13 +46,27 @@ BOOST_PYTHON_MODULE(fast_lib)
 
     // Expose the basis evaluation classes.
     class_<BasisEval, boost::noncopyable>("BasisEval", no_init)
+        .def("chain_rule", &BasisEval::chain_rule)
         .def("evaluate", pure_virtual(&BasisEval::evaluate));
     class_<PolyBasisEval, bases<BasisEval> >("PolyBasisEval", 
             init<std::vector<std::vector<double> > >())
+        .def("chain_rule", &PolyBasisEval::chain_rule)
         .def("evaluate", &PolyBasisEval::evaluate);
-    class_<FuncEval, bases<BasisEval> >("FuncEval", 
-            init<object>())
+    class_<GradientBasisEval, bases<BasisEval> >("GradientBasisEval", 
+            init<std::vector<std::vector<double> > >())
+        .def("chain_rule", &GradientBasisEval::chain_rule)
+        .def("evaluate", &GradientBasisEval::evaluate);
+    class_<FuncEval, bases<BasisEval> >("FuncEval", init<object>())
+        .def("chain_rule", &FuncEval::chain_rule)
         .def("evaluate", &FuncEval::evaluate);
+    class_<ConstantEval, bases<BasisEval> >("ConstantEval", init<double>())
+        .def("chain_rule", &ConstantEval::chain_rule)
+        .def("evaluate", &ConstantEval::evaluate);
+    class_<SolutionEval, bases<BasisEval> >("SolutionEval",
+            init<PolyBasisEval&, std::vector<double>,
+                 std::vector<std::vector<std::vector<double> > > >())
+        .def("chain_rule", &SolutionEval::chain_rule)
+        .def("evaluate", &SolutionEval::evaluate);
 
     // Expose mesh calculation functions
     class_<MeshEval>("MeshEval",
@@ -70,6 +85,7 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def("_call", pure_virtual(&Kernel::call));
     class_<KernelData>("KernelData", no_init)
         .def_readonly("dist", &KernelData::dist);
+    expose_kernel<MassMatrixKernel>("MassMatrixKernel");
     expose_kernel<DisplacementKernel>("DisplacementKernel");
     expose_kernel<TractionKernel>("TractionKernel");
     expose_kernel<AdjointTractionKernel>("AdjointTractionKernel");
@@ -83,6 +99,7 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def_readonly("x", &QuadratureInfo::x)
         .def_readonly("w", &QuadratureInfo::x);
     def("double_integral", double_integral);
+    def("single_integral", single_integral);
 
     //Misc
     def("basis_speed_test", basis_speed_test);
