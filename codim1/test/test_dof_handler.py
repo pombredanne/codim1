@@ -3,6 +3,14 @@ from codim1.core.dof_handler import DOFHandler
 from codim1.core.basis_funcs import BasisFunctions
 import codim1.core.mesh as mesh
 
+def test_inv_dof_map():
+    msh = mesh.Mesh.simple_line_mesh(3)
+    bf = BasisFunctions.from_degree(2)
+    discontinuous_elements = [2]
+    dh = DOFHandler(msh, bf, discontinuous_elements)
+    assert(dh.inv_dof_map[2] == [(0, 0, 2), (0, 1, 0)])
+    assert(dh.inv_dof_map[4] == [(0, 1, 2)])
+
 def test_mixed_dof_handler():
     msh = mesh.Mesh.simple_line_mesh(3)
     bf = BasisFunctions.from_degree(2)

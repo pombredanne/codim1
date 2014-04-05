@@ -1,19 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from codim1.core.dof_handler import DOFHandler
-from codim1.core.mesh import Mesh
-from codim1.core.matrix_assembler import MatrixAssembler
-from codim1.core.rhs_assembler import RHSAssembler
-from codim1.core.basis_funcs import BasisFunctions, Solution
+
+from codim1.assembly import *
+from codim1.core import *
+import codim1.core.tools as tools
 from codim1.fast_lib import AdjointTractionKernel,\
                                        RegularizedHypersingularKernel,\
                                        DisplacementKernel,\
                                        TractionKernel
-from codim1.core.quad_strategy import QuadStrategy
-from codim1.core.quadrature import QuadGauss
-from codim1.core.mass_matrix import MassMatrix
-from codim1.core.interior_point import InteriorPoint
-import codim1.core.tools as tools
 
 # This file solves a Neumann problem using the hypersingular boundary
 # integral equation -- also known as the traction boundary integral
