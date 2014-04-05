@@ -35,8 +35,21 @@ class DOFHandler(object):
                 # to relate the dof to the next door elements
                 self.process_continuous_element(k, element_processed)
             element_processed[k] = True
+
+        # Duplicate the dofmap for the other coordinate direction
         self.dof_map[1, :, :] = self.dof_map[0, :, :] + self.total_dofs
         self.total_dofs *= 2
+
+        # Inverse dof map. May be one to many for continuous elements.
+        self.inv_dof_map = [0] * self.total_dofs
+        for d in range(2):
+            for k in range(mesh.n_elements):
+                for i in range(num_fncs):
+                    dof = self.dof_map[d, k, i]
+                    if self.inv_dof_map[dof] == 0:
+                        self.inv_dof_map[dof] = []
+                    self.inv_dof_map[dof].append((d, k, i))
+
 
     def process_discontinuous_element(self, k):
         for i in range(self.basis_fncs.num_fncs):
