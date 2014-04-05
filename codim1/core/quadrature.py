@@ -1,7 +1,7 @@
 import numpy as np
 import copy
-import codim1.core.gaussian_quad as gaussian_quad
 from codim1.fast_lib import QuadratureInfo
+import gaussian_quad
 
 class QuadBase(object):
     """

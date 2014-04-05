@@ -1,5 +1,5 @@
 import numpy as np
-from codim1.core.matrix_assembler import MatrixAssembler
+from codim1.assembly import MatrixAssembler
 import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import Kernel, DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh

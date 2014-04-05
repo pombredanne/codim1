@@ -1,5 +1,5 @@
 import numpy as np
-from codim1.core.rhs_assembler import RHSAssembler
+from codim1.assembly import RHSAssembler
 import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import TractionKernel
 import codim1.core.mesh as mesh
