@@ -1,5 +1,5 @@
 import numpy as np
-from codim1.core.mass_matrix import MassMatrix
+from codim1.assembly import MassMatrix
 import codim1.core.mesh as mesh
 import codim1.core.basis_funcs as basis_funcs
 import codim1.core.dof_handler as dof_handler
@@ -22,3 +22,12 @@ def test_mass_matrix():
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
     np.testing.assert_almost_equal(M_exact, m.M[0:4, 0:4])
 
+def test_mass_matrix_rhs():
+    m = simple_mass_matrix()
+    m.compute()
+    M_exact = np.array([[1.0 / 3.0, 1.0 / 6.0, 0, 0],
+                        [1.0 / 6.0, 1.0 / 3.0, 0, 0],
+                        [0, 0, 1.0 / 3.0, 1.0 / 6.0],
+                        [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
+    np.testing.assert_almost_equal(m.for_rhs()[0:4],
+                                   np.sum(M_exact, axis = 1))

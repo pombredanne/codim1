@@ -54,3 +54,5 @@ class MassMatrix(object):
                     self.M[i_dof_y, j_dof_y] = M_local[1][1]
         self.computed = True
 
+    def for_rhs(self):
+        return np.sum(self.M, axis = 1)

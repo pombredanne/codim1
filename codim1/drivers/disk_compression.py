@@ -4,19 +4,12 @@ import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from codim1.core.dof_handler import DOFHandler
-from codim1.core.mesh import Mesh
-from codim1.core.matrix_assembler import MatrixAssembler
-from codim1.core.rhs_assembler import RHSAssembler
-from codim1.core.basis_funcs import BasisFunctions, Solution
+import codim1.core.tools as tools
+from codim1.core import *
+from codim1.assembly import *
 from codim1.fast_lib import DisplacementKernel, TractionKernel, \
                         AdjointTractionKernel, HypersingularKernel, \
                         RegularizedHypersingularKernel
-from codim1.core.quad_strategy import QuadStrategy
-from codim1.core.quadrature import QuadGauss
-from codim1.core.mass_matrix import MassMatrix
-from codim1.core.interior_point import InteriorPoint
-import codim1.core.tools as tools
 
 # The theta width over which to apply the load to our cylinder.
 alpha = (1 / 50.) * np.pi

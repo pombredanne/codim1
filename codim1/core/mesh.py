@@ -1,6 +1,6 @@
 import numpy as np
-from codim1.core.segment_distance import segments_distance
-from codim1.core.basis_funcs import BasisFunctions
+from segment_distance import segments_distance
+from basis_funcs import BasisFunctions
 from codim1.fast_lib import MeshEval
 
 class Mesh(object):

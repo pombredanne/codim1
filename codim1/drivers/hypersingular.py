@@ -53,7 +53,7 @@ def fnc(x, d):
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
                          QuadGauss(3), compute_on_init = True)
-rhs = -np.sum(mass_matrix.M, axis = 1)
+rhs = -mass_matrix.for_rhs()
 
 print('Assembling kernel matrix, Gpp')
 # Use the basis function arclength derivatives for the regularized
