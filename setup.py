@@ -1,4 +1,5 @@
 from imp import find_module
+import glob
 from os.path import join
 import setuptools
 from setuptools.extension import Extension
@@ -10,8 +11,7 @@ compile_args = ['-g', '-O3']
 fast_package = 'codim1.fast'
 ext = []
 ext.append(Extension(fast_package + '_lib',
-                  ['codim1/fast/python_interface.cpp',
-                    'codim1/fast/basis_eval.cpp'],
+                  glob.glob('codim1/fast/*.cpp'),
                   include_dirs=['codim1/fast'],
                   library_dirs=['/'],
                   libraries=['boost_python'],

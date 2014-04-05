@@ -30,7 +30,7 @@ quad_logr = 12
 quad_oneoverr = 12
 interior_quad_pts = 8
 
-n_elements = 150
+n_elements = 80
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
@@ -40,7 +40,7 @@ k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
 mesh = Mesh.simple_line_mesh(n_elements)
-bf = BasisFunctions.from_degree(2)
+bf = BasisFunctions.from_degree(1)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
@@ -64,29 +64,27 @@ assembler = MatrixAssembler(mesh, bf, dh, qs)
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 Guu = assembler.assemble_matrix(k_d)
 Gup = assembler.assemble_matrix(k_t)
-Gpu = assembler.assemble_matrix(k_tp)
+Gpu = Gup.T
 Gpp = derivs_assembler.assemble_matrix(k_h)
-
-# rhs_assembler = RHSAssembler(mesh, bf, dh, qs_rhs)
 
 matrix = np.zeros_like(Gpp)
 bc_type = np.zeros(n_elements)
-# bc_type[0] = 1
+bc_type[0] = 1
 bc_type[-1] = 1
 for k in range(n_elements):
     for i in range(bf.num_fncs):
-        dof_k = dh.dof_map[:, k, i]
         for l in range(n_elements):
             for j in range(bf.num_fncs):
+                dof_k = dh.dof_map[:, k, i]
                 dof_l = dh.dof_map[:, l, j]
                 if matrix[dof_k[0], dof_l[0]] != 0.0:
                     continue
                 if bc_type[k] == 0 and bc_type[l] == 0:
                     local_matrix = Gpp
                 if bc_type[k] == 0 and bc_type[l] == 1:
-                    local_matrix = -Gpu
+                    local_matrix = Gpu
                 if bc_type[k] == 1 and bc_type[l] == 0:
-                    local_matrix = -Gup
+                    local_matrix = Gup
                     rhs[dof_k] = 0.0
                 if bc_type[k] == 1 and bc_type[l] == 1:
                     local_matrix = Guu
@@ -102,7 +100,6 @@ soln_coeffs = np.linalg.solve(matrix, rhs)
 soln = Solution(bf, dh, soln_coeffs)
 x, s = tools.evaluate_boundary_solution(5, soln, mesh)
 # s[:5, :] = 0.0
-s[-5:, :] = 0.0
 
 plt.figure(1)
 plt.plot(x[:, 0], s[:, 0])
