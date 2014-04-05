@@ -247,7 +247,7 @@ if __name__ == "__main__":
         sys.exit()
 
     start = time.time()
-    sigma_xx = disk(1000, 0, True)
+    sigma_xx = disk(50, 0, True)
     end = time.time()
     print("Took: " + str(end - start) + " seconds")
     plt.show()
