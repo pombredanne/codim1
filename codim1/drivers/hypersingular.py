@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from codim1.core.dof_handler import ContinuousDOFHandler,\
-    DiscontinuousDOFHandler
+from codim1.core.dof_handler import DOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
@@ -18,7 +17,7 @@ import codim1.core.tools as tools
 
 # This file solves a Neumann problem using the hypersingular boundary
 # integral equation -- also known as the traction boundary integral
-# equation, because all the terms are in traction units.
+# equation, the boundary conditions are tractions
 
 # Elastic parameters
 shear_modulus = 1.0
@@ -31,7 +30,7 @@ quad_logr = 12
 quad_oneoverr = 12
 interior_quad_pts = 8
 
-n_elements = 50
+n_elements = 150
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
@@ -41,16 +40,16 @@ k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
 mesh = Mesh.simple_line_mesh(n_elements)
-bf = BasisFunctions.from_degree(1)
+bf = BasisFunctions.from_degree(2)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
-dh = ContinuousDOFHandler(mesh, bf)
+dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
 
 # Build the rhs
 def fnc(x, d):
     if d == 1:
-        return 1.0
-    return 0.0
+        return 0.0
+    return 1.0
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
                          QuadGauss(3), compute_on_init = True)
@@ -61,19 +60,49 @@ print('Assembling kernel matrix, Gpp')
 # Gpp (hypersingular) kernel
 # This is derived using integration by parts and moving part of the 1/r^3
 # singularity onto the basis functions.
+assembler = MatrixAssembler(mesh, bf, dh, qs)
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
+Guu = assembler.assemble_matrix(k_d)
+Gup = assembler.assemble_matrix(k_t)
+Gpu = assembler.assemble_matrix(k_tp)
 Gpp = derivs_assembler.assemble_matrix(k_h)
-dof_x_initial_point =
-Gpp[0, 0] = 1.0
-Gpp[0, 1:] = 0.0
-rhs[0] = 0.0
-import ipdb;ipdb.set_trace()
 
-soln_coeffs = np.linalg.solve(Gpp, rhs)
+# rhs_assembler = RHSAssembler(mesh, bf, dh, qs_rhs)
+
+matrix = np.zeros_like(Gpp)
+bc_type = np.zeros(n_elements)
+# bc_type[0] = 1
+bc_type[-1] = 1
+for k in range(n_elements):
+    for i in range(bf.num_fncs):
+        dof_k = dh.dof_map[:, k, i]
+        for l in range(n_elements):
+            for j in range(bf.num_fncs):
+                dof_l = dh.dof_map[:, l, j]
+                if matrix[dof_k[0], dof_l[0]] != 0.0:
+                    continue
+                if bc_type[k] == 0 and bc_type[l] == 0:
+                    local_matrix = Gpp
+                if bc_type[k] == 0 and bc_type[l] == 1:
+                    local_matrix = -Gpu
+                if bc_type[k] == 1 and bc_type[l] == 0:
+                    local_matrix = -Gup
+                    rhs[dof_k] = 0.0
+                if bc_type[k] == 1 and bc_type[l] == 1:
+                    local_matrix = Guu
+                    rhs[dof_k] = 0.0
+                for d1 in range(2):
+                    for d2 in range(2):
+                        matrix[dof_k[d1], dof_l[d2]] = \
+                            local_matrix[dof_k[d1], dof_l[d2]]
+
+soln_coeffs = np.linalg.solve(matrix, rhs)
 
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)
 x, s = tools.evaluate_boundary_solution(5, soln, mesh)
+# s[:5, :] = 0.0
+s[-5:, :] = 0.0
 
 plt.figure(1)
 plt.plot(x[:, 0], s[:, 0])

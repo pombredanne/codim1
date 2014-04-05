@@ -9,7 +9,7 @@ def simple_mass_matrix(n_elements = 2):
     bf = basis_funcs.BasisFunctions.from_degree(1)
     msh = mesh.Mesh.simple_line_mesh(n_elements)
     q = quadrature.QuadGauss(2)
-    dh = dof_handler.DiscontinuousDOFHandler(msh, bf)
+    dh = dof_handler.DOFHandler(msh, bf, range(n_elements))
     m = MassMatrix(msh, bf, bf, dh, q)
     return m
 

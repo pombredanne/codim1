@@ -4,7 +4,7 @@ from codim1.fast_lib import DisplacementKernel,\
                             HypersingularKernel,\
                             RegularizedHypersingularKernel,\
                             double_integral
-from codim1.core.dof_handler import ContinuousDOFHandler
+from codim1.core.dof_handler import DOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions, Solution
 from codim1.core.quad_strategy import QuadStrategy
@@ -133,7 +133,7 @@ def test_hypersingular_vs_regularized():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = ContinuousDOFHandler(mesh, bf)
+    dh = DOFHandler(mesh, bf)
 
     el1 = 15
     # pp0 = mesh.get_physical_point(el1, 0.5)
@@ -229,7 +229,7 @@ def test_hypersingular_vs_regularized_across_elements():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = ContinuousDOFHandler(mesh, bf)
+    dh = DOFHandler(mesh, bf)
 
     el1a = 15
     el1b = 14
