@@ -4,8 +4,7 @@ import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 
-from codim1.core.dof_handler import DiscontinuousDOFHandler,\
-                                    ContinuousDOFHandler
+from codim1.core.dof_handler import DOFHandler
 from codim1.core.mesh import Mesh
 from codim1.core.matrix_assembler import MatrixAssembler
 from codim1.core.rhs_assembler import RHSAssembler
@@ -87,7 +86,7 @@ def disk(n_elements, element_deg, plot):
     # If I am using the displacement BIE, I use a discontinuous basis
     # If I am using the traction BIE (hypersingular), I use a continuous
     # basis
-    dh = DiscontinuousDOFHandler(mesh, bf)
+    dh = DOFHandler(mesh, bf, range(n_elements))
 
     # Assemble the matrix of displacements induced by displacements at
     # another location.
