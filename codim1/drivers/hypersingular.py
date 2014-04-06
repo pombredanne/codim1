@@ -18,23 +18,22 @@ shear_modulus = 1.0
 poisson_ratio = 0.25
 
 # Quadrature points for the various circumstances
-quad_min = 4
+quad_min = 6
 quad_max = 12
 quad_logr = 12
 quad_oneoverr = 12
 interior_quad_pts = 8
 
-n_elements = 80
+n_elements = 10
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
-
 # The standard structures for a problem.
 mesh = Mesh.simple_line_mesh(n_elements)
-bf = BasisFunctions.from_degree(1)
+bf = BasisFunctions.from_degree(4)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
@@ -54,56 +53,45 @@ print('Assembling kernel matrix, Gpp')
 # Gpp (hypersingular) kernel
 # This is derived using integration by parts and moving part of the 1/r^3
 # singularity onto the basis functions.
+
 assembler = MatrixAssembler(mesh, bf, dh, qs)
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
-Guu = assembler.assemble_matrix(k_d)
-Gup = assembler.assemble_matrix(k_t)
-Gpu = Gup.T
 Gpp = derivs_assembler.assemble_matrix(k_h)
 
-matrix = np.zeros_like(Gpp)
-bc_type = np.zeros(n_elements)
-bc_type[0] = 1
-bc_type[-1] = 1
-for k in range(n_elements):
-    for i in range(bf.num_fncs):
-        for l in range(n_elements):
-            for j in range(bf.num_fncs):
-                dof_k = dh.dof_map[:, k, i]
-                dof_l = dh.dof_map[:, l, j]
-                if matrix[dof_k[0], dof_l[0]] != 0.0:
-                    continue
-                if bc_type[k] == 0 and bc_type[l] == 0:
-                    local_matrix = Gpp
-                if bc_type[k] == 0 and bc_type[l] == 1:
-                    local_matrix = Gpu
-                if bc_type[k] == 1 and bc_type[l] == 0:
-                    local_matrix = Gup
-                    rhs[dof_k] = 0.0
-                if bc_type[k] == 1 and bc_type[l] == 1:
-                    local_matrix = Guu
-                    rhs[dof_k] = 0.0
-                for d1 in range(2):
-                    for d2 in range(2):
-                        matrix[dof_k[d1], dof_l[d2]] = \
-                            local_matrix[dof_k[d1], dof_l[d2]]
+dof_0x = dh.dof_map[0, 0, 0]
+last_x_dof = dh.dof_map[0, -1, -1]
+dof_0y = dh.dof_map[1, 0, 0]
+Gpp[dof_0x, :] = 0.0
+Gpp[dof_0x, dof_0x] = 1.0
+rhs[dof_0x] = 0.0
+Gpp[last_x_dof, :] = 0.0
+Gpp[last_x_dof, last_x_dof] = 1.0
+rhs[last_x_dof] = 0.0
 
-soln_coeffs = np.linalg.solve(matrix, rhs)
+soln_coeffs = np.linalg.solve(Gpp, rhs)
 
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)
 x, s = tools.evaluate_boundary_solution(5, soln, mesh)
-# s[:5, :] = 0.0
 
 plt.figure(1)
-plt.plot(x[:, 0], s[:, 0])
-plt.xlabel(r'X')
-plt.ylabel(r'$u_x$', fontsize = 18)
-plt.figure(2)
-plt.plot(x[:, 0], s[:, 1])
-plt.xlabel(r'X')
-plt.ylabel(r'$u_y$', fontsize = 18)
+def plot_ux():
+    plt.plot(x[:, 0], s[:, 0])
+    plt.xlabel(r'X')
+    plt.ylabel(r'$u_x$', fontsize = 18)
+def plot_uy():
+    plt.plot(x[:, 0], s[:, 1])
+    plt.xlabel(r'X')
+    plt.ylabel(r'$u_y$', fontsize = 18)
+plot_ux()
+correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
+print np.max(s[:, 0])
+plt.plot(x[:, 0], correct)
+plt.figure()
+plot_uy()
 plt.show()
+
+# import ipdb;ipdb.set_trace()
 
 import sys
 sys.exit()
