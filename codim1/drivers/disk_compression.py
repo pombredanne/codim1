@@ -101,7 +101,7 @@ def disk(n_elements, element_deg, plot):
     # this makes assembly easier.
     # TODO: Could be moved inside assemble_rhs
     traction_function = BasisFunctions.from_function(
-            less_accurate_section_traction)
+            section_traction)
 
     # Assemble the rhs, composed of the displacements induced by the
     # traction inputs.
@@ -127,8 +127,6 @@ def disk(n_elements, element_deg, plot):
     # computations just to avoid problems in testing. Could be reduced
     # in the future.
     ip = InteriorPoint(mesh, dh, qs)
-    traction_function = BasisFunctions.from_function(
-                            less_accurate_section_traction)
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
     # where the normal is n_x=1, n_y=0
     normal = np.array([1.0, 0.0])
