@@ -3,19 +3,12 @@ import time
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-from codim1.core.dof_handler import DOFHandler
-from codim1.core.mesh import Mesh
-from codim1.core.matrix_assembler import MatrixAssembler
-from codim1.core.rhs_assembler import RHSAssembler
-from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.fast.elastic_kernel import AdjointTractionKernel,\
+from codim1.core import *
+from codim1.assembly import *
+from codim1.fast_lib import AdjointTractionKernel,\
                                        RegularizedHypersingularKernel,\
                                        DisplacementKernel,\
                                        TractionKernel
-from codim1.core.quad_strategy import QuadStrategy
-from codim1.core.quadrature import QuadGauss
-from codim1.core.mass_matrix import MassMatrix
-from codim1.core.interior_point import InteriorPoint
 import codim1.core.tools as tools
 
 from matplotlib import rcParams
@@ -149,9 +142,9 @@ if len(sys.argv) > 1 and sys.argv[1] == 'reload':
     reload_and_postprocess()
     sys.exit()
 
-# ux_exact, uy_exact = plot_edge_dislocation()
-# plt.show()
-# sys.exit()
+ux_exact, uy_exact = plot_edge_dislocation()
+plt.show()
+sys.exit()
 
 start = time.time()
 
@@ -173,8 +166,11 @@ matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
 Guu = matrix_assembler.assemble_matrix(k_d)
 
 # The prescribed displacement is 1.0 in the positive x direction.
-fnc = lambda x, n: np.array([1.0, 0.0])
-displacement_func = BasisFunctions.from_function(lambda x: fnc(x, 0))
+def fnc(x, d):
+    if d == 1:
+        return 0.0
+    return 1.0
+displacement_func = BasisFunctions.from_function(fnc)
 
 print("Assembling RHS")
 # The RHS kernel term.
@@ -185,7 +181,7 @@ print("Assembling RHS")
 # the traction kernel.
 mass_matrix = MassMatrix(mesh, bf, displacement_func, dh, QuadGauss(5),
                          compute_on_init = True)
-rhs += -0.5 * np.sum(mass_matrix.M, axis = 1)
+rhs = -0.5 * np.sum(mass_matrix.M, axis = 1)
 
 # Solve Ax = b, where x are the coefficients over the solution basis
 soln_coeffs = np.linalg.solve(Guu, rhs)
@@ -218,9 +214,9 @@ error_x = tools.L2_error(t[1:-1, 0], exact_tx[1:-1])
 error_y = tools.L2_error(t[1:-1, 1], exact_ty[1:-1])
 print error_x
 print error_y
-import ipdb;ipdb.set_trace()
-
-sys.exit()
+# import ipdb;ipdb.set_trace()
+#
+# sys.exit()
 
 print("Performing Interior Computation")
 x = np.linspace(-5, 5, x_pts)
@@ -238,8 +234,8 @@ for i in range(x_pts):
         d2 = np.sqrt((x[i] + 1) ** 2 + y[j] ** 2)
         if d1 < 0.05 or d2 < 0.05:
             continue
-        traction_effect[j, i, :] = \
-            ip.compute((x[i], y[j]), np.array((0.0, 0.0)), k_d, soln)
+        # traction_effect[j, i, :] = \
+            # ip.compute((x[i], y[j]), np.array((0.0, 0.0)), k_d, soln)
 
         displacement_effect_top[j, i, :] = \
             0.5 * ip.compute((x[i], y[j]), np.array([0.0, 0.0]),

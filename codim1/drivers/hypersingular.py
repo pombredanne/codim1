@@ -24,7 +24,7 @@ quad_logr = 12
 quad_oneoverr = 12
 interior_quad_pts = 8
 
-n_elements = 10
+n_elements = 500
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
@@ -33,7 +33,7 @@ k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
 mesh = Mesh.simple_line_mesh(n_elements)
-bf = BasisFunctions.from_degree(4)
+bf = BasisFunctions.from_degree(1)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
@@ -72,8 +72,13 @@ soln_coeffs = np.linalg.solve(Gpp, rhs)
 
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)
-x, s = tools.evaluate_boundary_solution(5, soln, mesh)
+x, s = tools.evaluate_boundary_solution(10, soln, mesh)
 
+correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
+error = np.sqrt(np.sum((s[:, 0] - correct) ** 2 * (2.0 / n_elements)))
+print error
+print 2 * n_elements * bf.num_fncs
+# 1:82, 2:58, 3:26
 plt.figure(1)
 def plot_ux():
     plt.plot(x[:, 0], s[:, 0])
@@ -84,14 +89,11 @@ def plot_uy():
     plt.xlabel(r'X')
     plt.ylabel(r'$u_y$', fontsize = 18)
 plot_ux()
-correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
 print np.max(s[:, 0])
 plt.plot(x[:, 0], correct)
 plt.figure()
 plot_uy()
 plt.show()
-
-# import ipdb;ipdb.set_trace()
 
 import sys
 sys.exit()
@@ -107,20 +109,24 @@ int_uy = np.zeros((x_pts, y_pts))
 ip = InteriorPoint(mesh, dh, qs)
 for i in range(x_pts):
     for j in range(y_pts):
-        traction_effect = ip.compute((x[i], y[j]), np.array((0.0, 0.0)),
+        traction_effect = 0.0 * ip.compute((x[i], y[j]), np.array((0.0, 0.0)),
                    k_d, traction_func)
-        displacement_effect = -ip.compute((x[i], y[j]), np.array([0.0, 0.0]),
-                   k_t, soln)
+        displacement_effect = -0.5 * \
+                ip.compute((x[i], y[j]), np.array([0.0, 0.0]), k_t, soln)
+        k_t.reverse_normal = True
+        displacement_effect -= 0.5 * \
+                ip.compute((x[i], y[j]), np.array([0.0, 0.0]), k_t, soln)
+        k_t.reverse_normal = False
         int_ux[j, i] = traction_effect[0] + displacement_effect[0]
         int_uy[j, i] = traction_effect[1] + displacement_effect[1]
 
+X, Y = np.meshgrid(x, y)
 plt.figure(3)
 plt.title(r'$u_x$')
-plt.imshow(int_ux)
-plt.colorbar()
-plt.figure(4)
-plt.title(r'$u_y$')
-plt.imshow(int_uy)
-plt.colorbar()
+plt.quiver(X, Y, int_ux, int_uy)
+# plt.colorbar()
+# plt.figure(4)
+# plt.title(r'$u_y$')
+# plt.imshow(int_uy)
+# plt.colorbar()
 plt.show()
-import ipdb;ipdb.set_trace()

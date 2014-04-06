@@ -11,6 +11,11 @@ KernelData Kernel::get_double_integral_data(std::vector<double> r,
     kd.m[1] = m[1];
     kd.n[0] = n[0];
     kd.n[1] = n[1];
+    if (reverse_normal)
+    {
+        kd.n[0] = -n[0];
+        kd.n[1] = -n[1];
+    }
     kd.dist = sqrt(pow(r[0], 2) + pow(r[1], 2));
     // grad(r)
     kd.dr[0] = r[0] / kd.dist;
@@ -23,12 +28,12 @@ KernelData Kernel::get_double_integral_data(std::vector<double> r,
 }
 
 KernelData Kernel::get_interior_integral_data(std::vector<double> phys_pt,
-                                              std::vector<double> m)
+                                              std::vector<double> n)
 {
     std::vector<double> r(2);
     r[0] = soln_point[0] - phys_pt[0];
     r[1] = soln_point[1] - phys_pt[1];
-    return get_double_integral_data(r, soln_normal, m);
+    return get_double_integral_data(r, soln_normal, n);
 }
 
 void Kernel::set_interior_data(std::vector<double> soln_point,
