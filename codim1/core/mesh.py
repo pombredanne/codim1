@@ -80,14 +80,26 @@ class Mesh(object):
                                   self.coefficients)
 
     @classmethod
-    def simple_line_mesh(cls, n_elements, left_edge = -1.0, right_edge = 1.0):
+    def simple_line_mesh(cls, n_elements,
+            left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
         """
         Create a mesh consisting of a line of elements starting at -1 and
         extending to +1 in x coordinate, y = 0.
         """
+        if type(left_edge) is float:
+            left_edge = (left_edge, 0.0)
+        if type(right_edge) is float:
+            right_edge = (right_edge, 0.0)
         n_vertices = n_elements + 1
-        vertex_params = np.linspace(left_edge, right_edge, n_vertices)
-        vertex_function = lambda x: np.array([x, 0])
+        vertex_params = np.linspace(left_edge[0], right_edge[0], n_vertices)
+        #slope
+        m = (right_edge[1] - left_edge[1]) / (right_edge[0] - left_edge[0])
+        c = right_edge[0]
+        d = right_edge[1]
+        if abs(m) < 0.000001:
+            vertex_function = lambda x: np.array([x, d])
+        else:
+            vertex_function = lambda x: np.array([x, c - ((d - x) / m)])
 
         element_to_vertex = np.zeros((n_elements, 2))
         for i in range(0, n_elements):
