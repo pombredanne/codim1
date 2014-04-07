@@ -18,13 +18,15 @@ shear_modulus = 1.0
 poisson_ratio = 0.25
 
 # Quadrature points for the various circumstances
-quad_min = 6
-quad_max = 12
-quad_logr = 12
-quad_oneoverr = 12
+quad_min = 2
+quad_max = 10
+quad_logr = 10
+quad_oneoverr = 10
 interior_quad_pts = 8
 
-n_elements = 500
+degree = 5
+n_elements = 4
+# 1:200, 2:114, 3:64, 4:50, 5:36
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
@@ -33,7 +35,7 @@ k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
 mesh = Mesh.simple_line_mesh(n_elements)
-bf = BasisFunctions.from_degree(1)
+bf = BasisFunctions.from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
@@ -45,7 +47,7 @@ def fnc(x, d):
     return 1.0
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
-                         QuadGauss(3), compute_on_init = True)
+                         QuadGauss(degree + 1), compute_on_init = True)
 rhs = -mass_matrix.for_rhs()
 
 print('Assembling kernel matrix, Gpp')
@@ -58,12 +60,11 @@ assembler = MatrixAssembler(mesh, bf, dh, qs)
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 Gpp = derivs_assembler.assemble_matrix(k_h)
 
-dof_0x = dh.dof_map[0, 0, 0]
+first_x_dof = dh.dof_map[0, 0, 0]
 last_x_dof = dh.dof_map[0, -1, -1]
-dof_0y = dh.dof_map[1, 0, 0]
-Gpp[dof_0x, :] = 0.0
-Gpp[dof_0x, dof_0x] = 1.0
-rhs[dof_0x] = 0.0
+Gpp[first_x_dof, :] = 0.0
+Gpp[first_x_dof, first_x_dof] = 1.0
+rhs[first_x_dof] = 0.0
 Gpp[last_x_dof, :] = 0.0
 Gpp[last_x_dof, last_x_dof] = 1.0
 rhs[last_x_dof] = 0.0
@@ -78,7 +79,6 @@ correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
 error = np.sqrt(np.sum((s[:, 0] - correct) ** 2 * (2.0 / n_elements)))
 print error
 print 2 * n_elements * bf.num_fncs
-# 1:82, 2:58, 3:26
 plt.figure(1)
 def plot_ux():
     plt.plot(x[:, 0], s[:, 0])
@@ -89,7 +89,6 @@ def plot_uy():
     plt.xlabel(r'X')
     plt.ylabel(r'$u_y$', fontsize = 18)
 plot_ux()
-print np.max(s[:, 0])
 plt.plot(x[:, 0], correct)
 plt.figure()
 plot_uy()
@@ -99,8 +98,8 @@ import sys
 sys.exit()
 
 # Compute some interior values.
-x_pts = 40
-y_pts = 40
+x_pts = 20
+y_pts = 20
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -122,11 +121,8 @@ for i in range(x_pts):
 
 X, Y = np.meshgrid(x, y)
 plt.figure(3)
-plt.title(r'$u_x$')
+plt.title('Displacement field for a constant stress drop crack.')
 plt.quiver(X, Y, int_ux, int_uy)
-# plt.colorbar()
-# plt.figure(4)
-# plt.title(r'$u_y$')
-# plt.imshow(int_uy)
-# plt.colorbar()
+plt.xlabel('x')
+plt.ylabel('y')
 plt.show()
