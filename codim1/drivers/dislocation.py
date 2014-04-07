@@ -52,8 +52,8 @@ def exact_edge_dislocation_trac(X, Y, nx, ny):
 
 def plot_edge_dislocation():
     # Plot the solution for an edge dislocation with burgers
-    x_pts = 150
-    y_pts = 150
+    x_pts = 100
+    y_pts = 100
     x = np.linspace(-5, 5, x_pts)
     # Doesn't sample 0.0!
     y = np.linspace(-5, 5, y_pts)
@@ -142,9 +142,19 @@ if len(sys.argv) > 1 and sys.argv[1] == 'reload':
     reload_and_postprocess()
     sys.exit()
 
-ux_exact, uy_exact = plot_edge_dislocation()
-plt.show()
-sys.exit()
+# x = np.linspace(-1, 1, 100)
+# tx, ty = exact_edge_dislocation_trac(x + 1, 0.0 * x, 0.0, 1.0)
+# tx2, ty2 = exact_edge_dislocation_trac(x - 1, 0.0 * x, 0.0, 1.0)
+# tx -= tx2
+# ty -= ty2
+# plt.figure()
+# plt.plot(x, tx)
+# plt.figure()
+# plt.plot(x, ty)
+# plt.show()
+# ux_exact, uy_exact = plot_edge_dislocation()
+# plt.show()
+# sys.exit()
 
 start = time.time()
 

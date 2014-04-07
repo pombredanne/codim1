@@ -24,8 +24,8 @@ quad_logr = 10
 quad_oneoverr = 10
 interior_quad_pts = 8
 
-degree = 5
-n_elements = 4
+degree = 1
+n_elements = 100
 # 1:200, 2:114, 3:64, 4:50, 5:36
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
@@ -34,7 +34,9 @@ k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
-mesh = Mesh.simple_line_mesh(n_elements)
+mesh = Mesh.simple_line_mesh(n_elements, (-2.0, 0.0), (2.0, -0.0))
+# tools.plot_mesh(mesh)
+# plt.show()
 bf = BasisFunctions.from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)
@@ -43,8 +45,9 @@ assembler = MatrixAssembler(mesh, bf, dh, qs)
 # Build the rhs
 def fnc(x, d):
     if d == 1:
-        return 0.0
+        return -0.0
     return 1.0
+    # return (1 / (x[0] - 1)) - (1 / (x[0] + 1))
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
                          QuadGauss(degree + 1), compute_on_init = True)
@@ -62,12 +65,20 @@ Gpp = derivs_assembler.assemble_matrix(k_h)
 
 first_x_dof = dh.dof_map[0, 0, 0]
 last_x_dof = dh.dof_map[0, -1, -1]
+first_y_dof = dh.dof_map[1, 0, 0]
+last_y_dof = dh.dof_map[1, -1, -1]
 Gpp[first_x_dof, :] = 0.0
 Gpp[first_x_dof, first_x_dof] = 1.0
 rhs[first_x_dof] = 0.0
 Gpp[last_x_dof, :] = 0.0
 Gpp[last_x_dof, last_x_dof] = 1.0
 rhs[last_x_dof] = 0.0
+Gpp[first_y_dof, :] = 0.0
+Gpp[first_y_dof, first_y_dof] = 1.0
+rhs[first_y_dof] = 0.0
+Gpp[last_y_dof, :] = 0.0
+Gpp[last_y_dof, last_y_dof] = 1.0
+rhs[last_y_dof] = 0.0
 
 soln_coeffs = np.linalg.solve(Gpp, rhs)
 
@@ -75,27 +86,27 @@ soln_coeffs = np.linalg.solve(Gpp, rhs)
 soln = Solution(bf, dh, soln_coeffs)
 x, s = tools.evaluate_boundary_solution(10, soln, mesh)
 
-correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
-error = np.sqrt(np.sum((s[:, 0] - correct) ** 2 * (2.0 / n_elements)))
-print error
-print 2 * n_elements * bf.num_fncs
-plt.figure(1)
-def plot_ux():
-    plt.plot(x[:, 0], s[:, 0])
-    plt.xlabel(r'X')
-    plt.ylabel(r'$u_x$', fontsize = 18)
-def plot_uy():
-    plt.plot(x[:, 0], s[:, 1])
-    plt.xlabel(r'X')
-    plt.ylabel(r'$u_y$', fontsize = 18)
-plot_ux()
-plt.plot(x[:, 0], correct)
-plt.figure()
-plot_uy()
-plt.show()
-
-import sys
-sys.exit()
+# correct = 1.5 * np.sqrt(1.0 - x[:, 0] ** 2)
+# error = np.sqrt(np.sum((s[:, 0] - correct) ** 2 * (2.0 / n_elements)))
+# print error
+# print 2 * n_elements * bf.num_fncs
+# plt.figure(1)
+# def plot_ux():
+#     plt.plot(x[:, 0], s[:, 0])
+#     plt.xlabel(r'X')
+#     plt.ylabel(r'$u_x$', fontsize = 18)
+# def plot_uy():
+#     plt.plot(x[:, 0], s[:, 1])
+#     plt.xlabel(r'X')
+#     plt.ylabel(r'$u_y$', fontsize = 18)
+# plot_ux()
+# plt.plot(x[:, 0], correct)
+# plt.figure()
+# plot_uy()
+# plt.show()
+#
+# import sys
+# sys.exit()
 
 # Compute some interior values.
 x_pts = 20
@@ -123,6 +134,12 @@ X, Y = np.meshgrid(x, y)
 plt.figure(3)
 plt.title('Displacement field for a constant stress drop crack.')
 plt.quiver(X, Y, int_ux, int_uy)
+# plt.imshow(int_ux)
+# plt.colorbar()
+# plt.figure()
+# plt.imshow(int_uy)
+# plt.colorbar()
+
 plt.xlabel('x')
 plt.ylabel('y')
 plt.show()
