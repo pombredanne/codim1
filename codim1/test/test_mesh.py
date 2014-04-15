@@ -3,6 +3,18 @@ from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
 
+def test_in_element():
+    m = Mesh.simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    assert(m.in_element(0, (-0.5, 0.0))[0])
+    assert(not m.in_element(0, (0.5, 0.0))[0])
+    assert(not m.in_element(0, (0.5, 0.5))[0])
+
+def test_in_element_diag():
+    m = Mesh.simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
+    assert(m.in_element(0, (-0.5, 0.5))[0])
+    assert(not m.in_element(0, (0.5, 0.0))[0])
+    assert(not m.in_element(0, (0.5, 0.5))[0])
+
 def test_mesh_linear():
     m = Mesh.simple_line_mesh(2)
     assert(m.is_linear)

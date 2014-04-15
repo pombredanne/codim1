@@ -3,6 +3,15 @@ from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MeshEval
 
+def null(a, rtol=1e-5):
+    """
+    Helper function to calculate the rank and null space of
+    a matrix.
+    """
+    u, s, v = np.linalg.svd(a)
+    rank = (s > rtol*s[0]).sum()
+    return rank, v[rank:].T.copy(), v[:rank].T.copy()
+
 class Mesh(object):
     """
     A class for managing a one dimensional mesh within a two dimensional
@@ -151,7 +160,7 @@ class Mesh(object):
         Compute the pairwise distance between all the elements. In
         2D, this is just the pairwise line segment distances. Moving to 3D,
         this shouldn't be hard if the polygons are "reasonable", but handling
-        outliers may be harder. Because this distance is only used for
+        outlers may be harder. Because this distance is only used for
         selecting the quadrature strategy, I should be conservative. Using too
         many quadrature points is not as bad as using too few. Using a
         bounding box method might be highly effective.
@@ -248,3 +257,52 @@ class Mesh(object):
         and thus to determine the local normal vector.
         """
         return self.mesh_eval.get_normal(element_idx, x_hat)
+
+    def in_element(self, element_idx, point):
+        """
+        Returns whether the point is within the element specified
+        and the reference location of the point if it is within the
+        element.
+        The probably suboptimal method for a quadratic mesh:
+        The mapping from reference coordinates to physical coordinates
+        is:
+        x = CB\vec{\hat{x}}
+        where \vec{\hat{x}} is the reference coordinate to each relevant power
+        [\hat{x}^2, \hat{x}^1, 1.0]
+        B is a 3x3 matrix representing the basis function and
+        C is a 2x3 matrix containing the coefficients.
+        If we solve
+        \vec{\hat{x}} = (CB)^{-1}x
+        then the reference coordinate vector must be consistent for the
+        point to lie on the curve. And, for the point to be within the element,
+        \hat{x} must be within [0, 1].
+        This should work with some minor modifications for higher order
+        elements.
+        """
+        x_coeffs = self.coefficients[0, element_idx, :]
+        y_coeffs = self.coefficients[1, element_idx, :]
+        basis_vals = self.basis_fncs.fncs
+        coeffs_matrix = np.vstack((x_coeffs, y_coeffs))
+        mapping_matrix = coeffs_matrix.dot(basis_vals)
+        x_hat_row_mapping_matrix = mapping_matrix[:, -2]
+        offset= mapping_matrix[:, -1]
+        inv_x_hat_row_mapping_matrix = 1.0 / x_hat_row_mapping_matrix
+        x_hat = inv_x_hat_row_mapping_matrix * (point - offset)
+
+        on_line = True
+        line_pt = 0.0
+        if x_hat[1] == x_hat[0]:
+            line_pt = x_hat[0]
+        elif np.isnan(x_hat[0]):
+            line_pt = x_hat[1]
+        elif np.isnan(x_hat[1]):
+            line_pt = x_hat[0]
+        else:
+            on_line = False
+
+        if on_line:
+            on_segment = (line_pt >= 0.0) and (line_pt <= 1.0)
+        else:
+            on_segment = False
+
+        return on_segment, line_pt
