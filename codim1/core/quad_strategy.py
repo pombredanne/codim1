@@ -128,3 +128,18 @@ class QuadStrategy(object):
         if points < self.min_points:
             points = self.min_points
         return points
+
+    def get_point_source_quadrature(self, singularity_type, singular_pt, k):
+        in_element, reference_loc = self.mesh.in_element(k, singular_pt)
+        if singularity_type == 'logr' and in_element:
+            quad = quadrature.QuadSingularTelles(self.quad_points_logr,
+                                                 reference_loc)
+        elif singularity_type == 'oneoverr' and in_element:
+            quad = quadrature.QuadOneOverR(self.quad_points_oneoverr,
+                                               reference_loc,
+                                               self.max_points)
+        else:
+            quad = self.get_interior_quadrature(k, singular_pt)
+        return quad
+
+
