@@ -34,7 +34,7 @@ k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_h = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 # The standard structures for a problem.
-mesh = Mesh.simple_line_mesh(n_elements, (-2.0, 0.0), (2.0, -0.0))
+mesh = Mesh.simple_line_mesh(n_elements, (-1.0, 0.0), (1.0, -0.0))
 # tools.plot_mesh(mesh)
 # plt.show()
 bf = BasisFunctions.from_degree(degree)
@@ -51,6 +51,7 @@ def fnc(x, d):
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
                          QuadGauss(degree + 1), compute_on_init = True)
+import ipdb;ipdb.set_trace()
 rhs = -mass_matrix.for_rhs()
 
 print('Assembling kernel matrix, Gpp')
@@ -81,6 +82,7 @@ Gpp[last_y_dof, last_y_dof] = 1.0
 rhs[last_y_dof] = 0.0
 
 soln_coeffs = np.linalg.solve(Gpp, rhs)
+import ipdb;ipdb.set_trace()
 
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)

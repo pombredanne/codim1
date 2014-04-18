@@ -93,6 +93,7 @@ double_integral(MeshEval& mesh_eval,
             const double q_w_l = cur_l_quad.w[q_l_idx];
 
             // TODO: Refactor idea: make a "get_quad_point_data" function.
+
             // Translate from reference segment coordinates to 
             // real, physical coordinates
             l_phys_pt = mesh_eval.get_physical_point(l, q_pt_l);
