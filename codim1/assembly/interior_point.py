@@ -23,7 +23,7 @@ class InteriorPoint(object):
         result = np.zeros(2)
 
         kernel.set_interior_data(pt, pt_normal)
-        one = ConstantEval(1.0)
+        one = ConstantEval(np.ones(2))
         for k in range(self.mesh.n_elements):
             # Vary quadrature order depending on distance to the point.
             quadrature = self.quad_strategy.get_interior_quadrature(k, pt)

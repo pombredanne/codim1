@@ -59,7 +59,8 @@ BOOST_PYTHON_MODULE(fast_lib)
     class_<FuncEval, bases<BasisEval> >("FuncEval", init<object>())
         .def("chain_rule", &FuncEval::chain_rule)
         .def("evaluate", &FuncEval::evaluate);
-    class_<ConstantEval, bases<BasisEval> >("ConstantEval", init<double>())
+    class_<ConstantEval, bases<BasisEval> >("ConstantEval",
+            init<std::vector<double> >())
         .def("chain_rule", &ConstantEval::chain_rule)
         .def("evaluate", &ConstantEval::evaluate);
     class_<SolutionEval, bases<BasisEval> >("SolutionEval",

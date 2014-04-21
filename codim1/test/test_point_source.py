@@ -15,7 +15,7 @@ def test_displacement_discontinuity_derivative():
     k = 1
     i = 1
     qi = qs.get_simple().quad_info
-    strength = ConstantEval(1.0)
+    strength = ConstantEval([1.0, 1.0])
     k_rh.set_interior_data(np.array([-2.0, 0.0]), np.array([0.0, 1.0]))
     basis = bf.get_gradient_basis(msh)._basis_eval
     result = single_integral(msh.mesh_eval, msh.is_linear, k_rh, strength,
@@ -30,9 +30,8 @@ def test_displacement_discontinuity_derivative():
     np.testing.assert_almost_equal(result[0][0], 0.0191957, 4)
 
     assembler = PointSourceRHS(msh, bf.get_gradient_basis(msh), dh, qs)
-    rhs = assembler.assemble_rhs([(1.0, np.array([-2.0, 0.0]),
+    rhs = assembler.assemble_rhs([((1.0, 0.0), np.array([-2.0, 0.0]),
                                   np.zeros(2))], k_rh)
-    print rhs
 
 if __name__ == "__main__":
     test_displacement_discontinuity_derivative()

@@ -4,7 +4,7 @@ from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
 from codim1.core.quad_strategy import QuadStrategy
-from codim1.core.interior_point import InteriorPoint
+from codim1.assembly.interior_point import InteriorPoint
 
 # Some ugly but real world tests. Couldn't think of anything simpler to try it
 # on....

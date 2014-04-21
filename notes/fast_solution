@@ -1,0 +1,7 @@
+ use schur complement approach -- results in a positive definite symmetric matrix
+ also easy to couple to a finite element discretization
+ smaller system to solve
+ also, improved conditioning (according to some sources)
+it's okay to compute the entire schur complement unlike in the 
+finite element case because the matrix is already dense.
+
