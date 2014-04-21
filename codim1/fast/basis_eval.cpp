@@ -21,7 +21,7 @@ double ConstantEval::evaluate(int element_idx, int i, double x_hat,
                                 std::vector<double> x,
                                 int d)
 {
-    return value;
+    return values[d];
 }
 
 std::vector<double> ConstantEval::evaluate_vector(int element_idx, int i, 
@@ -29,8 +29,8 @@ std::vector<double> ConstantEval::evaluate_vector(int element_idx, int i,
                         std::vector<double> x)
 {
     std::vector<double> retval(2);
-    retval[0] = value;
-    retval[1] = value;
+    retval[0] = values[0];
+    retval[1] = values[1];
     return retval;
 }
 

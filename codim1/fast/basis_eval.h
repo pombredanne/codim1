@@ -56,9 +56,9 @@ class FuncEval: public BasisEval
 class ConstantEval: public BasisEval
 {
     public:
-        ConstantEval(double value)
+        ConstantEval(std::vector<double> values)
         {
-            this->value = value;
+            this->values = values;
         }
 
         virtual double evaluate(int element_idx, int i, double x_hat,
@@ -68,7 +68,7 @@ class ConstantEval: public BasisEval
                                 double x_hat,
                                 std::vector<double> x);
 
-        double value;
+        std::vector<double> values;
 };
 
 // Basis evaluation could be sped up by manually entering

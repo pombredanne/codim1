@@ -8,6 +8,7 @@
 struct KernelData
 {
     double dist;
+    double dist2;
     double drdn;
     double drdm;
     double r[2];
@@ -23,7 +24,6 @@ class Kernel
         {
             shear_modulus = 1.0;
             poisson_ratio = 0.25;
-            reverse_normal = false;
         }
 
         // All a kernel needs to know are the elastic parameters.
@@ -53,10 +53,6 @@ class Kernel
 
         double shear_modulus;
         double poisson_ratio;
-
-        // reverse_normal can be used for considering the opposite side
-        // of a crack
-        bool reverse_normal;
 
         // assembly only needs to use the upper triangle (or lower) if
         // the matrix resulting from the kernel is symmetric
@@ -125,6 +121,8 @@ class AdjointTractionKernel: public Kernel
 *    (1/r)s onto the basis functions, thus resulting in a log(r) singular
 *    kernel.
 *    A derivation of this regularization is given in Frangi, Novati, 1996.
+*    This kernel cannot be used for interior point computation, because it
+*    is only properly defined when within a double integral.
 */
 class RegularizedHypersingularKernel: public Kernel
 {
@@ -135,6 +133,29 @@ class RegularizedHypersingularKernel: public Kernel
 
         double const5;
 };
+
+/*
+* A half regularized form of the hypersingular kernel. The kernel
+* is strongly singular and is based on the normal derivatives of the
+* regularized traction kernel
+* This kernel can be used for interior point computation when the 
+* interior point is near to the boundary. The singularity is less 
+* intense than for the original hypersingular equation. 
+* This kernel can also be used when a point source displacement discontinuity
+* is applied, like a step function displacement discontinuity boundary
+* condition.
+*/
+class SemiRegularizedHypersingularKernel: public Kernel
+{
+    public:
+        SemiRegularizedHypersingularKernel(double shear_modulus, 
+                                       double poisson_ratio);
+        virtual double call(KernelData d, int p, int q);
+
+        double const5;
+        const double e[2][2] = {{0, 1},{-1, 0}};
+};
+
 /*
 *   The non-regularized hypersingular kernel. Useful for interior 
 *   computation, though it will be problematic when the interior point

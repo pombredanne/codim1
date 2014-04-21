@@ -11,12 +11,8 @@ KernelData Kernel::get_double_integral_data(std::vector<double> r,
     kd.m[1] = m[1];
     kd.n[0] = n[0];
     kd.n[1] = n[1];
-    if (reverse_normal)
-    {
-        kd.n[0] = -n[0];
-        kd.n[1] = -n[1];
-    }
-    kd.dist = sqrt(pow(r[0], 2) + pow(r[1], 2));
+    kd.dist2 = pow(r[0], 2) + pow(r[1], 2)
+    kd.dist = sqrt(kd.dist2);
     // grad(r)
     kd.dr[0] = r[0] / kd.dist;
     kd.dr[1] = r[1] / kd.dist;
@@ -47,7 +43,6 @@ Kernel::Kernel(double shear_modulus, double poisson_ratio)
 {
     this->shear_modulus = shear_modulus;
     this->poisson_ratio = poisson_ratio;
-    this->reverse_normal = false;
 }
 
 std::vector<std::vector<double> >
@@ -153,12 +148,37 @@ double RegularizedHypersingularKernel::call(KernelData d, int p, int q)
     return const5 * ((p == q) * log(d.dist) - d.dr[p] * d.dr[q]);
 }
 
+SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
+    double shear_modulus, double poisson_ratio)
+    :Kernel(shear_modulus, poisson_ratio)
+{
+    symmetric_matrix = true;
+    singularity_type = "oneoverr";
+    const2 = shear_modulus / (4 * PI * (1 - poisson_ratio));
+}
+
+double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
+{
+    const double dalphadenom = 
+                        (d.dist * sqrt(d.dist2 * d.dist2 - d.r[0] * d.r[0]));
+    const double dalphax = (d.r[0] - d.r[1]) * (d.r[0] + d.r[1]) / dalphadenom;
+    const double dalphay = 2 * d.r[0] * d.r[1] / dalphadenom;
+
+    return -(const2 / d.dist) * (
+            (p == q) * 
+                2 * (1 - poisson_ratio) * ($$$$$$$ * d.n[0] + $$$$ * d.n[1])
+            - (4 * ((e[p, 0] * d.dr[0] + e[p, 1] * d.dr[1])
+                              * d.dr[j]
+                              * (d.dr[0] * d.n[0] + d.dr[1] * d.n[1]))
+            + (e[p, 0] * d.dr[ 
+}
+
 HypersingularKernel::HypersingularKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
     symmetric_matrix = true;
-    singularity_type = "logr";
+    singularity_type = "oneoverr";
     const1 = 1 - 2 * poisson_ratio;
     const5 = shear_modulus / (2 * PI * (1 - poisson_ratio));
 }

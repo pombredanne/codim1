@@ -24,8 +24,8 @@ class PointSourceRHS(object):
         total_dofs = self.dof_handler.total_dofs
         rhs = np.zeros(total_dofs)
         for (str, loc, normal) in strength_and_location:
-            strength = ConstantEval(str)
-            kernel.set_interior_data(loc, normal)
+            strength = ConstantEval(np.array(str))
+            kernel.set_interior_data(np.array(loc), np.array(normal))
             for k in range(self.mesh.n_elements):
                 quadrature = \
                     self.quad_strategy.get_point_source_quadrature(
@@ -37,10 +37,10 @@ class PointSourceRHS(object):
                     integral = single_integral(self.mesh.mesh_eval,
                                                self.mesh.is_linear,
                                                kernel,
-                                               strength,
                                                self.basis_funcs._basis_eval,
+                                               strength,
                                                quad_info,
-                                               k, 0, i)
+                                               k, i, 0)
                     rhs[dof_x] += integral[0][0]
                     rhs[dof_x] += integral[0][1]
                     rhs[dof_y] += integral[1][0]
