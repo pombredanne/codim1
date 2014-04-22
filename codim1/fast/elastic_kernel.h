@@ -145,6 +145,10 @@ class RegularizedHypersingularKernel: public Kernel
 * is applied, like a step function displacement discontinuity boundary
 * condition.
 * The expression can be found in the appendix of Frangi, Novati 1996.
+* I have no idea if this kernel could be effectively used for
+* true double integrals. This is not a problem, because the
+* fully regularized hypersingular kernel is far better suited to
+* that task.
 */
 class SemiRegularizedHypersingularKernel: public Kernel
 {
