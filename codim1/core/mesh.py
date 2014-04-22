@@ -99,47 +99,13 @@ class Mesh(object):
             left_edge = (left_edge, 0.0)
         if type(right_edge) is float:
             right_edge = (right_edge, 0.0)
-        n_vertices = n_elements + 1
-        vertex_params = np.linspace(left_edge[0], right_edge[0], n_vertices)
-        #slope
-        m = (right_edge[1] - left_edge[1]) / (right_edge[0] - left_edge[0])
-        c = right_edge[0]
-        d = right_edge[1]
-        if abs(m) < 0.000001:
-            vertex_function = lambda x: np.array([x, d])
-        else:
-            vertex_function = lambda x: np.array([x, c - ((d - x) / m)])
-
-        element_to_vertex = np.zeros((n_elements, 2))
-        for i in range(0, n_elements):
-            element_to_vertex[i, :] = (i, i + 1)
-        element_to_vertex = element_to_vertex.astype(int)
-
-        return cls(vertex_function, vertex_params, element_to_vertex)
+        from mesh_gen import simple_line_mesh
+        simple_line_mesh(n_elements, left_edge, right_edge)
 
     @classmethod
     def circular_mesh(cls, n_elements, radius, basis_fncs = None):
-        # Use linear basis by default
-        if basis_fncs is None:
-            basis_fncs = BasisFunctions.from_degree(1)
-
-        n_vertices = n_elements
-        vertex_params = np.linspace(0, 2 * np.pi, n_vertices + 1)
-        boundary_func = lambda t: radius * np.sin([np.pi / 2 - t, t])
-
-        element_to_vertex = np.zeros((n_elements, 2))
-        element_to_vertex_params = np.zeros((n_elements, 2))
-        for i in range(0, n_elements):
-            element_to_vertex[i, :] = (i, i + 1)
-            element_to_vertex_params[i, :] = (vertex_params[i],
-                                              vertex_params[i + 1])
-        element_to_vertex[-1, :] = (n_elements - 1, 0)
-        element_to_vertex = element_to_vertex.astype(int)
-
-        C = cls(boundary_func,
-                vertex_params[:-1], element_to_vertex,
-                basis_fncs, element_to_vertex_params)
-        return C
+        from mesh_gen import circular_mesh
+        circular_mesh(n_element, radius, basis_fncs)
 
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function

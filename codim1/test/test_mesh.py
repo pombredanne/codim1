@@ -2,25 +2,27 @@ import numpy as np
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
+from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
+                                 circular_mesh
 
 def test_in_element():
-    m = Mesh.simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
     assert(m.in_element(0, (-0.5, 0.0))[0])
     assert(not m.in_element(0, (0.5, 0.0))[0])
     assert(not m.in_element(0, (0.5, 0.5))[0])
 
 def test_in_element_diag():
-    m = Mesh.simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
+    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
     assert(m.in_element(0, (-0.5, 0.5))[0])
     assert(not m.in_element(0, (0.5, 0.0))[0])
     assert(not m.in_element(0, (0.5, 0.5))[0])
 
 def test_mesh_linear():
-    m = Mesh.simple_line_mesh(2)
+    m = simple_line_mesh(2)
     assert(m.is_linear)
 
 def test_simple_line_mesh():
-    m = Mesh.simple_line_mesh(2)
+    m = simple_line_mesh(2)
     correct_vertices = np.array([[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]])
     correct_etov = np.array([[0, 1], [1, 2]])
     assert((m.vertices == correct_vertices).all())
@@ -28,12 +30,12 @@ def test_simple_line_mesh():
     assert(m.element_to_vertex.dtype.type is np.int64)
 
 def test_simple_line_mesh():
-    m = Mesh.simple_line_mesh(2, 3.0, 4.0)
+    m = simple_line_mesh(2, 3.0, 4.0)
     correct_vertices = np.array([[3.0, 0.0], [3.5, 0.0], [4.0, 0.0]])
     assert((m.vertices == correct_vertices).all())
 
 def test_get_phys_pts():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
 
     # Element 2 should lie from 0 to 0.5
     pts = m.get_physical_point(2, 0.5)
@@ -45,18 +47,18 @@ def test_get_phys_pts():
     np.testing.assert_almost_equal(pts[1], 0.0)
 
 def test_jacobian():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
     j = m.get_jacobian(1, 0.0)
     np.testing.assert_almost_equal(j, 0.5)
 
 def test_normals():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
     for i in range(4):
         assert(m.get_normal(0, 0.5)[0] == 0)
         assert(m.get_normal(0, 0.5)[1] == 1)
 
 def test_connectivity():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
     assert(m.neighbors.dtype == np.int)
     assert(m.neighbors[0][0] == -1)
     assert(m.neighbors[3][1] == -1)
@@ -77,7 +79,7 @@ def test_connectivity_loop():
     assert(m.neighbors[1][1] == 0)
 
 def test_is_neighbor():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
     assert(m.is_neighbor(2, 3, 'right') == True)
     assert(m.is_neighbor(2, 3, 'left') == False)
     assert(m.is_neighbor(1, 0, 'left') == True)
@@ -95,7 +97,7 @@ def test_segment_distance():
     assert(dist2 == 1.0)
 
 def test_element_distances():
-    m = Mesh.simple_line_mesh(4)
+    m = simple_line_mesh(4)
     assert(m.element_distances[0, 3] == 1.0)
     assert(m.element_distances[0, 2] == 0.5)
     assert(m.element_distances[0, 1] == 0.0)
@@ -115,19 +117,19 @@ def test_element_widths():
 
 def test_higher_mesh_not_linear():
     bf = BasisFunctions.from_degree(2)
-    m = Mesh.circular_mesh(2, 1.0, bf)
+    m = circular_mesh(2, 1.0, bf)
     assert(not m.is_linear)
 
 def test_higher_order_coeff_gen():
     bf = BasisFunctions.from_degree(2)
-    m = Mesh.circular_mesh(2, 1.0, bf)
+    m = circular_mesh(2, 1.0, bf)
     coeffs_exact = np.array([[1.0, 0.0, -1.0],
                              [0.0, 1.0, 0.0]])
     np.testing.assert_almost_equal(m.coefficients[:, 0, :], coeffs_exact)
 
 def test_higher_order_phys_pt():
     bf = BasisFunctions.from_degree(2)
-    m = Mesh.circular_mesh(2, 1.0, bf)
+    m = circular_mesh(2, 1.0, bf)
     phys_pt = m.get_physical_point(0, 0.5)
     np.testing.assert_almost_equal(phys_pt, (0.0, 1.0))
     phys_pt = m.get_physical_point(0, 0.25)
@@ -137,7 +139,7 @@ def test_higher_order_phys_pt():
 
 def test_higher_order_jacobian():
     bf = BasisFunctions.from_degree(2)
-    m = Mesh.circular_mesh(2, 1.0, bf)
+    m = circular_mesh(2, 1.0, bf)
     x_hat = np.linspace(0, 1, 100)
     jacobian = m.get_jacobian(0, 0.5)
     np.testing.assert_almost_equal(jacobian, 2.0)
@@ -150,7 +152,18 @@ def test_higher_order_jacobian():
 
 def test_higher_order_normal():
     bf = BasisFunctions.from_degree(2)
-    m = Mesh.circular_mesh(2, 1.0, bf)
+    m = circular_mesh(2, 1.0, bf)
     x_hat = np.linspace(0, 1, 100)
     normal = m.get_normal(0, 0.5)
     np.testing.assert_almost_equal(normal, (0.0, -1.0))
+
+def test_combine_meshes():
+    m = simple_line_mesh(1)
+    m2 = simple_line_mesh(1, (-2.0, 1.0), (0.0, 1.0))
+    m3 = combine_meshes(m, m2)
+    assert((m3.get_physical_point(0, 0.5) == (0.0, 0.0)).all())
+    assert((m3.vertices[0] == (-1.0, 0.0)).all())
+    assert((m3.vertices[1] == (1.0, 0.0)).all())
+    assert((m3.vertices[2] == (-2.0, 1.0)).all())
+    assert((m3.vertices[3] == (0.0, 1.0)).all())
+    assert((m3.element_to_vertex[1] == (2, 3)).all())
