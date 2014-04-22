@@ -83,8 +83,8 @@ def interpolate(fnc, dof_handler, basis_funcs, mesh):
 def evaluate_boundary_solution(points_per_element, soln, mesh):
     """
     Once a solution is computed, it's often nice to know the actual value, not
-    just the coefficients of the polynomial basis! This function will produce
-    1 point for every "point_separation" of distance along the boundary.
+    just the coefficients of the polynomial basis! This function will
+    produce points_per_elements points of the solution per element. Whee!
 
     This accepts a vector-valued solution and produces vector-valued point
     evaluations. A scalar version would be simple to write with this as a

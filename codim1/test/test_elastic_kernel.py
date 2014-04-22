@@ -3,6 +3,7 @@ from codim1.fast_lib import DisplacementKernel,\
                             AdjointTractionKernel,\
                             HypersingularKernel,\
                             RegularizedHypersingularKernel,\
+                            SemiRegularizedHypersingularKernel,\
                             double_integral
 from codim1.core.dof_handler import DOFHandler
 from codim1.core.mesh import Mesh
@@ -126,6 +127,7 @@ def test_hypersingular_vs_regularized():
     # result
 
     k_rh = RegularizedHypersingularKernel(1.0, 0.25)
+    k_sh = SemiRegularizedHypersingularKernel(1.0, 0.25)
     k_h = HypersingularKernel(1.0, 0.25)
 
     K = 30
@@ -140,6 +142,7 @@ def test_hypersingular_vs_regularized():
     # m = mesh.get_normal(el1, 0.5)
     a = np.zeros((K, 2, 2))
     b = np.zeros((K, 2, 2))
+    c = np.zeros((K, 2, 2))
     # qq = np.zeros((K, 2, 2))
     # cr1 = np.zeros(K)
     # cr2 = np.zeros(K)
@@ -165,6 +168,9 @@ def test_hypersingular_vs_regularized():
         b[el2, :, :] = double_integral(mesh.mesh_eval, True, k_h,
                             bf._basis_eval, bf._basis_eval,
                             o_q, i_q, el1, i, el2, j)
+        c[el2, :, :] = double_integral(mesh.mesh_eval, True, k_sh,
+                            grad_bf._basis_eval, bf._basis_eval,
+                            o_q, i_q, el1, i, el2, j)
         # qq[el2, :, :] = double_integral(mesh, k_rh, bf, bf,
         #                     o_q, i_q, el1, 1, el2, 1)
         # # cr1[el2] = grad_bf.chain_rule(el1, 0.5)[0]
@@ -181,16 +187,17 @@ def test_hypersingular_vs_regularized():
         # k_h_val[el2, :, :] = \
         #         k_h.call(pp - pp0, m, np.array([n2x[el2], n2y[el2]]))
 
+    # #easiest comparison
     # from matplotlib import pyplot as plt
-    # plt.plot(a)
-    # plt.plot(b)
+    # plt.plot(range(K), a[:, 1, 1], label='ayy')
+    # plt.plot(range(K), b[:, 1, 1], label='byy')
+    # plt.plot(range(K), c[:, 1, 1], label='cyy')
+
     # plt.plot(cr1 / 100.0)
     # plt.figure()
     # plt.plot(range(K), a[:, 1, 1, 0, 0], label='axx')
-    # plt.plot(range(K), a[:, 0, 0], label='ayy')
     # plt.plot(range(K), a[:, 0, 1], label='axy')
     # plt.plot(range(K), b[:, 1, 1, 0, 0], label='bxx')
-    # plt.plot(range(K), b[:, 0, 0], label='byy')
     # plt.plot(range(K), b[:, 0, 1], label='bxy')
     # plt.plot(range(K), qq[:, 0, 0], label='other')
     # plt.plot(grad2x * n2x + grad2y ** 2)
@@ -214,14 +221,17 @@ def test_hypersingular_vs_regularized():
     # plt.figure()
     # plt.plot(n2y, label='normal')
     # plt.plot(cr2, label='cr')
-    # plt.legend()
-    # plt.show()
+    plt.legend()
+    plt.show()
     np.testing.assert_almost_equal(a, b, 2)
+    np.testing.assert_almost_equal(a, c, 2)
+    np.testing.assert_almost_equal(b, c, 2)
 
 def test_hypersingular_vs_regularized_across_elements():
     # The regularization is only valid for a continuous basis, so the
     # integrations will not be equal unless I account for both elements.
     k_rh = RegularizedHypersingularKernel(1.0, 0.25)
+    k_sh = SemiRegularizedHypersingularKernel(1.0, 0.25)
     k_h = HypersingularKernel(1.0, 0.25)
 
     K = 30
@@ -265,9 +275,24 @@ def test_hypersingular_vs_regularized_across_elements():
     b4 = double_integral(mesh.mesh_eval, True, k_h,
             bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
+    c1 = double_integral(mesh.mesh_eval, True, k_sh,
+            grad_bf._basis_eval, bf._basis_eval,
+                        o_q, i_q, el1a, 0, el2a, 2)
+    c2 = double_integral(mesh.mesh_eval, True, k_sh,
+            grad_bf._basis_eval, bf._basis_eval,
+                        o_q, i_q, el1a, 0, el2b, 0)
+    c3 = double_integral(mesh.mesh_eval, True, k_sh,
+            grad_bf._basis_eval, bf._basis_eval,
+                        o_q, i_q, el1b, 2, el2a, 2)
+    c4 = double_integral(mesh.mesh_eval, True, k_sh,
+            grad_bf._basis_eval, bf._basis_eval,
+                        o_q, i_q, el1b, 2, el2b, 0)
     a = np.array(a1) + np.array(a2) + np.array(a3) + np.array(a4)
     b = np.array(b1) + np.array(b2) + np.array(b3) + np.array(b4)
+    c = np.array(c1) + np.array(c2) + np.array(c3) + np.array(c4)
     np.testing.assert_almost_equal(a, b)
+    np.testing.assert_almost_equal(b, c)
+    np.testing.assert_almost_equal(a, c)
 
 if __name__ == "__main__":
     test_traction()

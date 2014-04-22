@@ -19,7 +19,6 @@ void expose_kernel(const char* type_string)
         .def("call", &T::call_all)
         .def("set_interior_data", &T::set_interior_data)
         .def("_call", &T::call)
-        .def_readwrite("reverse_normal", &T::reverse_normal)
         .def_readonly("symmetric_matrix", &T::symmetric_matrix)
         .def_readonly("singularity_type", &T::singularity_type);
 }
@@ -93,6 +92,8 @@ BOOST_PYTHON_MODULE(fast_lib)
     expose_kernel<HypersingularKernel>("HypersingularKernel");
     expose_kernel<RegularizedHypersingularKernel>
                                 ("RegularizedHypersingularKernel");
+    expose_kernel<SemiRegularizedHypersingularKernel>
+                                ("SemiRegularizedHypersingularKernel");
 
     //Expose the integration functions.
     class_<QuadratureInfo, boost::noncopyable>("QuadratureInfo", 

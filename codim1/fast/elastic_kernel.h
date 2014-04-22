@@ -144,6 +144,7 @@ class RegularizedHypersingularKernel: public Kernel
 * This kernel can also be used when a point source displacement discontinuity
 * is applied, like a step function displacement discontinuity boundary
 * condition.
+* The expression can be found in the appendix of Frangi, Novati 1996.
 */
 class SemiRegularizedHypersingularKernel: public Kernel
 {
@@ -152,8 +153,10 @@ class SemiRegularizedHypersingularKernel: public Kernel
                                        double poisson_ratio);
         virtual double call(KernelData d, int p, int q);
 
-        double const5;
-        const double e[2][2] = {{0, 1},{-1, 0}};
+        double const1;
+        double const6;
+        double const7;
+        double e[2][2]; 
 };
 
 /*

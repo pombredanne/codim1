@@ -241,7 +241,7 @@ class Mesh(object):
         Use the mapping defined by the coefficients and basis functions
         to convert coordinates
         """
-        return self.mesh_eval.get_physical_point(element_idx, x_hat)
+        return np.array(self.mesh_eval.get_physical_point(element_idx, x_hat))
 
     def get_jacobian(self, element_idx, x_hat):
         """
@@ -249,14 +249,14 @@ class Mesh(object):
         to get the determinant of the jacobian! This is used to change
         integration coordinates from physical to reference elements.
         """
-        return self.mesh_eval.get_jacobian(element_idx, x_hat)
+        return np.array(self.mesh_eval.get_jacobian(element_idx, x_hat))
 
     def get_normal(self, element_idx, x_hat):
         """
         Use the derivative of the mapping to determine the tangent vector
         and thus to determine the local normal vector.
         """
-        return self.mesh_eval.get_normal(element_idx, x_hat)
+        return np.array(self.mesh_eval.get_normal(element_idx, x_hat))
 
     def in_element(self, element_idx, point):
         """

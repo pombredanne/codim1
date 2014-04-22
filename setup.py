@@ -7,7 +7,7 @@ import numpy as np
 
 # -g compiles with debugging information.
 # -O0 means compile with no optimization, try -O3 for blazing speed
-compile_args = ['-g', '-O3']
+compile_args = ['-g', '-O3', '-std=c++0x']
 fast_package = 'codim1.fast'
 ext = []
 ext.append(Extension(fast_package + '_lib',
