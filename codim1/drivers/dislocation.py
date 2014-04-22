@@ -1,16 +1,11 @@
-import cPickle
-import time
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
 from codim1.core import *
 from codim1.assembly import *
-from codim1.fast_lib import AdjointTractionKernel,\
-                                       RegularizedHypersingularKernel,\
-                                       DisplacementKernel,\
-                                       TractionKernel,\
-                                       HypersingularKernel
+from codim1.fast_lib import *
 import codim1.core.tools as tools
+
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
     # Swap X and Y from the eshelby solution.
@@ -47,13 +42,14 @@ quad_oneoverr = 12
 interior_quad_pts = 13
 x_pts = 30
 y_pts = 30
-n_elements = 10
-degree = 1
+n_elements = 50
+degree = 2
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_h = HypersingularKernel(shear_modulus, poisson_ratio)
+k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 mesh = Mesh.simple_line_mesh(n_elements, -1.0, 1.0)
@@ -61,43 +57,50 @@ bf = BasisFunctions.from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf, range(n_elements))
 
-rhs_assembler = PointSourceRHS(mesh, bf.get_gradient_basis(mesh), dh, qs)
-str_and_loc = [((1.0, 0.0), (-1.0, 0.0), (1.0, 0.0))]
-              # ((1.0, 0.0), (1.0, 0.0), (1.0, 0.0))]
-rhs = rhs_assembler.assemble_rhs(str_and_loc, k_rh)
+def point_src(pt, normal):
+    src_pt = np.array((-1.0, 0.0))
+    src_normal = np.array([0.0, 1.0])
+    src_strength = np.array((1.0, 0.0))
+    stress = np.array(k_sh.call(src_pt - pt,
+                    src_normal,
+                    np.array([0.0, 1.0])))
+    src_pt2 = np.array((1.0, 0.0))
+    src_normal2 = np.array([0.0, 1.0])
+    src_strength2 = np.array((-1.0, 0.0))
+    stress2 = np.array(k_sh.call(src_pt2 - pt,
+                    src_normal2,
+                    np.array([0.0, 1.0])))
+    traction = 2 * stress.dot(src_strength)
+    traction -= 2 * stress2.dot(src_strength2)
+    return traction
 
-def dd_fnc(x, d):
-    if d == 1:
-        return 0.0
-    if x[0] <= -0.5 and x[0] >= -1:
-        return 1.0
-    return 0.0
-dd_fnc_basis = BasisFunctions.from_function(dd_fnc)
-rhs_assembler2 = RHSAssembler(mesh, bf, dh, qs)
-rhs2 = rhs_assembler2.assemble_rhs(dd_fnc_basis, k_h)
-import ipdb;ipdb.set_trace()
-
-matrix = MassMatrix(mesh, bf, bf, dh, QuadGauss(degree + 1), True)
-matrix = -matrix.M
-
-soln_coeffs = np.linalg.solve(matrix, rhs2)
-
+soln_coeffs = tools.interpolate(point_src, dh, bf, mesh)
 
 soln = Solution(bf, dh, soln_coeffs)
 x, t = tools.evaluate_boundary_solution(8, soln, mesh)
-x = x[25:]
-t = t[25:]
+tx = t[:, 0]
+ty = t[:, 1]
 plt.figure()
-plt.plot(x[:, 0], t[:, 0], label = 'tx', linewidth = '3')
-plt.plot(x[:, 0], t[:, 1], label = 'ty', linewidth = '3')
+plt.plot(x[:, 0], tx, label = 'tx', linewidth = '3')
+plt.plot(x[:, 0], ty, label = 'ty', linewidth = '3')
 
-tx, ty = exact_edge_dislocation_trac(x[:, 0] + 1, x[:, 1], 0.0, 1.0)
-tx2, ty2 = exact_edge_dislocation_trac(x[:, 0] - 1, x[:, 1], 0.0, 1.0)
-exact_tx = tx# + tx
-exact_ty = ty# + ty
-plt.plot(x[:, 0], exact_tx, label = 'tx_exact', linewidth = '3')
-plt.plot(x[:, 0], exact_ty, label = 'ty_exact', linewidth = '3')
-
+exact_tx, exact_ty = \
+    exact_edge_dislocation_trac(x[:, 0] + 1, x[:, 1], 0.0, 1.0)
+exact_tx2, exact_ty2 = \
+    exact_edge_dislocation_trac(x[:, 0] - 1, x[:, 1], 0.0, 1.0)
+exact_tx += exact_tx2
+exact_ty += exact_ty2
+# plt.plot(x[:, 0], exact_tx, label = 'tx_exact', linewidth = '3')
+# plt.plot(x[:, 0], exact_ty, label = 'ty_exact', linewidth = '3')
 plt.legend()
+
+
+plt.figure()
+error_x = np.abs((tx - exact_tx) / exact_tx)
+plt.plot(error_x * 100)
+plt.xlabel('x')
+plt.ylabel(r'$|t - t_{exact}|$')
+plt.title('Percent error')
 plt.show()
-sys.exit()
+
+

@@ -11,7 +11,7 @@ KernelData Kernel::get_double_integral_data(std::vector<double> r,
     kd.m[1] = m[1];
     kd.n[0] = n[0];
     kd.n[1] = n[1];
-    kd.dist2 = pow(r[0], 2) + pow(r[1], 2)
+    kd.dist2 = pow(r[0], 2) + pow(r[1], 2);
     kd.dist = sqrt(kd.dist2);
     // grad(r)
     kd.dr[0] = r[0] / kd.dist;
@@ -149,29 +149,69 @@ double RegularizedHypersingularKernel::call(KernelData d, int p, int q)
 }
 
 SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
-    double shear_modulus, double poisson_ratio)
-    :Kernel(shear_modulus, poisson_ratio)
+    double shear_modulus, double poisson_ratio):
+    Kernel(shear_modulus, poisson_ratio),
+    e{{0, 1},{-1, 0}}
 {
     symmetric_matrix = true;
     singularity_type = "oneoverr";
-    const2 = shear_modulus / (4 * PI * (1 - poisson_ratio));
+    const double lambda =
+        2 * shear_modulus * poisson_ratio / (1 - 2 * poisson_ratio);
+    const1 = (1 - 2 * poisson_ratio);
+    const6 = shear_modulus / (4 * PI * (1 - poisson_ratio));
+    const7 = lambda / PI;
 }
 
 double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
 {
     const double dalphadenom = 
-                        (d.dist * sqrt(d.dist2 * d.dist2 - d.r[0] * d.r[0]));
+                        (d.dist2 * d.dist * 
+                         sqrt(1 - pow(d.r[0] / d.dist2, 2))); 
     const double dalphax = (d.r[0] - d.r[1]) * (d.r[0] + d.r[1]) / dalphadenom;
     const double dalphay = 2 * d.r[0] * d.r[1] / dalphadenom;
-
-    return -(const2 / d.dist) * (
-            (p == q) * 
-                2 * (1 - poisson_ratio) * ($$$$$$$ * d.n[0] + $$$$ * d.n[1])
-            - (4 * ((e[p, 0] * d.dr[0] + e[p, 1] * d.dr[1])
-                              * d.dr[j]
-                              * (d.dr[0] * d.n[0] + d.dr[1] * d.n[1]))
-            + (e[p, 0] * d.dr[ 
+    double e_dr[]{e[0][0] * d.dr[0] + e[0][1] * d.dr[1],
+         e[1][0] * d.dr[0] + e[1][1] * d.dr[1]};
+    // double e_m[]{e[0][0] * d.m[0] + e[0][1] * d.m[1],
+    //      e[1][0] * d.m[0] + e[1][1] * d.m[1]};
+    // return 
+    //     -(const6 / d.dist) * (
+    //         2 * const1 * e_dr[p] * d.m[q] 
+    //         + 2 * poisson_ratio * e_m[p] * d.dr[q]
+    //         - 4 * e_dr[p] * d.dr[q] * d.drdm
+    //         + (p == q) * 2 * (1 - poisson_ratio) * 
+    //             (-d.dr[0] * d.m[1] + d.dr[1] * d.m[0])
+    //         + e[p][q] * 2 * poisson_ratio * 
+    //             (-dalphax * d.m[1] + dalphay * d.m[0])
+    //         - 2 * (1 - poisson_ratio) * e_dr[q] * d.m[p]);
+    double e_n[]{e[0][0] * d.n[0] + e[0][1] * d.n[1],
+         e[1][0] * d.n[0] + e[1][1] * d.n[1]};
+    return 
+        -(const6 / d.dist) * (
+            2 * const1 * e_dr[p] * d.n[q] 
+            + 2 * poisson_ratio * e_n[p] * d.dr[q]
+            - 4 * e_dr[p] * d.dr[q] * d.drdn
+            - (p == q) * 2 * (1 - poisson_ratio) * 
+                (-d.dr[0] * d.n[1] + d.dr[1] * d.n[0])
+            // I don't know why I can ignore this term. Maybe the 
+            // expression given in Frangi, Novati 96 is just wrong?
+            // - e[p][q] * 2 * poisson_ratio * 
+            //     (-dalphax * d.n[1] + dalphay * d.n[0])
+            - 2 * (1 - poisson_ratio) * e_dr[q] * d.n[p]);
+    // return 
+    //     -(const6 / d.dist) * (
+    //         (p == q) * 
+    //             2 * (1 - poisson_ratio) * (dalphax * d.n[0] + 
+    //                                        dalphay * d.n[1])
+    //         - 4 * e_dr[p] * d.dr[q] * d.drdn
+    //         + 2 * e_dr[p] * d.n[q]
+    //         + e_n[p] * d.dr[q]
+    //         - e[p][q] * const1 * d.drdn
+    //         - 2 * (1 - poisson_ratio) * e_dr[q] * d.n[p]
+    //         + e[p][q] * d.drdn 
+    //         - const1 * e_n[p] * d.dr[q])
+    //     - (const7 / d.dist) * e_dr[p] * d.n[q];
 }
+            
 
 HypersingularKernel::HypersingularKernel(double shear_modulus,
                                    double poisson_ratio)
