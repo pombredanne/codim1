@@ -12,12 +12,12 @@ poisson_ratio = 0.25
 offset = 1.0
 x_pts = 30
 y_pts = 30
-n_elements = 80
-degree = 4
+n_elements = 1000
+degree = 7
 quad_min = degree + 1
 quad_max = 3 * degree
-quad_logr = 3 * degree
-quad_oneoverr = 3 * degree
+quad_logr = 3 * degree + 1
+quad_oneoverr = 3 * degree + 1
 interior_quad_pts = 13
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
@@ -27,25 +27,22 @@ k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
-mesh = Mesh.simple_line_mesh(n_elements, -1.0, 1.0)
+left_end = np.array((-1.0, 0.0))
+right_end = np.array((1.0, -0.0))
+mesh = Mesh.simple_line_mesh(n_elements, left_end, right_end)
+tools.plot_mesh(mesh)
+plt.show()
 bf = BasisFunctions.from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf, range(n_elements))
 
 def point_src(pt, normal):
-    src_pt = np.array((-1.0, 0.0))
-    src_normal = np.array([0.0, 1.0])
-    src_strength = np.array((1.0, 0.0))
-    stress = np.array(k_sh.call(src_pt - pt,
-                    src_normal,
-                    np.array([0.0, 1.0])))
-    src_pt2 = np.array((1.0, 0.0))
-    src_normal2 = np.array([0.0, 1.0])
-    src_strength2 = np.array((1.0, 0.0))
-    stress2 = np.array(k_sh.call(src_pt2 - pt,
-                    src_normal2,
-                    np.array([0.0, 1.0])))
-    traction = 2 * stress.dot(src_strength)
+    src_strength = (right_end - left_end) /\
+                   np.linalg.norm(right_end - left_end)
+    stress = np.array(k_sh.call(pt - left_end, normal, normal))
+    src_strength2 = -src_strength
+    stress2 = np.array(k_sh.call(pt - right_end, normal, normal))
+    traction = -2 * stress.dot(src_strength)
     traction -= 2 * stress2.dot(src_strength2)
     return traction
 
@@ -55,10 +52,11 @@ soln = Solution(bf, dh, soln_coeffs)
 x, t = tools.evaluate_boundary_solution(8, soln, mesh)
 tx = t[:, 0]
 ty = t[:, 1]
+distance_to_left = np.sqrt((x[:, 0] - left_end[0]) ** 2 +
+                           (x[:, 1] - left_end[1]) ** 2)
 plt.figure(1)
-plt.plot(x[:, 0], tx, label = 'tx', linewidth = '3')
-plt.plot(x[:, 0], ty, label = 'ty', linewidth = '3')
-plt.legend()
+plt.plot(distance_to_left, tx, label = 'tx', linewidth = '3')
+plt.plot(distance_to_left, ty, label = 'ty', linewidth = '3')
 
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
@@ -92,6 +90,9 @@ exact_tx2, exact_ty2 = \
     exact_edge_dislocation_trac(x[:, 0] - 1, x[:, 1], 0.0, 1.0)
 exact_tx -= exact_tx2
 exact_ty -= exact_ty2
+# plt.plot(distance_to_left, exact_tx, label = 'exact_tx', linewidth = '3')
+# plt.plot(distance_to_left, exact_ty, label = 'exact_ty', linewidth = '3')
+plt.legend()
 
 plt.figure(2)
 error_x = np.abs((tx - exact_tx) / exact_tx)
@@ -99,6 +100,8 @@ plt.plot(error_x * 100)
 plt.xlabel('x')
 plt.ylabel(r'$|t - t_{exact}|$')
 plt.title('Percent error')
+plt.show()
+sys.exit()
 
 x_pts = 30
 y_pts = 30
