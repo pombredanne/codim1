@@ -6,6 +6,60 @@ from codim1.assembly import *
 from codim1.fast_lib import *
 import codim1.core.tools as tools
 
+
+shear_modulus = 1.0
+poisson_ratio = 0.25
+offset = 1.0
+x_pts = 30
+y_pts = 30
+n_elements = 80
+degree = 4
+quad_min = degree + 1
+quad_max = 3 * degree
+quad_logr = 3 * degree
+quad_oneoverr = 3 * degree
+interior_quad_pts = 13
+
+k_d = DisplacementKernel(shear_modulus, poisson_ratio)
+k_t = TractionKernel(shear_modulus, poisson_ratio)
+k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
+k_h = HypersingularKernel(shear_modulus, poisson_ratio)
+k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
+k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
+
+mesh = Mesh.simple_line_mesh(n_elements, -1.0, 1.0)
+bf = BasisFunctions.from_degree(degree)
+qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
+dh = DOFHandler(mesh, bf, range(n_elements))
+
+def point_src(pt, normal):
+    src_pt = np.array((-1.0, 0.0))
+    src_normal = np.array([0.0, 1.0])
+    src_strength = np.array((1.0, 0.0))
+    stress = np.array(k_sh.call(src_pt - pt,
+                    src_normal,
+                    np.array([0.0, 1.0])))
+    src_pt2 = np.array((1.0, 0.0))
+    src_normal2 = np.array([0.0, 1.0])
+    src_strength2 = np.array((1.0, 0.0))
+    stress2 = np.array(k_sh.call(src_pt2 - pt,
+                    src_normal2,
+                    np.array([0.0, 1.0])))
+    traction = 2 * stress.dot(src_strength)
+    traction -= 2 * stress2.dot(src_strength2)
+    return traction
+
+soln_coeffs = tools.interpolate(point_src, dh, bf, mesh)
+
+soln = Solution(bf, dh, soln_coeffs)
+x, t = tools.evaluate_boundary_solution(8, soln, mesh)
+tx = t[:, 0]
+ty = t[:, 1]
+plt.figure(1)
+plt.plot(x[:, 0], tx, label = 'tx', linewidth = '3')
+plt.plot(x[:, 0], ty, label = 'ty', linewidth = '3')
+plt.legend()
+
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
     # Swap X and Y from the eshelby solution.
@@ -32,75 +86,95 @@ def exact_edge_dislocation_trac(X, Y, nx, ny):
     ty = sxy * nx + syy * ny
     return tx, ty
 
-shear_modulus = 1.0
-poisson_ratio = 0.25
-offset = 1.0
-quad_min = 12
-quad_max = 12
-quad_logr = 12
-quad_oneoverr = 12
-interior_quad_pts = 13
-x_pts = 30
-y_pts = 30
-n_elements = 50
-degree = 2
-
-k_d = DisplacementKernel(shear_modulus, poisson_ratio)
-k_t = TractionKernel(shear_modulus, poisson_ratio)
-k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
-k_h = HypersingularKernel(shear_modulus, poisson_ratio)
-k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
-k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
-
-mesh = Mesh.simple_line_mesh(n_elements, -1.0, 1.0)
-bf = BasisFunctions.from_degree(degree)
-qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
-dh = DOFHandler(mesh, bf, range(n_elements))
-
-def point_src(pt, normal):
-    src_pt = np.array((-1.0, 0.0))
-    src_normal = np.array([0.0, 1.0])
-    src_strength = np.array((1.0, 0.0))
-    stress = np.array(k_sh.call(src_pt - pt,
-                    src_normal,
-                    np.array([0.0, 1.0])))
-    src_pt2 = np.array((1.0, 0.0))
-    src_normal2 = np.array([0.0, 1.0])
-    src_strength2 = np.array((-1.0, 0.0))
-    stress2 = np.array(k_sh.call(src_pt2 - pt,
-                    src_normal2,
-                    np.array([0.0, 1.0])))
-    traction = 2 * stress.dot(src_strength)
-    traction -= 2 * stress2.dot(src_strength2)
-    return traction
-
-soln_coeffs = tools.interpolate(point_src, dh, bf, mesh)
-
-soln = Solution(bf, dh, soln_coeffs)
-x, t = tools.evaluate_boundary_solution(8, soln, mesh)
-tx = t[:, 0]
-ty = t[:, 1]
-plt.figure()
-plt.plot(x[:, 0], tx, label = 'tx', linewidth = '3')
-plt.plot(x[:, 0], ty, label = 'ty', linewidth = '3')
-
 exact_tx, exact_ty = \
     exact_edge_dislocation_trac(x[:, 0] + 1, x[:, 1], 0.0, 1.0)
 exact_tx2, exact_ty2 = \
     exact_edge_dislocation_trac(x[:, 0] - 1, x[:, 1], 0.0, 1.0)
-exact_tx += exact_tx2
-exact_ty += exact_ty2
-# plt.plot(x[:, 0], exact_tx, label = 'tx_exact', linewidth = '3')
-# plt.plot(x[:, 0], exact_ty, label = 'ty_exact', linewidth = '3')
-plt.legend()
+exact_tx -= exact_tx2
+exact_ty -= exact_ty2
 
-
-plt.figure()
+plt.figure(2)
 error_x = np.abs((tx - exact_tx) / exact_tx)
 plt.plot(error_x * 100)
 plt.xlabel('x')
 plt.ylabel(r'$|t - t_{exact}|$')
 plt.title('Percent error')
+
+x_pts = 30
+y_pts = 30
+x = np.linspace(-5, 5, x_pts)
+# Doesn't sample 0.0!
+y = np.linspace(-5, 5, y_pts)
+X, Y = np.meshgrid(x, y)
+
+exact_grid_ux, exact_grid_uy = exact_edge_dislocation_disp(X + 1, Y)
+exact_grid_ux2, exact_grid_uy2 = exact_edge_dislocation_disp(X - 1, Y)
+exact_grid_ux = exact_grid_ux2 - exact_grid_ux
+exact_grid_uy = exact_grid_uy2 - exact_grid_uy
+
+exact_grid_tx, exact_grid_ty = exact_edge_dislocation_trac(X + 1, Y, 0.0, 1.0)
+exact_grid_tx2, exact_grid_ty2 =\
+        exact_edge_dislocation_trac(X - 1, Y, 0.0, 1.0)
+exact_grid_tx = exact_grid_tx2 - exact_grid_tx
+exact_grid_ty = exact_grid_ty2 - exact_grid_ty
+
+plt.figure(3)
+plt.imshow(exact_grid_ux)
+plt.colorbar()
+plt.title(r'Exact $u_x$')
+plt.figure(4)
+plt.imshow(exact_grid_uy)
+plt.colorbar()
+plt.title('Exact uy')
+plt.title(r'Exact $u_y$')
+plt.figure(5)
+plt.imshow(exact_grid_tx)
+plt.colorbar()
+plt.title(r'Exact $t_x$')
+plt.figure(6)
+plt.imshow(exact_grid_ty)
+plt.colorbar()
+plt.title(r'Exact $t_y$')
+
+x = np.linspace(-5, 5, x_pts)
+# Doesn't sample 0.0!
+y = np.linspace(-5, 5, y_pts)
+sxx = np.zeros((x_pts, y_pts))
+sxy = np.zeros((x_pts, y_pts))
+syy = np.zeros((x_pts, y_pts))
+displacement = np.zeros((x_pts, y_pts, 2))
+def fnc(x,d):
+    if d == 0 and x[0] <= 1.0 and x[0] >= -1.0:
+        return 1.0
+    return 0.0
+displacement_func = BasisFunctions.from_function(fnc)
+
+ip = InteriorPoint(mesh, dh, qs)
+for i in range(x_pts):
+    print i
+    for j in range(y_pts):
+        d1 = np.sqrt((x[i] - 1) ** 2 + y[j] ** 2)
+        d2 = np.sqrt((x[i] + 1) ** 2 + y[j] ** 2)
+        displacement[j, i, :] = \
+            -0.5 * ip.compute((x[i], y[j]), np.array([0.0, 0.0]),
+                        k_t, displacement_func)
+        sxx[j, i], sxy[j, i] = 0.5 * point_src(np.array(x[i], y[j]),
+                                               np.array((0.0, 1.0)))
+int_ux = displacement[:, :, 0]
+int_uy = displacement[:, :, 1]
+plt.figure(7)
+plt.imshow(int_ux)
+plt.title(r'Derived $u_x$')
+plt.colorbar()
+plt.figure(8)
+plt.imshow(int_uy)
+plt.title(r'Derived $u_x$')
+plt.colorbar()
+plt.figure(9)
+plt.imshow(sxy)
+plt.title(r'Derived $t_x$')
+plt.figure(9)
+plt.imshow(sxy)
+plt.title(r'Derived $s_{xx}$')
+plt.colorbar()
 plt.show()
-
-
