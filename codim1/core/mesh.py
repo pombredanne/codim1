@@ -3,15 +3,6 @@ from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MeshEval
 
-def null(a, rtol=1e-5):
-    """
-    Helper function to calculate the rank and null space of
-    a matrix.
-    """
-    u, s, v = np.linalg.svd(a)
-    rank = (s > rtol*s[0]).sum()
-    return rank, v[rank:].T.copy(), v[:rank].T.copy()
-
 class Mesh(object):
     """
     A class for managing a one dimensional mesh within a two dimensional
@@ -87,6 +78,7 @@ class Mesh(object):
         self.mesh_eval = MeshEval(self.basis_fncs.fncs,
                                   self.basis_fncs.derivs,
                                   self.coefficients)
+        self.parts = []
 
     @classmethod
     def simple_line_mesh(cls, n_elements,
@@ -215,7 +207,7 @@ class Mesh(object):
         to get the determinant of the jacobian! This is used to change
         integration coordinates from physical to reference elements.
         """
-        return np.array(self.mesh_eval.get_jacobian(element_idx, x_hat))
+        return self.mesh_eval.get_jacobian(element_idx, x_hat)
 
     def get_normal(self, element_idx, x_hat):
         """

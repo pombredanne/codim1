@@ -1,4 +1,5 @@
 import numpy as np
+
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
@@ -167,3 +168,15 @@ def test_combine_meshes():
     assert((m3.vertices[2] == (-2.0, 1.0)).all())
     assert((m3.vertices[3] == (0.0, 1.0)).all())
     assert((m3.element_to_vertex[1] == (2, 3)).all())
+
+def test_combine_mesh_parts():
+    m = simple_line_mesh(1)
+    m2 = simple_line_mesh(1, (-2.0, 1.0), (0.0, 1.0))
+    m3 = combine_meshes(m, m2)
+    assert(m3.parts[0] == m)
+    assert(m3.parts[1] == m2)
+
+def test_jacobian_type():
+    m = simple_line_mesh(1)
+    jacobian = m.get_jacobian(0, 0.0)
+    assert(type(jacobian) == float)
