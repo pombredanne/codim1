@@ -86,6 +86,9 @@ def combine_meshes(mesh1, mesh2):
         else:
             return mesh2.boundary_fnc(t - buffer - max_mesh1_param +
                                         min_mesh2_param)
-    return Mesh(boundary_func, vertex_params, element_to_vertex,
-                None, element_to_vertex_params)
+    result =  Mesh(boundary_func, vertex_params, element_to_vertex,
+                   None, element_to_vertex_params)
+    result.parts.append(mesh1)
+    result.parts.append(mesh2)
+    return result
 

@@ -35,12 +35,12 @@ class PointSourceRHS(object):
                     dof_x = self.dof_handler.dof_map[0, k, i]
                     dof_y = self.dof_handler.dof_map[1, k, i]
                     integral = single_integral(self.mesh.mesh_eval,
-                                               self.mesh.is_linear,
-                                               kernel,
-                                               self.basis_funcs._basis_eval,
-                                               strength,
-                                               quad_info,
-                                               k, i, 0)
+                                           self.mesh.is_linear,
+                                           kernel,
+                                           self.basis_funcs._basis_eval,
+                                           strength,
+                                           quad_info,
+                                           k, i, 0)
                     rhs[dof_x] += integral[0][0]
                     rhs[dof_x] += integral[0][1]
                     rhs[dof_y] += integral[1][0]
