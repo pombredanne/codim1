@@ -100,12 +100,12 @@ class Mesh(object):
         if type(right_edge) is float:
             right_edge = (right_edge, 0.0)
         from mesh_gen import simple_line_mesh
-        simple_line_mesh(n_elements, left_edge, right_edge)
+        return simple_line_mesh(n_elements, left_edge, right_edge)
 
     @classmethod
     def circular_mesh(cls, n_elements, radius, basis_fncs = None):
         from mesh_gen import circular_mesh
-        circular_mesh(n_element, radius, basis_fncs)
+        return circular_mesh(n_elements, radius, basis_fncs)
 
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function

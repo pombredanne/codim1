@@ -1,5 +1,6 @@
 import numpy as np
 from codim1.core.basis_funcs import Function
+from codim1.core import QuadGauss
 from codim1.fast_lib import single_integral, ConstantEval
 
 class InteriorPoint(object):
