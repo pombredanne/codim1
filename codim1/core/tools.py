@@ -29,12 +29,14 @@ def L2_error(f1, f2):
 def plot_mesh(msh, show = True, points_per_element = 5):
     points = []
     x_hat = np.linspace(0, 1, points_per_element)
+    fig, ax = plt.subplots()
     for k in range(msh.n_elements):
+        points = []
         for i in range(points_per_element):
             points.append(msh.get_physical_point(k, x_hat[i]))
-    lc = matplotlib.collections.LineCollection(zip(points[:-1], points[1:]))
-    fig, ax = plt.subplots()
-    ax.add_collection(lc)
+        lc = matplotlib.collections.LineCollection(
+                            zip(points[:-1], points[1:]))
+        ax.add_collection(lc)
     ax.autoscale()
     ax.margins(0.1)
     if show:

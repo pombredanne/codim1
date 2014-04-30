@@ -1,15 +1,11 @@
-import time
 import sys
-import cPickle
 import numpy as np
 import matplotlib.pyplot as plt
 
 import codim1.core.tools as tools
 from codim1.core import *
 from codim1.assembly import *
-from codim1.fast_lib import DisplacementKernel, TractionKernel, \
-                        AdjointTractionKernel, HypersingularKernel, \
-                        RegularizedHypersingularKernel
+from codim1.fast_lib import *
 
 # The theta width over which to apply the load to our cylinder.
 alpha = (1 / 50.) * np.pi
@@ -100,8 +96,7 @@ def disk(n_elements, element_deg, plot):
     # Make the input function behave like a basis -- for internal reasons,
     # this makes assembly easier.
     # TODO: Could be moved inside assemble_rhs
-    traction_function = BasisFunctions.from_function(
-            section_traction)
+    traction_function = BasisFunctions.from_function( section_traction)
 
     # Assemble the rhs, composed of the displacements induced by the
     # traction inputs.
@@ -179,7 +174,7 @@ def disk(n_elements, element_deg, plot):
         plt.legend()
 
     # Collect the displacements at an array of interior points.
-    save_interior = False
+    save_interior = True
     if save_interior:
         x_pts = 20
         y_pts = 22
@@ -201,18 +196,20 @@ def disk(n_elements, element_deg, plot):
                 displacement_effect = -ip.compute((x_val, y_val),
                                                   np.zeros(2),
                                                   k_t, soln)
-                int_ux[j, i] = traction_effect[0] + displacement_effect[0]
-                int_uy[j, i] = traction_effect[1] + displacement_effect[1]
+                int_ux[j, i] = traction_effect[0] - displacement_effect[0]
+                int_uy[j, i] = traction_effect[1] - displacement_effect[1]
         int_u = np.array([int_ux, int_uy])
-        with open('int_u_disk.pkl', 'wb') as f:
-            cPickle.dump(int_u, f)
+        # with open('int_u_disk.pkl', 'wb') as f:
+        #     cPickle.dump(int_u, f)
+        reload_and_postprocess(int_u)
 
     return int_strs_x[:, 0]
 
-def reload_and_postprocess():
+def reload_and_postprocess(int_u = None):
     # Creates a pretty picture =)
-    f = open('data/disk_compression/int_u_disk.pkl', 'rb')
-    int_u = cPickle.load(f)
+    if int_u is None:
+        f = open('data/disk_compression/int_u_disk.pkl', 'rb')
+        int_u = cPickle.load(f)
     x_pts = 20
     y_pts = 22
     x = np.linspace(-0.95, 0.95, x_pts)
@@ -237,10 +234,8 @@ if __name__ == "__main__":
         reload_and_postprocess()
         sys.exit()
 
-    start = time.time()
     sigma_xx = disk(50, 0, True)
-    end = time.time()
-    print("Took: " + str(end - start) + " seconds")
+    # print("Took: " + str(end - start) + " seconds")
     plt.show()
 
     # Calculate errors and compare with the crouch errors.

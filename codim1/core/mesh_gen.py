@@ -1,5 +1,6 @@
 import numpy as np
 from mesh import Mesh
+from basis_funcs import BasisFunctions
 
 def simple_line_mesh(n_elements,
         left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):

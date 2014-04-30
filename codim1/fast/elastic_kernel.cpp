@@ -171,18 +171,6 @@ double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
     const double dalphay = 2 * d.r[0] * d.r[1] / dalphadenom;
     double e_dr[]{e[0][0] * d.dr[0] + e[0][1] * d.dr[1],
          e[1][0] * d.dr[0] + e[1][1] * d.dr[1]};
-    // double e_m[]{e[0][0] * d.m[0] + e[0][1] * d.m[1],
-    //      e[1][0] * d.m[0] + e[1][1] * d.m[1]};
-    // return 
-    //     -(const6 / d.dist) * (
-    //         2 * const1 * e_dr[p] * d.m[q] 
-    //         + 2 * poisson_ratio * e_m[p] * d.dr[q]
-    //         - 4 * e_dr[p] * d.dr[q] * d.drdm
-    //         + (p == q) * 2 * (1 - poisson_ratio) * 
-    //             (-d.dr[0] * d.m[1] + d.dr[1] * d.m[0])
-    //         + e[p][q] * 2 * poisson_ratio * 
-    //             (-dalphax * d.m[1] + dalphay * d.m[0])
-    //         - 2 * (1 - poisson_ratio) * e_dr[q] * d.m[p]);
     double e_n[]{e[0][0] * d.n[0] + e[0][1] * d.n[1],
          e[1][0] * d.n[0] + e[1][1] * d.n[1]};
     return 
@@ -197,19 +185,6 @@ double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
             // - e[p][q] * 2 * poisson_ratio * 
             //     (-dalphax * d.n[1] + dalphay * d.n[0])
             - 2 * (1 - poisson_ratio) * e_dr[q] * d.n[p]);
-    // return 
-    //     -(const6 / d.dist) * (
-    //         (p == q) * 
-    //             2 * (1 - poisson_ratio) * (dalphax * d.n[0] + 
-    //                                        dalphay * d.n[1])
-    //         - 4 * e_dr[p] * d.dr[q] * d.drdn
-    //         + 2 * e_dr[p] * d.n[q]
-    //         + e_n[p] * d.dr[q]
-    //         - e[p][q] * const1 * d.drdn
-    //         - 2 * (1 - poisson_ratio) * e_dr[q] * d.n[p]
-    //         + e[p][q] * d.drdn 
-    //         - const1 * e_n[p] * d.dr[q])
-    //     - (const7 / d.dist) * e_dr[p] * d.n[q];
 }
             
 
