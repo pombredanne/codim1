@@ -29,3 +29,21 @@ def apply_average_constraint(matrix, rhs, mesh, bf, dh):
                                        k, i, 0)
             matrix[first_x_dof, dof_x] = integral[0][0]
             matrix[first_y_dof, dof_y] = integral[1][1]
+
+def pin_ends_constraint(matrix, rhs, left_end, right_end, dh):
+    first_x_dof = dh.dof_map[0, 0, 0]
+    last_x_dof = dh.dof_map[0, -1, -1]
+    first_y_dof = dh.dof_map[1, 0, 0]
+    last_y_dof = dh.dof_map[1, -1, -1]
+    matrix[first_x_dof, :] = 0.0
+    matrix[first_x_dof, first_x_dof] = 1.0
+    rhs[first_x_dof] = left_end[0]
+    matrix[last_x_dof, :] = 0.0
+    matrix[last_x_dof, last_x_dof] = 1.0
+    rhs[last_x_dof] = right_end[0]
+    matrix[first_y_dof, :] = 0.0
+    matrix[first_y_dof, first_y_dof] = 1.0
+    rhs[first_y_dof] = left_end[1]
+    matrix[last_y_dof, :] = 0.0
+    matrix[last_y_dof, last_y_dof] = 1.0
+    rhs[last_y_dof] = right_end[1]
