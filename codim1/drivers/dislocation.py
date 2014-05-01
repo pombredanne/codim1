@@ -7,8 +7,8 @@ from codim1.fast_lib import *
 import codim1.core.tools as tools
 
 
-shear_modulus = 1.0
-poisson_ratio = 0.25
+mu = 1.0
+pr = 0.25
 offset = 1.0
 x_pts = 30
 y_pts = 30
@@ -20,6 +20,11 @@ quad_logr = 3 * degree + 1
 quad_oneoverr = 3 * degree + 1
 interior_quad_pts = 13
 
+# The code is designed for a plane stress scenario
+# Use the plane stress/plane strain equivalence to produce plane strain
+# results.
+shear_modulus = mu
+poisson_ratio = pr / (1 - pr)
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
@@ -65,7 +70,7 @@ distance_to_left = np.sqrt((x[:, 0] - left_end[0]) ** 2 +
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
     # Swap X and Y from the eshelby solution.
-    nu = poisson_ratio
+    nu = pr
     factor = (offset / (2 * np.pi))
     R = np.sqrt(X ** 2 + Y ** 2)
     ux = factor * (np.arctan(X / Y) + \
@@ -78,8 +83,8 @@ def exact_edge_dislocation_trac(X, Y, nx, ny):
     # Analytical traction field due to an edge dislocation on a surface with
     # normal n
     # Swap X and Y from the normally given solution.
-    nu = poisson_ratio
-    factor = 2 * shear_modulus * offset / (2 * np.pi * (1 - nu))
+    nu = pr
+    factor = 2 * mu * offset / (2 * np.pi * (1 - nu))
     denom = (Y ** 2 + X ** 2) ** 2
     sxx = -Y * (3 * X ** 2 + Y ** 2) * (factor / denom)
     syy = Y * (X ** 2 - Y ** 2) * (factor / denom)
@@ -106,8 +111,6 @@ exact_ty -= exact_ty2
 # plt.title('Percent error')
 # plt.show()
 
-x_pts = 20
-y_pts = 20
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -124,15 +127,15 @@ exact_grid_tx2, exact_grid_ty2 =\
 exact_grid_tx = exact_grid_tx2 - exact_grid_tx
 exact_grid_ty = exact_grid_ty2 - exact_grid_ty
 
-# plt.figure(3)
-# plt.imshow(exact_grid_ux)
-# plt.colorbar()
-# plt.title(r'Exact $u_x$')
-# #
-# plt.figure(4)
-# plt.imshow(exact_grid_uy)
-# plt.colorbar()
-# plt.title(r'Exact $u_y$')
+plt.figure(3)
+plt.imshow(exact_grid_ux)
+plt.colorbar()
+plt.title(r'Exact $u_x$')
+#
+plt.figure(4)
+plt.imshow(exact_grid_uy)
+plt.colorbar()
+plt.title(r'Exact $u_y$')
 #
 # plt.figure(5)
 # plt.imshow(exact_grid_tx)
@@ -162,48 +165,44 @@ ip = InteriorPoint(mesh, dh, qs)
 for i in range(x_pts):
     print i
     for j in range(y_pts):
-        # displacement[j, i, :] = ip.compute((x[i], y[j]),
-        #                                    np.array([0.0, 0.0]),
-        #                                    k_t, displacement_func)
-        # displacement[j, i, :] += ip.compute((x[i], y[j]),
-        #                                    np.array([0.0, 0.0]),
-        #                                    k_u, soln)
-        import ipdb;ipdb.set_trace()
-        sxx[j, i], sxy[j, i] = 0.5 * point_src(np.array(x[i], y[j]),
-                                               np.array((0.0, 1.0)))
-        sxy2[j, i], syy[j, i] = 0.5 * point_src(np.array(x[i], y[j]),
-                                               np.array((1.0, 0.0)))
+        displacement[j, i, :] += ip.compute((x[i], y[j]),
+                                           np.array([0.0, 0.0]),
+                                           k_t, displacement_func)
+        # sxx[j, i], sxy[j, i] = 0.5 * point_src(np.array(x[i], y[j]),
+        #                                        np.array((0.0, 1.0)))
+        # sxy2[j, i], syy[j, i] = 0.5 * point_src(np.array(x[i], y[j]),
+        #                                        np.array((1.0, 0.0)))
 int_ux = displacement[:, :, 0]
 int_uy = displacement[:, :, 1]
 
-# plt.figure(7)
-# plt.imshow(int_ux)
-# plt.title(r'Derived $u_x$')
-# plt.colorbar()
-#
-# plt.figure(8)
-# plt.imshow(int_uy)
-# plt.title(r'Derived $u_y$')
-# plt.colorbar()
-#
-plt.figure(9)
-plt.imshow(sxy)
-plt.title(r'Derived $s_{xy}$')
+plt.figure(7)
+plt.imshow(int_ux)
+plt.title(r'Derived $u_x$')
 plt.colorbar()
 
-plt.figure(10)
-plt.imshow(sxx)
-plt.title(r'Derived $s_{xx}$')
+plt.figure(8)
+plt.imshow(int_uy)
+plt.title(r'Derived $u_y$')
 plt.colorbar()
-plt.figure(11)
-plt.imshow(sxy2)
-plt.title(r'Derived $s_{xy2}$')
-plt.colorbar()
-
-plt.figure(12)
-plt.imshow(syy)
-plt.title(r'Derived $s_{yy}$')
-plt.colorbar()
+# #
+# plt.figure(9)
+# plt.imshow(sxy)
+# plt.title(r'Derived $s_{xy}$')
+# plt.colorbar()
+#
+# plt.figure(10)
+# plt.imshow(sxx)
+# plt.title(r'Derived $s_{xx}$')
+# plt.colorbar()
+# plt.figure(11)
+# plt.imshow(sxy2)
+# plt.title(r'Derived $s_{xy2}$')
+# plt.colorbar()
+#
+# plt.figure(12)
+# plt.imshow(syy)
+# plt.title(r'Derived $s_{yy}$')
+# plt.colorbar()
 # plt.figure(11)
 # plt.imshow(int_ux - exact_grid_ux)
 # plt.title(r'Error in $u_x$')

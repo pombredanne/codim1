@@ -24,8 +24,8 @@ class QuadGauss(QuadBase):
 
 class QuadSingularTelles(QuadBase):
     """
-    Use a cubic polynomial transformation to turn a 1D cauchy principal value
-    integral into a easily integrable form.
+    Use a cubic polynomial transformation to turn a 1D log singular
+    integral into an integrable form.
     This should also be able to accurately integrate terms like
     log(|r|) where r = (x - y).
 
