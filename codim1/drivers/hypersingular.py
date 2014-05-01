@@ -17,8 +17,8 @@ from codim1.fast_lib import AdjointTractionKernel,\
 shear_modulus = 1.0
 poisson_ratio = 0.25
 
-degree = 4
-n_elements = 100
+degree = 3
+n_elements = 50
 
 # Quadrature points for the various circumstances
 quad_min = degree + 1
@@ -26,15 +26,15 @@ quad_max = 12
 quad_logr = 12
 quad_oneoverr = 12
 interior_quad_pts = 8
-# 1:200, 2:114, 3:64, 4:50, 5:36
 
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
 k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
-# The standard structures for a problem.
-mesh = Mesh.simple_line_mesh(n_elements, (-1.0, 0.0), (1.0, -0.0))
+left_end = np.array((-1.0, 1.0))
+right_end = np.array((1.0, -1.0))
+mesh = Mesh.simple_line_mesh(n_elements, left_end, right_end)
 # tools.plot_mesh(mesh)
 # plt.show()
 bf = BasisFunctions.from_degree(degree)
@@ -43,10 +43,10 @@ dh = DOFHandler(mesh, bf)
 assembler = MatrixAssembler(mesh, bf, dh, qs)
 
 # Build the rhs
+src_strength = (right_end - left_end) /\
+               np.linalg.norm(right_end - left_end)
 def fnc(x, d):
-    if d == 1:
-        return 0.0
-    return 1.0
+    return src_strength[d]
     # return (4.0 / (np.pi * 3.0)) * ((1 / (x[0] - 1)) - (1 / (x[0] + 1)))
 traction_func = BasisFunctions.from_function(fnc)
 mass_matrix = MassMatrix(mesh, bf, traction_func, dh,
@@ -81,7 +81,6 @@ Gpp[last_y_dof, last_y_dof] = 1.0
 rhs[last_y_dof] = 0.0
 
 soln_coeffs = np.linalg.solve(Gpp, rhs)
-import ipdb;ipdb.set_trace()
 
 # Create a solution object that pairs the coefficients with the basis
 soln = Solution(bf, dh, soln_coeffs)
@@ -105,12 +104,12 @@ plt.plot(x[:, 0], correct)
 plt.figure()
 plot_uy()
 plt.show()
-import sys
-sys.exit()
+# import sys
+# sys.exit()
 
 # Compute some interior values.
-x_pts = 20
-y_pts = 20
+x_pts = 31
+y_pts = 31
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
 y = np.linspace(-5, 5, y_pts)
@@ -121,12 +120,9 @@ for i in range(x_pts):
     for j in range(y_pts):
         traction_effect = 0.0 * ip.compute((x[i], y[j]), np.array((0.0, 0.0)),
                    k_d, traction_func)
-        displacement_effect = -0.5 * \
-                ip.compute((x[i], y[j]), np.array([0.0, 0.0]), k_t, soln)
-        k_t.reverse_normal = True
-        displacement_effect -= 0.5 * \
-                ip.compute((x[i], y[j]), np.array([0.0, 0.0]), k_t, soln)
-        k_t.reverse_normal = False
+        displacement_effect = ip.compute((x[i], y[j]),
+                                         np.array([0.0, 0.0]),
+                                         k_t, soln)
         int_ux[j, i] = traction_effect[0] + displacement_effect[0]
         int_uy[j, i] = traction_effect[1] + displacement_effect[1]
 
@@ -134,11 +130,12 @@ X, Y = np.meshgrid(x, y)
 plt.figure(3)
 plt.title('Displacement field for a constant stress drop crack.')
 plt.quiver(X, Y, int_ux, int_uy)
-# plt.imshow(int_ux)
-# plt.colorbar()
-# plt.figure()
-# plt.imshow(int_uy)
-# plt.colorbar()
+plt.figure()
+plt.imshow(np.fliplr(int_ux))
+plt.colorbar()
+plt.figure()
+plt.imshow(np.fliplr(int_uy))
+plt.colorbar()
 
 plt.xlabel('x')
 plt.ylabel('y')

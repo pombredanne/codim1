@@ -7,8 +7,8 @@ from codim1.fast_lib import *
 import codim1.core.tools as tools
 
 
-mu = 1.0
-pr = 0.25
+shear_modulus = 1.0
+poisson_ratio = 0.25
 offset = 1.0
 x_pts = 30
 y_pts = 30
@@ -20,11 +20,6 @@ quad_logr = 3 * degree + 1
 quad_oneoverr = 3 * degree + 1
 interior_quad_pts = 13
 
-# The code is designed for a plane stress scenario
-# Use the plane stress/plane strain equivalence to produce plane strain
-# results.
-shear_modulus = mu
-poisson_ratio = pr / (1 - pr)
 k_d = DisplacementKernel(shear_modulus, poisson_ratio)
 k_t = TractionKernel(shear_modulus, poisson_ratio)
 k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
@@ -70,7 +65,7 @@ distance_to_left = np.sqrt((x[:, 0] - left_end[0]) ** 2 +
 def exact_edge_dislocation_disp(X, Y):
     # The analytic displacement fields due to an edge dislocation.
     # Swap X and Y from the eshelby solution.
-    nu = pr
+    nu = poisson_ratio
     factor = (offset / (2 * np.pi))
     R = np.sqrt(X ** 2 + Y ** 2)
     ux = factor * (np.arctan(X / Y) + \
@@ -83,8 +78,8 @@ def exact_edge_dislocation_trac(X, Y, nx, ny):
     # Analytical traction field due to an edge dislocation on a surface with
     # normal n
     # Swap X and Y from the normally given solution.
-    nu = pr
-    factor = 2 * mu * offset / (2 * np.pi * (1 - nu))
+    nu = poisson_ratio
+    factor = 2 * shear_modulus * offset / (2 * np.pi * (1 - nu))
     denom = (Y ** 2 + X ** 2) ** 2
     sxx = -Y * (3 * X ** 2 + Y ** 2) * (factor / denom)
     syy = Y * (X ** 2 - Y ** 2) * (factor / denom)
