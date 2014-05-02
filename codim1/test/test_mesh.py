@@ -49,19 +49,19 @@ def test_equivalent_pairs():
     m2 = simple_line_mesh(1, (0.0, 1.0), (1.0, 0.0))
     m = combine_meshes(m1, m2)
     equivalent_pairs = m._find_equivalent_pairs(1e-6)
-    assert(equivalent_pairs[0][0] == 1)
-    assert(equivalent_pairs[0][1] == 2)
+    assert(equivalent_pairs[0, 0] == 1)
+    assert(equivalent_pairs[0, 1] == 2)
 
 def test_multisegment_mesh():
     m1 = simple_line_mesh(1, (-1.0, 0.0), (0.0, 1.0))
     m2 = simple_line_mesh(1, (0.0, 1.0), (1.0, 0.0))
     m = combine_meshes(m1, m2, ensure_continuity = True)
-    assert(m.vertices[0, 0] == -1.0)
-    assert(m.vertices[0, 1] == 0.0)
-    assert(m.vertices[1, 0] == 0.0)
-    assert(m.vertices[1, 1] == 1.0)
-    assert(m.vertices[2, 0] == 1.0)
-    assert(m.vertices[2, 1] == 0.0)
+    assert(m.element_to_vertex[0, 0] == 0)
+    assert(m.element_to_vertex[0, 1] == 1)
+    assert(m.element_to_vertex[1, 0] == 1)
+    assert(m.element_to_vertex[1, 1] == 3)
+    assert(m.neighbors[0][1] == 1)
+    assert(m.neighbors[1][0] == 0)
 
 def test_get_phys_pts():
     m = simple_line_mesh(4)
