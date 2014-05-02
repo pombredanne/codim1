@@ -22,6 +22,18 @@ def test_mass_matrix():
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
     np.testing.assert_almost_equal(M_exact, m.M[0:4, 0:4])
 
+def test_mass_matrix_continuous():
+    bf = basis_funcs.BasisFunctions.from_degree(1)
+    msh = mesh.Mesh.simple_line_mesh(2)
+    q = quadrature.QuadGauss(2)
+    dh = dof_handler.DOFHandler(msh, bf)
+    m = MassMatrix(msh, bf, bf, dh, q)
+    m.compute()
+    M_exact = np.array([[1.0 / 3.0, 1.0 / 6.0, 0],
+                        [1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0],
+                        [0, 1.0 / 6.0, 1.0 / 3.0]])
+    np.testing.assert_almost_equal(M_exact, m.M[0:3, 0:3])
+
 def test_mass_matrix_rhs():
     m = simple_mass_matrix()
     m.compute()

@@ -50,8 +50,8 @@ class MassMatrix(object):
                                       self.soln_basis_funcs._basis_eval,
                                       q_info,
                                       k, i, j)
-                    self.M[i_dof_x, j_dof_x] = M_local[0][0]
-                    self.M[i_dof_y, j_dof_y] = M_local[1][1]
+                    self.M[i_dof_x, j_dof_x] += M_local[0][0]
+                    self.M[i_dof_y, j_dof_y] += M_local[1][1]
         self.computed = True
 
     def for_rhs(self):
