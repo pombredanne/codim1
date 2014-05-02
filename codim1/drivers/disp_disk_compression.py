@@ -8,7 +8,7 @@ from codim1.fast_lib import *
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements = 50
+n_elements = 100
 degree = 2
 quad_min = 4
 quad_max = 10
@@ -24,7 +24,7 @@ k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 bf = BasisFunctions.from_degree(degree)
 mesh = Mesh.circular_mesh(n_elements, 1.0)
 qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
-dh = DOFHandler(mesh, bf)
+dh = DOFHandler(mesh, bf)#, range(n_elements))
 
 matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
 matrix = matrix_assembler.assemble_matrix(k_d)
@@ -32,7 +32,7 @@ matrix = matrix_assembler.assemble_matrix(k_d)
 # Uniform compression displacement
 def compress(x, d):
     x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
-    return -0.2 * x[d] / x_length
+    return 0.2 * x[d] / x_length
 
 displacement_function = BasisFunctions.from_function(compress)
 
@@ -46,6 +46,7 @@ mass_matrix = MassMatrix(mesh, bf, bf,
                          dh, QuadGauss(degree + 1),
                          compute_on_init = True)
 rhs += mass_matrix.for_rhs()
+import ipdb;ipdb.set_trace()
 
 soln_coeffs = np.linalg.solve(matrix, rhs)
 soln = Solution(bf, dh, soln_coeffs)
