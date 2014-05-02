@@ -8,7 +8,7 @@ from codim1.fast_lib import *
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements = 100
+n_elements = 50
 degree = 2
 quad_min = 4
 quad_max = 10
@@ -22,7 +22,7 @@ k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 
 bf = BasisFunctions.from_degree(degree)
-mesh = Mesh.circular_mesh(n_elements, 1.0)
+mesh = Mesh.circular_mesh(n_elements, 1.0, bf)
 qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)#, range(n_elements))
 
@@ -42,11 +42,10 @@ print("Assembling RHS")
 rhs_assembler = RHSAssembler(mesh, bf, dh, qs)
 rhs = rhs_assembler.assemble_rhs(displacement_function, k_t)
 
-mass_matrix = MassMatrix(mesh, bf, bf,
+mass_matrix = MassMatrix(mesh, bf, displacement_function,
                          dh, QuadGauss(degree + 1),
                          compute_on_init = True)
 rhs += mass_matrix.for_rhs()
-import ipdb;ipdb.set_trace()
 
 soln_coeffs = np.linalg.solve(matrix, rhs)
 soln = Solution(bf, dh, soln_coeffs)
