@@ -29,6 +29,12 @@ def simple_line_mesh(n_elements,
 
     return Mesh(vertex_function, vertex_params, element_to_vertex)
 
+# def multisegment_mesh(n_elements_per_segment, points):
+#     n_segments = len(points) - 1
+#     n_vertices = [n_elements_per_segment + 1]
+#     for seg in range(1, n_segments):
+#         n_vertices[seg] = n_elements_per_segment
+
 def circular_mesh(n_elements, radius, basis_fncs = None):
     # Use linear basis by default
     if basis_fncs is None:
@@ -52,7 +58,7 @@ def circular_mesh(n_elements, radius, basis_fncs = None):
             basis_fncs, element_to_vertex_params)
     return C
 
-def combine_meshes(mesh1, mesh2):
+def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     """
     Combine two meshes into one disconnected mesh. This function
     relies on the user to make sure that nothing weird is going on.
@@ -87,6 +93,8 @@ def combine_meshes(mesh1, mesh2):
                                         min_mesh2_param)
     result =  Mesh(boundary_func, vertex_params, element_to_vertex,
                    None, element_to_vertex_params)
+    if ensure_continuity:
+        result.condense_duplicate_vertices()
     result.parts.append(mesh1)
     result.parts.append(mesh2)
     return result
