@@ -63,22 +63,7 @@ assembler = MatrixAssembler(mesh, bf, dh, qs)
 derivs_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 Gpp = derivs_assembler.assemble_matrix(k_rh)
 
-first_x_dof = dh.dof_map[0, 0, 0]
-last_x_dof = dh.dof_map[0, -1, -1]
-first_y_dof = dh.dof_map[1, 0, 0]
-last_y_dof = dh.dof_map[1, -1, -1]
-Gpp[first_x_dof, :] = 0.0
-Gpp[first_x_dof, first_x_dof] = 1.0
-rhs[first_x_dof] = 0.0
-Gpp[last_x_dof, :] = 0.0
-Gpp[last_x_dof, last_x_dof] = 1.0
-rhs[last_x_dof] = 0.0
-Gpp[first_y_dof, :] = 0.0
-Gpp[first_y_dof, first_y_dof] = 1.0
-rhs[first_y_dof] = 0.0
-Gpp[last_y_dof, :] = 0.0
-Gpp[last_y_dof, last_y_dof] = 1.0
-rhs[last_y_dof] = 0.0
+pin_ends_constraint(Gpp, rhs, (0.0, 0.0), (0.0, 0.0), dh)
 
 soln_coeffs = np.linalg.solve(Gpp, rhs)
 
