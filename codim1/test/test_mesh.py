@@ -35,6 +35,15 @@ def test_simple_line_mesh():
     correct_vertices = np.array([[3.0, 0.0], [3.5, 0.0], [4.0, 0.0]])
     assert((m.vertices == correct_vertices).all())
 
+def test_angular_simple_line_mesh():
+    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
+    assert(m.vertices[0, 0] == -1.0)
+    assert(m.vertices[0, 1] == 1.0)
+    assert(m.vertices[1, 0] == 0.0)
+    assert(m.vertices[1, 1] == 0.0)
+    assert(m.vertices[2, 0] == 1.0)
+    assert(m.vertices[2, 1] == -1.0)
+
 def test_get_phys_pts():
     m = simple_line_mesh(4)
 

@@ -35,9 +35,20 @@ fault_vector = left_end - right_end
 fault_tangential = fault_vector / np.linalg.norm(fault_vector)
 fault_normal = np.array((fault_tangential[1], -fault_tangential[0]))
 
-left_surface = np.array((-30.0, 0.0))
-right_surface = np.array((30.0, 0.0))
-mesh = simple_line_mesh(n_elements_surface, left_surface, right_surface)
+# left_surface = np.array((-10.0, 0.0))
+# right_surface = np.array((10.0, 0.0))
+# mesh = simple_line_mesh(n_elements_surface, left_surface, right_surface)
+
+left_surface = np.array((-10.0, 0.0))
+rise_begin = np.array((0.0, 0.0))
+rise_end = np.array((3.0, 0.3))
+right_surface = np.array((10.0, 0.3))
+# mesh1 = simple_line_mesh(n_elements_surface / 3, left_surface, rise_begin)
+mesh2 = simple_line_mesh(n_elements_surface / 3, rise_begin, rise_end)
+# mesh3 = simple_line_mesh(n_elements_surface / 3, rise_end, right_surface)
+# mesh = combine_meshes(mesh2, mesh3)
+tools.plot_mesh(mesh2)
+plt.show()
 
 bf = BasisFunctions.from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
@@ -47,9 +58,6 @@ str_and_loc = [(fault_tangential, left_end, fault_normal),
                (-fault_tangential, right_end, fault_normal)]
 rhs_assembler = PointSourceRHS(mesh, bf.get_gradient_basis(mesh), dh, qs)
 rhs = -rhs_assembler.assemble_rhs(str_and_loc, k_rh)
-plt.plot(rhs[dh.dof_map[0, 0, 0]:dh.dof_map[0, -1, -1]])
-plt.plot(rhs[dh.dof_map[1, 0, 0]:dh.dof_map[1, -1, -1]], linewidth = 2)
-plt.show()
 
 matrix_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
 matrix = matrix_assembler.assemble_matrix(k_rh)
