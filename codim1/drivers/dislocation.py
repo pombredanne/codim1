@@ -108,7 +108,7 @@ exact_ty -= exact_ty2
 
 x = np.linspace(-5, 5, x_pts)
 # Doesn't sample 0.0!
-y = np.linspace(-5, 5, y_pts)
+y = np.linspace(-15, 15, y_pts)
 X, Y = np.meshgrid(x, y)
 
 exact_grid_ux, exact_grid_uy = exact_edge_dislocation_disp(X + 1, Y)

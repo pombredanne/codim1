@@ -27,10 +27,16 @@ def apply_average_constraint(matrix, rhs, mesh, bf, dh):
                                        one,
                                        quad_info,
                                        k, i, 0)
-            matrix[first_x_dof, dof_x] = integral[0][0]
-            matrix[first_y_dof, dof_y] = integral[1][1]
+            matrix[first_x_dof, dof_x] += integral[0][0]
+            matrix[first_y_dof, dof_y] += integral[1][1]
 
 def pin_ends_constraint(matrix, rhs, left_end, right_end, dh):
+    """
+    Pin the values at the ends of a simple line mesh. This is useful
+    for crack solutions with only traction boundary conditions, because
+    the matrix is singular. Pinning the ends removes the rigid body motion
+    modes of solution and results in a nonsingular matrix.
+    """
     first_x_dof = dh.dof_map[0, 0, 0]
     last_x_dof = dh.dof_map[0, -1, -1]
     first_y_dof = dh.dof_map[1, 0, 0]
