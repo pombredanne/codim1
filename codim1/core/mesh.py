@@ -92,11 +92,16 @@ class Mesh(object):
         though the code should be easily adaptable.
         """
         pairs = self._find_equivalent_pairs(epsilon)
+        for idx in range(pairs.shape[0]):
+            self.element_to_vertex[self.element_to_vertex == pairs[idx, 1]] =\
+                pairs[idx, 0]
+        self.compute_connectivity()
 
     def _find_equivalent_pairs(self, epsilon):
+        # TODO: Should be extendable to find equivalence sets,
+        # rather than just pairs.
         sorted_vertices = self.vertices[self.vertices[:,0].argsort()]
         equivalent_pairs = []
-        import ipdb;ipdb.set_trace()
         for (idx, x_val) in enumerate(sorted_vertices[:-1, 0]):
             if np.abs(x_val - sorted_vertices[idx + 1, 0]) > epsilon:
                 continue
@@ -104,7 +109,7 @@ class Mesh(object):
                 > epsilon:
                 continue
             equivalent_pairs.append((idx, idx + 1))
-        return equivalent_pairs
+        return np.array(equivalent_pairs)
 
     @classmethod
     def simple_line_mesh(cls, n_elements,
