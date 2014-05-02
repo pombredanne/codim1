@@ -80,6 +80,32 @@ class Mesh(object):
                                   self.coefficients)
         self.parts = []
 
+    def condense_duplicate_vertices(self, epsilon = 1e-6):
+        """
+        Remove duplicate vertices and ensure continuity between their
+        respective elements. This is a post-processing function on the
+        already produced mesh. I don't think it will work in the
+        nonlinear mesh case.
+
+        I think it also only condenses pairs of vertices. If three vertices
+        all share the same point, the problem is slightly more difficult,
+        though the code should be easily adaptable.
+        """
+        pairs = self._find_equivalent_pairs(epsilon)
+
+    def _find_equivalent_pairs(self, epsilon):
+        sorted_vertices = self.vertices[self.vertices[:,0].argsort()]
+        equivalent_pairs = []
+        import ipdb;ipdb.set_trace()
+        for (idx, x_val) in enumerate(sorted_vertices[:-1, 0]):
+            if np.abs(x_val - sorted_vertices[idx + 1, 0]) > epsilon:
+                continue
+            if np.abs(sorted_vertices[idx, 1] - sorted_vertices[idx + 1, 1])\
+                > epsilon:
+                continue
+            equivalent_pairs.append((idx, idx + 1))
+        return equivalent_pairs
+
     @classmethod
     def simple_line_mesh(cls, n_elements,
             left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
@@ -118,7 +144,7 @@ class Mesh(object):
         Compute the pairwise distance between all the elements. In
         2D, this is just the pairwise line segment distances. Moving to 3D,
         this shouldn't be hard if the polygons are "reasonable", but handling
-        outlers may be harder. Because this distance is only used for
+        outliers may be harder. Because this distance is only used for
         selecting the quadrature strategy, I should be conservative. Using too
         many quadrature points is not as bad as using too few. Using a
         bounding box method might be highly effective.
