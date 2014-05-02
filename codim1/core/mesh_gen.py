@@ -16,12 +16,11 @@ def simple_line_mesh(n_elements,
     vertex_params = np.linspace(left_edge[0], right_edge[0], n_vertices)
     #slope
     m = (right_edge[1] - left_edge[1]) / (right_edge[0] - left_edge[0])
-    c = right_edge[0]
-    d = right_edge[1]
+    b = left_edge[1] - m * left_edge[0]
     if abs(m) < 0.000001:
-        vertex_function = lambda x: np.array([x, d])
+        vertex_function = lambda x: np.array([x, b])
     else:
-        vertex_function = lambda x: np.array([x, c - ((d - x) / m)])
+        vertex_function = lambda x: np.array([x, m * x + b])
 
     element_to_vertex = np.zeros((n_elements, 2))
     for i in range(0, n_elements):
