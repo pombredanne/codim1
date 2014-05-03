@@ -18,6 +18,11 @@ def test_in_element_diag():
     assert(not m.in_element(0, (0.5, 0.0))[0])
     assert(not m.in_element(0, (0.5, 0.5))[0])
 
+def test_in_element_corner():
+    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
+    assert(m.in_element(1, (1.0, -1.0))[0])
+    assert(not m.in_element(1, (1.01, -1.0))[0])
+
 def test_mesh_linear():
     m = simple_line_mesh(2)
     assert(m.is_linear)

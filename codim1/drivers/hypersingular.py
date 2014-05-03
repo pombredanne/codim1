@@ -93,6 +93,7 @@ plt.show()
 # sys.exit()
 
 # Compute some interior values.
+interior_stresses((-5, -5), (5, 5), 31, mesh, dh, qs, k_ta, k_h)
 x_pts = 31
 y_pts = 31
 x = np.linspace(-5, 5, x_pts)
