@@ -21,7 +21,6 @@ def apply_average_constraint(matrix, rhs, mesh, bf, dh):
             dof_x = dh.dof_map[0, k, i]
             dof_y = dh.dof_map[1, k, i]
             integral = single_integral(mesh.mesh_eval,
-                                       mesh.is_linear,
                                        kernel,
                                        bf._basis_eval,
                                        one,
@@ -30,6 +29,8 @@ def apply_average_constraint(matrix, rhs, mesh, bf, dh):
             matrix[first_x_dof, dof_x] += integral[0][0]
             matrix[first_y_dof, dof_y] += integral[1][1]
 
+# TODO: Refactor this into a "pin-element" constraint that takes an
+# element id as an input and a left-right flag
 def pin_ends_constraint(matrix, rhs, left_end, right_end, dh):
     """
     Pin the values at the ends of a simple line mesh. This is useful

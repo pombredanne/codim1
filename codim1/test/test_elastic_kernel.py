@@ -160,15 +160,15 @@ def test_hypersingular_vs_regularized():
         o_q, i_q = qs.get_quadrature('logr', el1, el2)
         o_q = o_q.quad_info
         i_q = [q.quad_info for q in i_q]
-        a[el2, :, :] = double_integral(mesh.mesh_eval, True, k_rh,
+        a[el2, :, :] = double_integral(mesh.mesh_eval, k_rh,
                                              grad_bf._basis_eval,
                                              grad_bf._basis_eval,
                                              o_q, i_q, el1, i,
                                              el2, j)
-        b[el2, :, :] = double_integral(mesh.mesh_eval, True, k_h,
+        b[el2, :, :] = double_integral(mesh.mesh_eval, k_h,
                             bf._basis_eval, bf._basis_eval,
                             o_q, i_q, el1, i, el2, j)
-        c[el2, :, :] = double_integral(mesh.mesh_eval, True, k_sh,
+        c[el2, :, :] = double_integral(mesh.mesh_eval, k_sh,
                             grad_bf._basis_eval, bf._basis_eval,
                             o_q, i_q, el1, i, el2, j)
         # qq[el2, :, :] = double_integral(mesh, k_rh, bf, bf,
@@ -251,40 +251,40 @@ def test_hypersingular_vs_regularized_across_elements():
 
     # Four integrals for this matrix term. Two choices of source element
     # and two choices of solution element.
-    a1 = double_integral(mesh.mesh_eval, True, k_rh,
+    a1 = double_integral(mesh.mesh_eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1a, 0, el2a, 2)
-    a2 = double_integral(mesh.mesh_eval, True, k_rh,
+    a2 = double_integral(mesh.mesh_eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1a, 0, el2b, 0)
-    a3 = double_integral(mesh.mesh_eval, True, k_rh,
+    a3 = double_integral(mesh.mesh_eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1b, 2, el2a, 2)
-    a4 = double_integral(mesh.mesh_eval, True, k_rh,
+    a4 = double_integral(mesh.mesh_eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
-    b1 = double_integral(mesh.mesh_eval, True, k_h,
+    b1 = double_integral(mesh.mesh_eval, k_h,
             bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2a, 2)
-    b2 = double_integral(mesh.mesh_eval, True, k_h,
+    b2 = double_integral(mesh.mesh_eval, k_h,
             bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2b, 0)
-    b3 = double_integral(mesh.mesh_eval, True, k_h,
+    b3 = double_integral(mesh.mesh_eval, k_h,
             bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2a, 2)
-    b4 = double_integral(mesh.mesh_eval, True, k_h,
+    b4 = double_integral(mesh.mesh_eval, k_h,
             bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
-    c1 = double_integral(mesh.mesh_eval, True, k_sh,
+    c1 = double_integral(mesh.mesh_eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2a, 2)
-    c2 = double_integral(mesh.mesh_eval, True, k_sh,
+    c2 = double_integral(mesh.mesh_eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1a, 0, el2b, 0)
-    c3 = double_integral(mesh.mesh_eval, True, k_sh,
+    c3 = double_integral(mesh.mesh_eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2a, 2)
-    c4 = double_integral(mesh.mesh_eval, True, k_sh,
+    c4 = double_integral(mesh.mesh_eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
                         o_q, i_q, el1b, 2, el2b, 0)
     a = np.array(a1) + np.array(a2) + np.array(a3) + np.array(a4)

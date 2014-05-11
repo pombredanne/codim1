@@ -44,7 +44,6 @@ class MassMatrix(object):
                     j_dof_x = self.dof_handler.dof_map[0, k, j]
                     j_dof_y = self.dof_handler.dof_map[1, k, j]
                     M_local = single_integral(self.mesh.mesh_eval,
-                                      self.mesh.is_linear,
                                       kernel,
                                       self.src_basis_funcs._basis_eval,
                                       self.soln_basis_funcs._basis_eval,

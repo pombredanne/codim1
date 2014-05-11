@@ -32,24 +32,12 @@ class Mesh(object):
                        basis_fncs = None,
                        element_to_vertex_params = None):
 
-        # Default to linear mesh.
-        self.basis_fncs = basis_fncs
-        if self.basis_fncs is None:
-            self.basis_fncs = BasisFunctions.from_degree(1)
+        self.basis_fncs = BasisFunctions.from_degree(1)
 
         # element_to_vertex contains pairs of indices referring the (x, y)
         # values in vertices
         self.element_to_vertex = element_to_vertex
         self.n_elements = element_to_vertex.shape[0]
-
-        # A linear mesh basis should be treated specially
-        if self.basis_fncs.num_fncs > 2:
-            self.is_linear = False
-        else:
-            self.is_linear = True
-        if self.basis_fncs.num_fncs < 2:
-            raise Exception("At least two basis functions are required to" +
-                            " describe a mesh edge.")
 
         # Vertices contains the position of each vertex in tuple form (x, y)
         self.vertex_params = vertex_params
@@ -66,11 +54,16 @@ class Mesh(object):
             self.element_to_vertex_params = \
                     self.vertex_params[element_to_vertex]
 
+
         # Determine which elements touch.
         self.compute_connectivity()
 
         # Compute the coefficients of the mesh basis.
         self.compute_coefficients()
+
+        # build elements from element_to_vertex_params
+        # for i in range(self.element_to_vertex_params.shape[0]):
+        #     self.elements.append(Element(
 
         self.compute_element_distances()
         self.compute_element_widths()

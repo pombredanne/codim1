@@ -6,7 +6,6 @@
 //TODO: Play with some strategy pattern ideas for making this flexible
 std::vector<std::vector<double> >
 double_integral(MeshEval& mesh_eval, 
-                bool linear_mesh,
                 Kernel& kernel, 
                 BasisEval& k_basis_eval,
                 BasisEval& l_basis_eval,
@@ -41,21 +40,12 @@ double_integral(MeshEval& mesh_eval,
     double kernel_val;
 
 
-    // TODO: Refactor the linear_mesh stuff out into the mesh_eval object.
-    // If the mesh is linear then the jacobian and normal vectors 
-    // will be the
-    // same at all quadrature points, so just grab them here once.
-    // TODO: There could be some "MeshInfo" object that is just 
-    // grabbed once...
-    if (linear_mesh)
-    {
-        k_jacobian = mesh_eval.get_jacobian(k, 0.0);
-        l_jacobian = mesh_eval.get_jacobian(l, 0.0);
-        k_normal = mesh_eval.get_normal(k, 0.0);
-        l_normal = mesh_eval.get_normal(l, 0.0);  
-        k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
-        l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
-    }
+    k_jacobian = mesh_eval.get_jacobian(k, 0.0);
+    l_jacobian = mesh_eval.get_jacobian(l, 0.0);
+    k_normal = mesh_eval.get_normal(k, 0.0);
+    l_normal = mesh_eval.get_normal(l, 0.0);  
+    k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
+    l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
 
     const int num_k_pts = k_quadrature.x.size();
     for(int q_k_idx = 0; q_k_idx < num_k_pts; q_k_idx++)
@@ -66,16 +56,6 @@ double_integral(MeshEval& mesh_eval,
         // Translate from reference segment coordinates to 
         // real, physical coordinates
         k_phys_pt = mesh_eval.get_physical_point(k, q_pt_k);
-
-        // If we have a nonlinear mesh, then the jacobians and normals
-        // are different for each quadrature point.
-        if (!linear_mesh)
-        {
-            k_jacobian = mesh_eval.get_jacobian(k, q_pt_k);
-            k_normal = mesh_eval.get_normal(k, q_pt_k);
-            k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
-            l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
-        }
 
         // The basis functions should be evaluated on reference
         // coordinates
@@ -97,16 +77,6 @@ double_integral(MeshEval& mesh_eval,
             // Translate from reference segment coordinates to 
             // real, physical coordinates
             l_phys_pt = mesh_eval.get_physical_point(l, q_pt_l);
-
-            if (!linear_mesh)
-            {
-                // If we have a nonlinear mesh, then the jacobians and normals
-                // are different for each quadrature point.
-                l_jacobian = mesh_eval.get_jacobian(l, q_pt_l);
-                l_normal = mesh_eval.get_normal(l, q_pt_l);
-                k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
-                l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
-            }
 
             // The basis functions should be evaluated on reference
             // coordinates
@@ -157,7 +127,6 @@ double_integral(MeshEval& mesh_eval,
  */
 std::vector<std::vector<double> >
 single_integral(MeshEval& mesh_eval, 
-                bool linear_mesh,
                 Kernel& kernel, 
                 BasisEval& i_basis_eval,
                 BasisEval& j_basis_eval,
@@ -173,13 +142,10 @@ single_integral(MeshEval& mesh_eval,
 
     double jacobian;
     std::vector<double> k_normal;
-    if (linear_mesh)
-    {
-        jacobian = mesh_eval.get_jacobian(k, 0.0);
-        k_normal = mesh_eval.get_normal(k, 0.0);
-        jacobian *= i_basis_eval.chain_rule(jacobian);
-        jacobian *= j_basis_eval.chain_rule(jacobian);
-    }
+    jacobian = mesh_eval.get_jacobian(k, 0.0);
+    k_normal = mesh_eval.get_normal(k, 0.0);
+    jacobian *= i_basis_eval.chain_rule(jacobian);
+    jacobian *= j_basis_eval.chain_rule(jacobian);
 
     std::vector<double> phys_pt;
     std::vector<double> i_basis_val, j_basis_val;
@@ -193,14 +159,6 @@ single_integral(MeshEval& mesh_eval,
         const double q_w = quadrature.w[q_idx];
 
         phys_pt = mesh_eval.get_physical_point(k, q_pt);
-
-        if (!linear_mesh)
-        {
-            jacobian = mesh_eval.get_jacobian(k, q_pt);
-            k_normal = mesh_eval.get_normal(k, q_pt);
-            jacobian *= i_basis_eval.chain_rule(jacobian);
-            jacobian *= j_basis_eval.chain_rule(jacobian);
-        }
 
         i_basis_val = i_basis_eval.evaluate_vector(k, i, q_pt, phys_pt);
         j_basis_val = j_basis_eval.evaluate_vector(k, j, q_pt, phys_pt);

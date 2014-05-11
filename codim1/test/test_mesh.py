@@ -32,10 +32,6 @@ def test_in_element_corner():
     assert(m.in_element(1, (1.0, -1.0))[0])
     assert(not m.in_element(1, (1.01, -1.0))[0])
 
-def test_mesh_linear():
-    m = simple_line_mesh(2)
-    assert(m.is_linear)
-
 def test_simple_line_mesh():
     m = simple_line_mesh(2)
     correct_vertices = np.array([[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]])
@@ -157,48 +153,6 @@ def test_element_widths():
     m = Mesh(vp_func, vp, etov)
     assert(m.element_widths[0] == 1.0)
     assert(m.element_widths[1] == 2.0)
-
-def test_higher_mesh_not_linear():
-    bf = BasisFunctions.from_degree(2)
-    m = circular_mesh(2, 1.0, bf)
-    assert(not m.is_linear)
-
-def test_higher_order_coeff_gen():
-    bf = BasisFunctions.from_degree(2)
-    m = circular_mesh(2, 1.0, bf)
-    coeffs_exact = np.array([[1.0, 0.0, -1.0],
-                             [0.0, 1.0, 0.0]])
-    np.testing.assert_almost_equal(m.coefficients[:, 0, :], coeffs_exact)
-
-def test_higher_order_phys_pt():
-    bf = BasisFunctions.from_degree(2)
-    m = circular_mesh(2, 1.0, bf)
-    phys_pt = m.get_physical_point(0, 0.5)
-    np.testing.assert_almost_equal(phys_pt, (0.0, 1.0))
-    phys_pt = m.get_physical_point(0, 0.25)
-    np.testing.assert_almost_equal(phys_pt, (0.5, 0.75))
-    phys_pt = m.get_physical_point(0, 0.75)
-    np.testing.assert_almost_equal(phys_pt, (-0.5, 0.75))
-
-def test_higher_order_jacobian():
-    bf = BasisFunctions.from_degree(2)
-    m = circular_mesh(2, 1.0, bf)
-    x_hat = np.linspace(0, 1, 100)
-    jacobian = m.get_jacobian(0, 0.5)
-    np.testing.assert_almost_equal(jacobian, 2.0)
-    # jacobian = np.zeros(100)
-    # for i in range(100):
-    #     jacobian[i] = m.get_jacobian(0, x_hat[i])
-    # import matplotlib.pyplot as plt
-    # plt.plot(x_hat, jacobian)
-    # plt.show()
-
-def test_higher_order_normal():
-    bf = BasisFunctions.from_degree(2)
-    m = circular_mesh(2, 1.0, bf)
-    x_hat = np.linspace(0, 1, 100)
-    normal = m.get_normal(0, 0.5)
-    np.testing.assert_almost_equal(normal, (0.0, -1.0))
 
 def test_combine_meshes():
     m = simple_line_mesh(1)
