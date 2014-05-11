@@ -1,10 +1,19 @@
 import numpy as np
+import warnings
 
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.segment_distance import segments_distance
 from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
                                  circular_mesh
+
+
+def test_in_element_doesnt_break_warnings():
+    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    m.in_element(0, (-0.5, 0.0))
+    with warnings.catch_warnings(record=True) as w:
+        a = np.ones(2) / np.zeros(2)
+    assert(len(w) == 1)
 
 def test_in_element():
     m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))

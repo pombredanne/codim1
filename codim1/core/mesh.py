@@ -275,8 +275,11 @@ class Mesh(object):
         mapping_matrix = coeffs_matrix.dot(basis_vals)
         x_hat_row_mapping_matrix = mapping_matrix[:, -2]
         offset= mapping_matrix[:, -1]
+
+        old_settings = np.seterr(divide='ignore', invalid='ignore')
         inv_x_hat_row_mapping_matrix = 1.0 / x_hat_row_mapping_matrix
         x_hat = inv_x_hat_row_mapping_matrix * (point - offset)
+        np.seterr(**old_settings)
 
         on_line = True
         line_pt = 0.0

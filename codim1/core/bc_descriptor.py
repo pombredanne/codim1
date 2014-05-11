@@ -1,0 +1,3 @@
+
+class BCDescriptor(object):
+    def
