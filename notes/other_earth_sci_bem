@@ -1,0 +1,7 @@
+Poly3D
+http://www.ceri.memphis.edu/people/ellis/3ddef/
+-- apparently this one doesn't assume equal partitioning of slip on each side
+   of a dislocation. I'm not sure what this means as the small-defm linear
+   elastic assumption means that any partitioning of slip across the 
+   dislocation is equivalent.
+All use some sort of half-space assumption
