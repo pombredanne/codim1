@@ -31,7 +31,6 @@ class InteriorPoint(object):
             quad_info = quadrature.quad_info
             for i in range(solution.num_fncs):
                 integral = single_integral(self.mesh.mesh_eval,
-                                           True,
                                            kernel,
                                            one,
                                            solution._basis_eval,

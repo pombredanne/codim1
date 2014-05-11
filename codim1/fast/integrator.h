@@ -19,7 +19,6 @@ struct QuadratureInfo
         
 std::vector<std::vector<double> >
 double_integral(MeshEval& mesh_eval, 
-                bool linear_mesh,
                 Kernel& kernel, 
                 BasisEval& k_basis_eval,
                 BasisEval& l_basis_eval,
@@ -40,7 +39,6 @@ double_integral(MeshEval& mesh_eval,
  */
 std::vector<std::vector<double> >
 single_integral(MeshEval& mesh_eval, 
-                bool linear_mesh,
                 Kernel& kernel, 
                 BasisEval& i_basis_eval,
                 BasisEval& j_basis_eval,
