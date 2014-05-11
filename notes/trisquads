@@ -1,0 +1,7 @@
+tris are more commonly produced from meshing procedures and i will frequently 
+need to use triangular meshes.
+but, quads are easier to use in many many ways -- tensor product effect.
+2d quadrilateral meshing is a mostly solved problem.
+triangle->quadrilateral meshing is performed successfully by the Q-morph 
+algorithm.
+no reason to screw with tris if I don't need to.

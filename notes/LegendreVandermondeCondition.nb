@@ -97,7 +97,7 @@ Cell[BoxData["730143.289207443`"], "Output",
 }, Open  ]]
 },
 WindowSize->{740, 867},
-WindowMargins->{{Automatic, 865}, {50, Automatic}},
+WindowMargins->{{Automatic, 855}, {12, Automatic}},
 FrontEndVersion->"9.0 for Linux x86 (64-bit) (February 7, 2013)",
 StyleDefinitions->"Default.nb"
 ]
@@ -117,7 +117,7 @@ Cell[1634, 44, 960, 25, 55, "Input"],
 Cell[2597, 71, 349, 7, 32, "Input"],
 Cell[CellGroupData[{
 Cell[2971, 82, 207, 3, 32, "Input"],
-Cell[3181, 87, 533, 8, 65, "Output"]
+Cell[3181, 87, 533, 8, 32, "Output"]
 }, Open  ]]
 }
 ]
