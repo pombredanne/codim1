@@ -1,0 +1,5 @@
+black box fmm looks worthwhile.
+i should explore how to extend it to the high order case with just lumping
+elements. maybe a two tiered iteraction list and M2L...
+interaction between the element nodes and the fmm nodes is complex and
+interesting
