@@ -229,7 +229,7 @@ def reload_and_postprocess(int_u = None):
     plt.show()
 
 
-if __name__ == "__main__":
+def test_disk_compression():
     if len(sys.argv) > 1 and sys.argv[1] == 'reload':
         reload_and_postprocess()
         sys.exit()
@@ -255,4 +255,7 @@ if __name__ == "__main__":
     print tools.L2_error(sigma_xx_crouch_200, sigma_xx_exact)
 
     plt.show()
+
+if __name__ == "__main__":
+    test_disk_compression()
 

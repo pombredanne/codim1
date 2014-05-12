@@ -8,24 +8,14 @@ class Mesh(object):
     A class for managing a one dimensional mesh within a two dimensional
     boundary element code.
 
-    This mesh class can use higher order mappings.
-    Arbitrary order of mapping can be used by simply providing the proper
-    set of basis functions. This is unnecessary for problems with
-    straight boundaries.
-
-    Some of the functions that are simple for a linear boundary are much more
-    difficult for higher order boundaries. For example, computing the distance
-    between two elements is more involved.
-    Also, for a linear element, the jacobian determinant and the normal
-    vectors are constant. The calling code should account for this.
+    A mesh is defined by vertices and the element that connect them.
+    To initialize a mesh, pass a list of vertices and a list of elements.
 
     Normal vectors are computed assuming that they point left of the vertex
     direction. Meaning, if \vec{r} = \vec{x}_1 - \vec{x}_0 and
     \vec{r} = (r_x, r_y) then \vec{n} = \frac{(r_x, -r_y)}{\norm{r}}. So,
     exterior domain boundaries should be traversed clockwise and
     interior domain boundaries should be traversed counterclockwise.
-
-    boundary_fnc is a function that defines the boundary.
     """
     def __init__(self, vertices, element_to_vertex):
 

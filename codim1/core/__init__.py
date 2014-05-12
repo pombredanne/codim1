@@ -1,3 +1,4 @@
+from element import Element, Vertex
 from mesh import Mesh
 from dof_handler import DOFHandler
 from quadrature import QuadGauss, QuadSingularTelles, QuadOneOverR
