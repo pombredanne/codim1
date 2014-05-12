@@ -1,6 +1,20 @@
 import numpy as np
 from mesh import Mesh
+from element import Element, Vertex
 from basis_funcs import BasisFunctions
+
+def from_vertices_and_etov(vertices, etov):
+    vertex_objs = []
+    for v_idx in range(vertices.shape[0]):
+        vertex_objs.append(Vertex((vertices[v_idx, 0], vertices[v_idx, 1])))
+
+    element_objs = []
+    for e_idx in range(etov.shape[0]):
+        v0 = vertex_objs[etov[e_idx, 0]]
+        v1 = vertex_objs[etov[e_idx, 1]]
+        element_objs.append(Element(v0, v1))
+
+    return Mesh(vertex_objs, element_objs)
 
 def simple_line_mesh(n_elements,
         left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
@@ -9,32 +23,38 @@ def simple_line_mesh(n_elements,
     extending to +1 in x coordinate, y = 0.
     """
     n_vertices = n_elements + 1
-    x = np.linspace(left_edge[0], right_edge[0], n_vertices)
-    y = np.linspace(left_edge[1], right_edge[1], n_vertices)
-    vertices = np.vstack((x, y)).T
+    x_list = np.linspace(left_edge[0], right_edge[0], n_vertices)
+    y_list = np.linspace(left_edge[1], right_edge[1], n_vertices)
+    vertices = []
+    for (x, y) in zip(x_list, y_list):
+        vertices.append(Vertex(np.array((x, y))))
 
-    element_to_vertex = np.zeros((n_elements, 2))
+    elements = []
     for i in range(0, n_elements):
-        element_to_vertex[i, :] = (i, i + 1)
-    element_to_vertex = element_to_vertex.astype(int)
+        v0 = vertices[i]
+        v1 = vertices[i + 1]
+        elements.append(Element(v0, v1))
 
-    return Mesh(vertices, element_to_vertex)
+    return Mesh(vertices, elements)
 
 def circular_mesh(n_elements, radius):
     n_vertices = n_elements
 
     t = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
-    x = radius * np.cos(t)
-    y = radius * np.sin(t)
-    vertices = np.vstack((x, y)).T
+    x_list = radius * np.cos(t)
+    y_list = radius * np.sin(t)
+    vertices = []
+    for (x, y) in zip(x_list, y_list):
+        vertices.append(Vertex(np.array((x, y))))
 
-    element_to_vertex = np.zeros((n_elements, 2))
+    elements = []
     for i in range(0, n_elements - 1):
-        element_to_vertex[i, :] = (i, i + 1)
-    element_to_vertex[-1, :] = (n_elements - 1, 0)
-    element_to_vertex = element_to_vertex.astype(int)
+        v0 = vertices[i]
+        v1 = vertices[i + 1]
+        elements.append(Element(v0, v1))
+    elements.append(Element(vertices[n_elements - 1], vertices[0]))
 
-    return Mesh(vertices, element_to_vertex)
+    return Mesh(vertices, elements)
 
 def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     """
@@ -43,18 +63,17 @@ def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     for example, the meshes probably should not intersect. I'm not
     sure what would happen if they do! Also, I assume that all
     the meshes are linear (linear mapping from real to reference space).
-    """
-    buffer = 1.0
-    new_vertices = np.vstack((mesh1.vertices, mesh2.vertices))
-    mesh2_initial_vertex_idx = mesh1.vertices.shape[0]
-    mesh2_element_to_vertex = mesh2.element_to_vertex +\
-                              mesh2_initial_vertex_idx
-    new_etov = np.vstack((mesh1.element_to_vertex, mesh2_element_to_vertex))
 
-    result =  Mesh(new_vertices, new_etov)
+    Note that this function destroys the internals of mesh1 and mesh2.
+    Should this be fixed?
+    """
+    vertices = mesh1.vertices
+    vertices.extend(mesh2.vertices)
+    elements = mesh1.elements
+    elements.extend(mesh2.elements)
+
+    result =  Mesh(vertices, elements)
     if ensure_continuity:
         result.condense_duplicate_vertices()
-    result.parts.append(mesh1)
-    result.parts.append(mesh2)
     return result
 

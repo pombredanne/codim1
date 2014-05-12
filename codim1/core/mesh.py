@@ -18,32 +18,20 @@ class Mesh(object):
     exterior domain boundaries should be traversed clockwise and
     interior domain boundaries should be traversed counterclockwise.
     """
-    def __init__(self, vertices, element_to_vertex):
+    def __init__(self, vertices, elements):
 
         self.basis_fncs = BasisFunctions.from_degree(1)
 
-        # element_to_vertex contains pairs of indices referring the (x, y)
-        # values in vertices
-        self.element_to_vertex = element_to_vertex
-        self.n_elements = element_to_vertex.shape[0]
+        # Elements connect vertices and define edge properties
+        self.elements = elements
+        self.n_elements = len(elements)
 
         # Vertices contains the position of each vertex in tuple form (x, y)
         self.vertices = vertices
-        self.n_vertices = self.vertices.shape[0]
+        self.n_vertices = len(self.vertices)
 
-        self.vertex_objs = []
-        for v_idx in range(self.n_vertices):
-            self.vertex_objs.append(Vertex(self.vertices[v_idx, :]))
-
-        self.element_objs = []
-        next_id = 0
         for e_idx in range(self.n_elements):
-            v0 = self.vertex_objs[self.element_to_vertex[e_idx, 0]]
-            v1 = self.vertex_objs[self.element_to_vertex[e_idx, 1]]
-            el = Element(v0, v1)
-            el.set_id(next_id)
-            next_id += 1
-            self.element_objs.append(el)
+            self.elements[e_idx].set_id(e_idx)
 
         self.compute_connectivity()
 
@@ -53,19 +41,15 @@ class Mesh(object):
         # Compute the separation between elements
         self.compute_element_distances()
 
-        # The length of each element.
-        self.compute_element_widths()
-
-        # The evaluation class that operates in the c++ layer.
+        # The interface with the fast c++ evaluation code.
         self.mesh_eval = MeshEval(self.basis_fncs.fncs,
                                   self.basis_fncs.derivs,
                                   self.coefficients)
-        self.parts = []
 
     def compute_connectivity(self):
         """Loop over elements and update neighbors."""
         # Determine which elements touch.
-        for e in self.element_objs:
+        for e in self.elements:
             e.update_neighbors()
 
     def condense_duplicate_vertices(self, epsilon = 1e-6):
@@ -80,32 +64,33 @@ class Mesh(object):
         though the code should be easily adaptable.
         """
         pairs = self._find_equivalent_pairs(epsilon)
-        for idx in range(pairs.shape[0]):
-            v0 = self.vertex_objs[pairs[idx, 0]]
-            v1 = self.vertex_objs[pairs[idx, 1]]
+        for idx in range(len(pairs)):
+            v0 = pairs[idx][0]
+            v1 = pairs[idx][1]
             elements_touching = v1.connected_to
             for element in elements_touching:
                 if v1 is element.vertex1:
                     element.reinit(v0, element.vertex2)
                 if v1 is element.vertex2:
                     element.reinit(element.vertex2, v0)
-            self.element_to_vertex[self.element_to_vertex==pairs[idx, 1]] =\
-                pairs[idx, 0]
         self.compute_connectivity()
 
     def _find_equivalent_pairs(self, epsilon):
+        """
+        To find equivalent vertex pairs, we sort the list of vertices
+        by their x value first and then compare locally within the list.
+        """
         # TODO: Should be extendable to find equivalence sets,
         # rather than just pairs.
-        sorted_vertices = self.vertices[self.vertices[:,0].argsort()]
+        sorted_vertices = sorted(self.vertices, key = lambda v: v.loc[0])
         equivalent_pairs = []
-        for (idx, x_val) in enumerate(sorted_vertices[:-1, 0]):
-            if np.abs(x_val - sorted_vertices[idx + 1, 0]) > epsilon:
+        for (idx, v) in enumerate(sorted_vertices[:-1]):
+            if np.abs(v.loc[0] - sorted_vertices[idx + 1].loc[0]) > epsilon:
                 continue
-            if np.abs(sorted_vertices[idx, 1] - sorted_vertices[idx + 1, 1])\
-                > epsilon:
+            if np.abs(v.loc[1] - sorted_vertices[idx + 1].loc[1]) > epsilon:
                 continue
-            equivalent_pairs.append((idx, idx + 1))
-        return np.array(equivalent_pairs)
+            equivalent_pairs.append((v, sorted_vertices[idx + 1]))
+        return equivalent_pairs
 
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function
@@ -113,10 +98,10 @@ class Mesh(object):
         coefficients = np.empty((2, self.n_elements,
                                  self.basis_fncs.num_fncs))
         for k in range(self.n_elements):
-            left_vertex = self.vertices[self.element_to_vertex[k, 0]]
-            right_vertex = self.vertices[self.element_to_vertex[k, 1]]
-            coefficients[:, k, 0] = left_vertex
-            coefficients[:, k, 1] = right_vertex
+            left_vertex = self.elements[k].vertex1
+            right_vertex = self.elements[k].vertex2
+            coefficients[:, k, 0] = left_vertex.loc
+            coefficients[:, k, 1] = right_vertex.loc
         self.coefficients = coefficients
 
     def compute_element_distances(self):
@@ -131,35 +116,20 @@ class Mesh(object):
         """
         self.element_distances = np.zeros((self.n_elements, self.n_elements))
         for k in range(self.n_elements):
-            o1 = self.element_to_vertex[k, 0]
-            o2 = self.element_to_vertex[k, 1]
-            outer_vertex1 = self.vertices[o1, :]
-            outer_vertex2 = self.vertices[o2, :]
+            outer_v1 = self.elements[k].vertex1
+            outer_v2 = self.elements[k].vertex2
             # Only loop over the upper triangle of the matrix
             for l in range(k, self.n_elements):
-                i1 = self.element_to_vertex[l, 0]
-                i2 = self.element_to_vertex[l, 1]
-                inner_vertex1 = self.vertices[i1, :]
-                inner_vertex2 = self.vertices[i2, :]
-                dist = segments_distance(outer_vertex1[0], outer_vertex1[1],
-                                         outer_vertex2[0], outer_vertex2[1],
-                                         inner_vertex1[0], inner_vertex1[1],
-                                         inner_vertex2[0], inner_vertex2[1])
+                inner_v1 = self.elements[l].vertex1
+                inner_v2 = self.elements[l].vertex2
+                dist = segments_distance(outer_v1.loc[0], outer_v1.loc[1],
+                                         outer_v2.loc[0], outer_v2.loc[1],
+                                         inner_v1.loc[0], inner_v1.loc[1],
+                                         inner_v2.loc[0], inner_v2.loc[1])
                 self.element_distances[k, l] = dist
         # Make it symmetric. No need to worry about doubling the diagonal
         # because the diagonal *should* be zero!
         self.element_distances += self.element_distances.T
-
-    def compute_element_widths(self):
-        """
-        Calculate the length of each element.
-        """
-        self.element_widths = np.empty(self.n_elements)
-        for k in range(self.n_elements):
-            v1 = self.vertices[self.element_to_vertex[k, 0], :]
-            v2 = self.vertices[self.element_to_vertex[k, 1], :]
-            length = np.sqrt((v2[1] - v1[1]) ** 2 + (v2[0] - v1[0]) ** 2)
-            self.element_widths[k] = length
 
     def is_neighbor(self, k, l, direction = 'both'):
         """
@@ -170,21 +140,21 @@ class Mesh(object):
         """
         # Check the right side
         if (direction is 'left' or direction is 'both') \
-            and self.element_objs[l] in self.element_objs[k].neighbors_left:
+            and self.elements[l] in self.elements[k].neighbors_left:
             return True
         # Check the left side
         if (direction is 'right' or direction is 'both') \
-            and self.element_objs[l] in self.element_objs[k].neighbors_right:
+            and self.elements[l] in self.elements[k].neighbors_right:
             return True
         return False
 
     def get_neighbors(self, k, direction):
         if direction is 'left':
-            return self.element_objs[k].neighbors_left
+            return self.elements[k].neighbors_left
         if direction is 'right':
-            return self.element_objs[k].neighbors_right
-        raise Exception('When calling get_neighbors, direction should be \'left\' or' +
-                        ' \'right\'')
+            return self.elements[k].neighbors_right
+        raise Exception('When calling get_neighbors, direction should be '
+                        '\'left\' or \'right\'')
 
     def get_physical_point(self, element_idx, x_hat):
         """

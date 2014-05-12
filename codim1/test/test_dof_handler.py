@@ -53,7 +53,7 @@ def test_continuous_dof_handler_quadratic():
 def test_continuous_dof_handler_loop():
     vertices = np.array([(0.0, 1.0), (1.0, 0.0)])
     element_to_vertex = np.array([[0, 1], [1, 0]])
-    m = mesh.Mesh(vertices, element_to_vertex)
+    m = from_vertices_and_etov(vertices, element_to_vertex)
     bf = BasisFunctions.from_degree(1)
     dh = DOFHandler(m, bf)
     assert(dh.dof_map[0, 0, 0] == dh.dof_map[0, 1, 1])
