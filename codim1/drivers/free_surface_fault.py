@@ -9,7 +9,7 @@ mpl.rcParams['lines.linewidth'] = 2
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements_surface = 200
+n_elements_surface = 60
 degree = 1
 quad_min = degree + 1
 quad_mult = 3

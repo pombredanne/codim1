@@ -62,15 +62,19 @@ class DOFHandler(object):
         should match the dofs of the neighboring element on that side.
         """
         # Handle left boundary
-        nghbr_left = self.mesh.neighbors[k][0]
-        if nghbr_left == -1 or \
-                not is_processed[nghbr_left] or \
-                nghbr_left in self.discontinuous_elements:
+        nghbrs_left = self.mesh.get_neighbors(k, 'left')
+        proc_ngbhr = -1
+        for nl in nghbrs_left:
+            if is_processed[nl.id] and \
+                    not nl.id in self.discontinuous_elements:
+                proc_ngbhr = nl.id
+                break
+        if nghbrs_left == [] or proc_ngbhr == -1:
             # Far left dof.
             self.dof_map[0, k, 0] = self.total_dofs
             self.total_dofs += 1
         else:
-            self.dof_map[0, k, 0] = self.dof_map[0, nghbr_left, -1]
+            self.dof_map[0, k, 0] = self.dof_map[0, proc_ngbhr, -1]
 
         # Handle internal dofs.
         for i in range(1, self.basis_fncs.num_fncs - 1):
@@ -78,13 +82,16 @@ class DOFHandler(object):
             self.total_dofs += 1
 
         # Handle right boundary
-        nghbr_right = self.mesh.neighbors[k][1]
-        if nghbr_right == -1 or \
-                not is_processed[nghbr_right] or \
-                nghbr_right in self.discontinuous_elements:
+        nghbrs_right = self.mesh.get_neighbors(k, 'right')
+        proc_ngbhr = -1
+        for nr in nghbrs_right:
+            if is_processed[nr.id] and \
+                    not nr.id in self.discontinuous_elements:
+                proc_ngbhr = nr.id
+        if nghbrs_left == [] or proc_ngbhr == -1:
             # Far right dof.
             self.dof_map[0, k, -1] = self.total_dofs
             self.total_dofs += 1
         else:
-            self.dof_map[0, k, -1] = self.dof_map[0, nghbr_right, 0]
+            self.dof_map[0, k, -1] = self.dof_map[0, proc_ngbhr, 0]
         return self.total_dofs

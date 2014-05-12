@@ -7,6 +7,9 @@ from codim1.core.segment_distance import segments_distance
 from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
                                  circular_mesh
 
+def test_get_neighbors():
+    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    assert(m.get_neighbors(0, 'right') == m.element_objs[0].neighbors_right)
 
 def test_in_element_doesnt_break_warnings():
     m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
@@ -49,8 +52,8 @@ def test_multisegment_mesh():
     assert(m.element_to_vertex[0, 1] == 1)
     assert(m.element_to_vertex[1, 0] == 1)
     assert(m.element_to_vertex[1, 1] == 3)
-    assert(m.neighbors[0][1] == 1)
-    assert(m.neighbors[1][0] == 0)
+    assert(m.is_neighbor(0, 1, 'right'))
+    assert(m.is_neighbor(1, 0, 'left'))
 
 def test_get_phys_pts():
     m = simple_line_mesh(4)
@@ -77,23 +80,21 @@ def test_normals():
 
 def test_connectivity():
     m = simple_line_mesh(4)
-    assert(m.neighbors.dtype == np.int)
-    assert(m.neighbors[0][0] == -1)
-    assert(m.neighbors[3][1] == -1)
+    assert(m.get_neighbors(0, 'left') == [])
+    assert(m.get_neighbors(3, 'right') == [])
 
-    assert(m.neighbors[2][0] == 1)
-    assert(m.neighbors[2][1] == 3)
+    assert(m.is_neighbor(2, 1, 'left'))
+    assert(m.is_neighbor(2, 3, 'right'))
 
 def test_connectivity_loop():
     vertices = np.array([(0.0, 1.0), (1.0, 0.0)])
     element_to_vertex = np.array([[0, 1], [1, 0]])
     m = Mesh(vertices, element_to_vertex)
 
-    assert(m.neighbors.dtype == np.int)
-    assert(m.neighbors[0][0] == 1)
-    assert(m.neighbors[0][1] == 1)
-    assert(m.neighbors[1][0] == 0)
-    assert(m.neighbors[1][1] == 0)
+    assert(m.is_neighbor(0, 1, 'left'))
+    assert(m.is_neighbor(0, 1, 'right'))
+    assert(m.is_neighbor(1, 0, 'left'))
+    assert(m.is_neighbor(1, 0, 'right'))
 
 def test_is_neighbor():
     m = simple_line_mesh(4)
