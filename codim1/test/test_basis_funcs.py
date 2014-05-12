@@ -1,7 +1,5 @@
 import numpy as np
-from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.core.mesh import Mesh
-import codim1.core.dof_handler as dof_handler
+from codim1.core import *
 
 def test_degree_zero():
     bf = BasisFunctions.from_degree(0)
@@ -64,7 +62,7 @@ def test_function():
     assert(f_val[1] == 11.1)
 
 def test_gradient():
-    msh = Mesh.circular_mesh(200, 1.0)
+    msh = circular_mesh(200, 1.0)
     bf = BasisFunctions([0.0, 1.0])
     gradient = bf.get_gradient_basis(msh)
     chain_rule = gradient.chain_rule(msh.get_jacobian(0, 0.0))
@@ -73,9 +71,9 @@ def test_gradient():
                                    -31.83229765 * np.ones(2))
 
 def test_solution():
-    msh = Mesh.simple_line_mesh(1)
+    msh = simple_line_mesh(1)
     bf = BasisFunctions([0.0, 1.0])
-    dh = dof_handler.DOFHandler(msh, bf, [1])
+    dh = DOFHandler(msh, bf, [1])
     coeffs = np.array([0.0, 1.0, 1.0, 0.0])
     soln = Solution(bf, dh, coeffs)
 

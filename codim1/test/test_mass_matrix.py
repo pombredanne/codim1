@@ -1,13 +1,13 @@
 import numpy as np
 from codim1.assembly import MassMatrix
-import codim1.core.mesh as mesh
+from codim1.core import *
 import codim1.core.basis_funcs as basis_funcs
 import codim1.core.dof_handler as dof_handler
 import codim1.core.quadrature as quadrature
 
 def simple_mass_matrix(n_elements = 2):
     bf = basis_funcs.BasisFunctions.from_degree(1)
-    msh = mesh.Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     q = quadrature.QuadGauss(2)
     dh = dof_handler.DOFHandler(msh, bf, range(n_elements))
     m = MassMatrix(msh, bf, bf, dh, q)
@@ -24,7 +24,7 @@ def test_mass_matrix():
 
 def test_mass_matrix_continuous():
     bf = basis_funcs.BasisFunctions.from_degree(1)
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
     dh = dof_handler.DOFHandler(msh, bf)
     m = MassMatrix(msh, bf, bf, dh, q)

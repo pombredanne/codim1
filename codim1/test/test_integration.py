@@ -1,14 +1,14 @@
 import numpy as np
-import codim1.core.mesh as mesh
 import codim1.core.quad_strategy as quad_strategy
 import codim1.core.quadrature as quadrature
 import codim1.core.basis_funcs as basis_funcs
+from codim1.core import *
 from codim1.fast_lib import TractionKernel, DisplacementKernel,\
     double_integral, single_integral, MassMatrixKernel
 
 
 def test_exact_dbl_integrals_H_same_element():
-    msh = mesh.Mesh.simple_line_mesh(1)
+    msh = simple_line_mesh(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     qo = qs.get_simple().quad_info
     qi = [q.quad_info for q in qs.quad_oneoverr]
@@ -41,7 +41,7 @@ def test_exact_dbl_integrals_H_same_element():
 
 
 def test_exact_dbl_integrals_G_same_element():
-    msh = mesh.Mesh.simple_line_mesh(1)
+    msh = simple_line_mesh(1)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     qo = qs.get_simple().quad_info
@@ -62,7 +62,7 @@ def test_exact_dbl_integrals_G_same_element():
 
 
 def test_exact_dbl_integrals_G_different_element():
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     qo = qs.get_simple().quad_info
@@ -87,7 +87,7 @@ def test_exact_dbl_integrals_G_different_element():
 
 
 def test_realistic_double_integral_symmetry():
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
     kernel = DisplacementKernel(1.0, 0.25)
@@ -106,7 +106,7 @@ def test_realistic_double_integral_symmetry():
 
 
 def test_M_integral_same_dof():
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)
@@ -116,7 +116,7 @@ def test_M_integral_same_dof():
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 3.0)
 
 def test_M_integral_same_dof_with_jacobian():
-    msh = mesh.Mesh.simple_line_mesh(4)
+    msh = simple_line_mesh(4)
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)
@@ -126,7 +126,7 @@ def test_M_integral_same_dof_with_jacobian():
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)
 
 def test_M_integral_diff_dof():
-    msh = mesh.Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)

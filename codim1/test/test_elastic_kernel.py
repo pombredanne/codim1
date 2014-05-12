@@ -5,11 +5,7 @@ from codim1.fast_lib import DisplacementKernel,\
                             RegularizedHypersingularKernel,\
                             SemiRegularizedHypersingularKernel,\
                             double_integral
-from codim1.core.dof_handler import DOFHandler
-from codim1.core.mesh import Mesh
-from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.core.quad_strategy import QuadStrategy
-from codim1.core.quadrature import QuadGauss
+from codim1.core import *
 import numpy as np
 
 def test_traction_kernel_elements():
@@ -131,7 +127,7 @@ def test_hypersingular_vs_regularized():
     k_h = HypersingularKernel(1.0, 0.25)
 
     K = 30
-    mesh = Mesh.circular_mesh(K, 2.0)
+    mesh = circular_mesh(K, 2.0)
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
@@ -235,7 +231,7 @@ def test_hypersingular_vs_regularized_across_elements():
     k_h = HypersingularKernel(1.0, 0.25)
 
     K = 30
-    mesh = Mesh.circular_mesh(K, 2.0)
+    mesh = circular_mesh(K, 2.0)
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)

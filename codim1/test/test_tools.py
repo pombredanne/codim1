@@ -1,9 +1,7 @@
 import numpy as np
 from codim1.core.tools import interpolate, evaluate_boundary_solution, \
                 evaluate_solution_on_element, plot_mesh, L2_error
-from codim1.core.dof_handler import DOFHandler
-from codim1.core.basis_funcs import BasisFunctions, Solution
-from codim1.core.mesh import Mesh
+from codim1.core import *
 
 # def test_plot_mesh():
 #     m = Mesh.circular_mesh(50, 1.0)
@@ -18,7 +16,7 @@ def test_L2error():
 def test_interpolate():
     n_elements = 2
     element_deg = 0
-    msh = Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
     dh = DOFHandler(msh, bf, range(n_elements))
     fnc = lambda x, n: (x[0], x[1])
@@ -33,7 +31,7 @@ def test_interpolate():
 def test_evaluate_boundary_solution_easy():
     n_elements = 2
     element_deg = 0
-    msh = Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
     dh = DOFHandler(msh, bf, range(n_elements))
     fnc = lambda x, n: (x[0], x[1])
@@ -48,7 +46,7 @@ def test_evaluate_boundary_solution_easy():
 def test_evaluate_solution_on_element():
     n_elements = 2
     element_deg = 1
-    msh = Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
     dh = DOFHandler(msh, bf, range(n_elements))
     fnc = lambda x, n: (x[0], x[1])
@@ -63,7 +61,7 @@ def test_interpolate_evaluate_hard():
     n_elements = 5
     # Sixth order elements should exactly interpolate a sixth order polynomial.
     element_deg = 6
-    msh = Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
     dh = DOFHandler(msh, bf, range(n_elements))
     fnc = lambda x, n: (x[0] ** 6, 0)
@@ -76,7 +74,7 @@ def test_interpolate_evaluate_hard():
 def test_interpolate_normal():
     n_elements = 2
     element_deg = 0
-    msh = Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
     dh = DOFHandler(msh, bf, range(n_elements))
     fnc = lambda x, n: (x[0] * n[0], x[1])
