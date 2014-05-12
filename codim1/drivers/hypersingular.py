@@ -34,7 +34,7 @@ k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
 left_end = np.array((-1.0, 1.0))
 right_end = np.array((1.0, -1.0))
-mesh = Mesh.simple_line_mesh(n_elements, left_end, right_end)
+mesh = simple_line_mesh(n_elements, left_end, right_end)
 # tools.plot_mesh(mesh)
 # plt.show()
 bf = BasisFunctions.from_degree(degree)

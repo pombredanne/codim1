@@ -8,8 +8,8 @@ from codim1.fast_lib import *
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements = 50
-degree = 2
+n_elements = 200
+degree = 1
 quad_min = 4
 quad_max = 10
 quad_logr = 10
@@ -22,7 +22,7 @@ k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 
 bf = BasisFunctions.from_degree(degree)
-mesh = Mesh.circular_mesh(n_elements, 1.0, bf)
+mesh = circular_mesh(n_elements, 1.0)
 qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
 dh = DOFHandler(mesh, bf)#, range(n_elements))
 
