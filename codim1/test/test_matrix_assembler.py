@@ -4,6 +4,7 @@ import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import Kernel, DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh
 import codim1.core.dof_handler as dof_handler
+from codim1.core import *
 import codim1.core.tools as tools
 import codim1.core.quad_strategy as quad_strategy
 
@@ -36,7 +37,7 @@ def simple_assembler(degree = 0,
                      n_elements = 2):
     if oneoverr_pts % 2 == 1:
         oneoverr_pts += 1
-    msh = mesh.Mesh.simple_line_mesh(n_elements)
+    msh = simple_line_mesh(n_elements)
     qs = quad_strategy.QuadStrategy(msh, nonsing_pts, nonsing_pts,
                      logr_pts, oneoverr_pts)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
@@ -126,7 +127,7 @@ def realistic_assembler(n_elements = 4,
     dim = 2
     if quad_points_oneoverr % 2 == 1:
         quad_points_oneoverr += 1
-    msh = mesh.Mesh.simple_line_mesh(n_elements, left, right)
+    msh = simple_line_mesh(n_elements, (left, 0.0), (right, 0.0))
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
     dh = dof_handler.DOFHandler(msh, bf)
     qs = quad_strategy.QuadStrategy(msh, quad_points_nonsingular,

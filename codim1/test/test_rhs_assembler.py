@@ -1,10 +1,7 @@
 import numpy as np
 from codim1.assembly import RHSAssembler
-import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import TractionKernel
-import codim1.core.mesh as mesh
-import codim1.core.dof_handler as dof_handler
-import codim1.core.quad_strategy as quad_strategy
+from codim1.core import *
 
 # A presumed-to-be correct matrix formed from the G_up kernel
 correct_matrix = \
@@ -22,10 +19,10 @@ correct_matrix = \
       0.00000000e+00,   0.00000000e+00,   0.00000000e+00]])
 
 def rhs_assembler():
-    bf = basis_funcs.BasisFunctions.from_degree(1)
-    msh = mesh.Mesh.simple_line_mesh(2, -1.0, 1.0)
-    dh = dof_handler.DOFHandler(msh, bf)
-    qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
+    bf = BasisFunctions.from_degree(1)
+    msh = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    dh = DOFHandler(msh, bf)
+    qs = QuadStrategy(msh, 10, 10, 10, 10)
     assembler = RHSAssembler(msh, bf, dh, qs)
     return assembler
 
@@ -37,7 +34,7 @@ def test_rhs_row_not_shared():
 
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
-    fnc = basis_funcs.BasisFunctions.from_function(f)
+    fnc = BasisFunctions.from_function(f)
     row_x, row_y = a.assemble_row(fnc, kernel, 0, 0)
 
     np.testing.assert_almost_equal(row_correct_x, row_x)
@@ -51,7 +48,7 @@ def test_rhs_row_shared():
 
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
-    fnc = basis_funcs.BasisFunctions.from_function(f)
+    fnc = BasisFunctions.from_function(f)
     row_x, row_y = a.assemble_row(fnc, kernel, 0, 1)
     row_x2, row_y2 = a.assemble_row(fnc, kernel, 1, 0)
     row_x += row_x2
@@ -70,7 +67,7 @@ def test_rhs():
 
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
-    fnc = basis_funcs.BasisFunctions.from_function(f)
+    fnc = BasisFunctions.from_function(f)
     rhs = a.assemble_rhs(fnc, kernel)
     np.testing.assert_almost_equal(rhs_correct, rhs)
 

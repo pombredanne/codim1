@@ -6,7 +6,7 @@ from codim1.fast_lib import RegularizedHypersingularKernel,\
 
 def test_displacement_discontinuity_derivative():
     bf = BasisFunctions.from_degree(1)
-    msh = Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     dh = DOFHandler(msh, bf)
     qs = QuadStrategy(msh, 10, 10, 10, 10)
     k_rh = RegularizedHypersingularKernel(1.0, 0.25)

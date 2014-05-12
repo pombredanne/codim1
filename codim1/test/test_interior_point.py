@@ -1,15 +1,12 @@
 import numpy as np
-import codim1.core.basis_funcs as basis_funcs
+from codim1.core import *
 from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel
-import codim1.core.mesh as mesh
-import codim1.core.dof_handler as dof_handler
-from codim1.core.quad_strategy import QuadStrategy
 from codim1.assembly.interior_point import InteriorPoint
 
 # Some ugly but real world tests. Couldn't think of anything simpler to try it
 # on....
 def test_interior_point_hypersingular():
-    msh = mesh.Mesh.circular_mesh(10, 1.0)
+    msh = circular_mesh(10, 1.0)
     bf = basis_funcs.BasisFunctions.from_degree(0)
     dh = dof_handler.DOFHandler(msh, bf, range(10))
     qs = QuadStrategy(msh, 6, 12, 2, 2)
@@ -29,7 +26,7 @@ def test_interior_point_hypersingular():
     np.testing.assert_almost_equal(result[1], 0.0)
 
 def test_interior_point_traction_adjoint():
-    msh = mesh.Mesh.circular_mesh(50, 1.0)
+    msh = circular_mesh(50, 1.0)
     bf = basis_funcs.BasisFunctions.from_degree(0)
     dh = dof_handler.DOFHandler(msh, bf, range(50))
     qs = QuadStrategy(msh, 6, 12, 2, 2)

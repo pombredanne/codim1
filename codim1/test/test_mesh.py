@@ -32,27 +32,6 @@ def test_in_element_corner():
     assert(m.in_element(1, (1.0, -1.0))[0])
     assert(not m.in_element(1, (1.01, -1.0))[0])
 
-def test_simple_line_mesh():
-    m = simple_line_mesh(2)
-    correct_vertices = np.array([[-1.0, 0.0], [0.0, 0.0], [1.0, 0.0]])
-    correct_etov = np.array([[0, 1], [1, 2]])
-    assert((m.vertices == correct_vertices).all())
-    assert((m.element_to_vertex == correct_etov).all())
-    assert(m.element_to_vertex.dtype.type is np.int64)
-
-def test_simple_line_mesh():
-    m = simple_line_mesh(2, 3.0, 4.0)
-    correct_vertices = np.array([[3.0, 0.0], [3.5, 0.0], [4.0, 0.0]])
-    assert((m.vertices == correct_vertices).all())
-
-def test_angular_simple_line_mesh():
-    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
-    assert(m.vertices[0, 0] == -1.0)
-    assert(m.vertices[0, 1] == 1.0)
-    assert(m.vertices[1, 0] == 0.0)
-    assert(m.vertices[1, 1] == 0.0)
-    assert(m.vertices[2, 0] == 1.0)
-    assert(m.vertices[2, 1] == -1.0)
 
 def test_equivalent_pairs():
     m1 = simple_line_mesh(1, (-1.0, 0.0), (0.0, 1.0))
@@ -106,10 +85,9 @@ def test_connectivity():
     assert(m.neighbors[2][1] == 3)
 
 def test_connectivity_loop():
-    vp = np.array([0.0, 1.0])
-    vp_func = lambda x: np.array([x, 1.0 - x])
+    vertices = np.array([(0.0, 1.0), (1.0, 0.0)])
     element_to_vertex = np.array([[0, 1], [1, 0]])
-    m = Mesh(vp_func, vp, element_to_vertex)
+    m = Mesh(vertices, element_to_vertex)
 
     assert(m.neighbors.dtype == np.int)
     assert(m.neighbors[0][0] == 1)
@@ -147,10 +125,9 @@ def test_element_distances():
             np.zeros_like(m.element_distances))
 
 def test_element_widths():
-    vp = np.array([0.0, 1.0, 3.0])
-    vp_func = lambda x: np.array([x, 0])
+    vertices = np.array([(0.0, 0.0), (1.0, 0.0), (3.0, 0.0)])
     etov = np.array([(0, 1), (1, 2)])
-    m = Mesh(vp_func, vp, etov)
+    m = Mesh(vertices, etov)
     assert(m.element_widths[0] == 1.0)
     assert(m.element_widths[1] == 2.0)
 

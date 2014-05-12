@@ -27,10 +27,7 @@ class Mesh(object):
 
     boundary_fnc is a function that defines the boundary.
     """
-    def __init__(self, boundary_fnc,
-                       vertex_params, element_to_vertex,
-                       basis_fncs = None,
-                       element_to_vertex_params = None):
+    def __init__(self, vertices, element_to_vertex):
 
         self.basis_fncs = BasisFunctions.from_degree(1)
 
@@ -40,20 +37,8 @@ class Mesh(object):
         self.n_elements = element_to_vertex.shape[0]
 
         # Vertices contains the position of each vertex in tuple form (x, y)
-        self.vertex_params = vertex_params
-        self.boundary_fnc = boundary_fnc
-        self.n_vertices = self.vertex_params.shape[0]
-        self.vertices = np.empty((self.n_vertices, 2))
-        for (i, vp) in enumerate(vertex_params):
-            self.vertices[i, :] = boundary_fnc(vp)
-
-        # Default is that the parameters and vertices match up.
-        # See the circular mesh example for where this constraint is broken.
-        self.element_to_vertex_params = element_to_vertex_params
-        if self.element_to_vertex_params is None:
-            self.element_to_vertex_params = \
-                    self.vertex_params[element_to_vertex]
-
+        self.vertices = vertices
+        self.n_vertices = self.vertices.shape[0]
 
         # Determine which elements touch.
         self.compute_connectivity()
@@ -61,13 +46,13 @@ class Mesh(object):
         # Compute the coefficients of the mesh basis.
         self.compute_coefficients()
 
-        # build elements from element_to_vertex_params
-        # for i in range(self.element_to_vertex_params.shape[0]):
-        #     self.elements.append(Element(
-
+        # Compute the separation between elements
         self.compute_element_distances()
+
+        # The length of each element.
         self.compute_element_widths()
 
+        # The evaluation class that operates in the c++ layer.
         self.mesh_eval = MeshEval(self.basis_fncs.fncs,
                                   self.basis_fncs.derivs,
                                   self.coefficients)
@@ -104,37 +89,16 @@ class Mesh(object):
             equivalent_pairs.append((idx, idx + 1))
         return np.array(equivalent_pairs)
 
-    @classmethod
-    def simple_line_mesh(cls, n_elements,
-            left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
-        """
-        Create a mesh consisting of a line of elements starting at -1 and
-        extending to +1 in x coordinate, y = 0.
-        """
-        if type(left_edge) is float:
-            left_edge = (left_edge, 0.0)
-        if type(right_edge) is float:
-            right_edge = (right_edge, 0.0)
-        from mesh_gen import simple_line_mesh
-        return simple_line_mesh(n_elements, left_edge, right_edge)
-
-    @classmethod
-    def circular_mesh(cls, n_elements, radius, basis_fncs = None):
-        from mesh_gen import circular_mesh
-        return circular_mesh(n_elements, radius, basis_fncs)
-
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function
         # onto the basis
         coefficients = np.empty((2, self.n_elements,
                                  self.basis_fncs.num_fncs))
         for k in range(self.n_elements):
-            left_param = self.element_to_vertex_params[k, 0]
-            right_param = self.element_to_vertex_params[k, 1]
-            for (i, node) in enumerate(self.basis_fncs.nodes):
-                node_param = left_param + node * (right_param - left_param)
-                node_loc = self.boundary_fnc(node_param)
-                coefficients[:, k, i] = node_loc
+            left_vertex = self.vertices[self.element_to_vertex[k, 0]]
+            right_vertex = self.vertices[self.element_to_vertex[k, 1]]
+            coefficients[:, k, 0] = left_vertex
+            coefficients[:, k, 1] = right_vertex
         self.coefficients = coefficients
 
     def compute_element_distances(self):
@@ -267,7 +231,7 @@ class Mesh(object):
         coeffs_matrix = np.vstack((x_coeffs, y_coeffs))
         mapping_matrix = coeffs_matrix.dot(basis_vals)
         x_hat_row_mapping_matrix = mapping_matrix[:, -2]
-        offset= mapping_matrix[:, -1]
+        offset = mapping_matrix[:, -1]
 
         old_settings = np.seterr(divide='ignore', invalid='ignore')
         inv_x_hat_row_mapping_matrix = 1.0 / x_hat_row_mapping_matrix

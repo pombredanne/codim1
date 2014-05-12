@@ -1,8 +1,7 @@
-from codim1.core.mesh import Mesh
-from codim1.core.quad_strategy import QuadStrategy
+from codim1.core import *
 
 def test_build_quadrature_list():
-    msh = Mesh.simple_line_mesh(2)
+    msh = simple_line_mesh(2)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
 
     assert(qs.quad_nonsingular[2].N == 2)
@@ -19,7 +18,7 @@ def test_build_quadrature_list():
     assert(qs.quad_oneoverr[1].x0 == qs.quad_nonsingular[2].x[1])
 
 def test_get_quadrature_nonsingular():
-    msh = Mesh.simple_line_mesh(3)
+    msh = simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
     (Gqo, Gqi) = qs.get_quadrature('logr', 0, 2)
     (Hqo, Hqi) = qs.get_quadrature('oneoverr', 0, 2)
@@ -29,7 +28,7 @@ def test_get_quadrature_nonsingular():
     assert(Hqo == qs.quad_nonsingular[2])
 
 def test_get_quadrature_singular():
-    msh = Mesh.simple_line_mesh(3)
+    msh = simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
     (Gqo, Gqi) = qs.get_quadrature('logr', 0, 0)
     (Hqo, Hqi) = qs.get_quadrature('oneoverr', 0, 0)
@@ -39,7 +38,7 @@ def test_get_quadrature_singular():
     assert(Hqi == qs.quad_oneoverr)
 
 def test_get_quadrature_side():
-    msh = Mesh.simple_line_mesh(3)
+    msh = simple_line_mesh(3)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
     (Gqo, Gqi) = qs.get_quadrature('logr', 1, 0)
     (Hqo, Hqi) = qs.get_quadrature('oneoverr', 1, 0)
@@ -49,7 +48,7 @@ def test_get_quadrature_side():
     assert(Hqi[0] == qs.quad_shared_edge_right)
 
 def test_quad_strategy_nonsingular():
-    msh = Mesh.simple_line_mesh(4)
+    msh = simple_line_mesh(4)
     qs = QuadStrategy(msh, 2, 5, 2, 2)
     assert(qs.choose_nonsingular(0, 0) == 5)
     assert(qs.choose_nonsingular(0, 1) == 5)
@@ -57,7 +56,7 @@ def test_quad_strategy_nonsingular():
     assert(qs.choose_nonsingular(0, 3) == 3)
 
 def test_quad_strat_min():
-    msh = Mesh.simple_line_mesh(20)
+    msh = simple_line_mesh(20)
     qs = QuadStrategy(msh, 8, 10, 2, 2)
     assert(qs.choose_nonsingular(0, 15) == 8)
 
