@@ -25,8 +25,8 @@ k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
-di = 0.1
-df = 1.0
+di = 0.4
+df = 1.4
 x_di = 0.0
 x_df = 1.0
 # fault angle
@@ -48,6 +48,7 @@ right_surface = np.array((30.0, 0.3))
 mesh1 = simple_line_mesh(n_elements_surface, left_surface, rise_begin)
 mesh2 = simple_line_mesh(n_elements_surface, rise_begin, rise_end)
 mesh3 = simple_line_mesh(n_elements_surface / 3, rise_end, right_surface)
+import ipdb;ipdb.set_trace()
 mesh = combine_meshes(mesh1, combine_meshes(mesh2, mesh3),
                       ensure_continuity = True)
 tools.plot_mesh(mesh)
@@ -102,8 +103,7 @@ def analytical_free_surface(x, x_d, d, delta, s):
     uy = -factor * (term1 + term2)
     return ux, uy
 
-plot_inner = 100
-x_e = x[plot_inner:-plot_inner, 0]
+x_e = x[:, 0]
 ux_exact1, uy_exact1 = analytical_free_surface(x_e, x_di, di, delta, -1.0)
 ux_exact2, uy_exact2 = analytical_free_surface(x_e, x_df, df, delta, 1.0)
 ux_exact = ux_exact1 + ux_exact2
@@ -111,11 +111,11 @@ uy_exact = uy_exact1 + uy_exact2
 
 plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
 plt.plot(x_e, uy_exact, '*', label = 'Exact Y Displacement')
-plt.plot(x[plot_inner:-plot_inner, 0],
-         u_soln[plot_inner:-plot_inner, 0],
+plt.plot(x[:, 0],
+         u_soln[:, 0],
          linewidth = 2, label = 'Estimated X displacement')
-plt.plot(x[plot_inner:-plot_inner, 0],
-         u_soln[plot_inner:-plot_inner, 1],
+plt.plot(x[:, 0],
+         u_soln[:, 1],
          linewidth = 2, label = 'Estimated Y displacement')
 plt.xlabel(r'$x/d$', fontsize = 18)
 plt.ylabel(r'$u/s$', fontsize = 18)

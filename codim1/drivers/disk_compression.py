@@ -42,12 +42,8 @@ def disk(n_elements, element_deg, plot):
     # Define the solution basis functions
     bf = BasisFunctions.from_degree(element_deg)
 
-    # We must use at least first order mesh basis functions.
-    mesh_bf = BasisFunctions.from_degree(
-              element_deg if element_deg > 0 else 1)
-
     # A circle with radius one.
-    mesh = Mesh.circular_mesh(n_elements, 1.0, mesh_bf)
+    mesh = circular_mesh(n_elements, 1.0)
     # tools.plot_mesh(mesh)
 
     # This object defines what type of quadrature to use for different
@@ -184,7 +180,7 @@ def disk(n_elements, element_deg, plot):
         int_uy = np.zeros((y_pts, x_pts))
         for i in range(x_pts):
             for j in range(y_pts):
-                print i, j
+                # print i, j
                 x_val = x[i]
                 y_val = y[j]
                 if ((x_val ** 2) + (y_val ** 2)) > 0.99:
@@ -234,7 +230,7 @@ def test_disk_compression():
         reload_and_postprocess()
         sys.exit()
 
-    sigma_xx = disk(50, 0, True)
+    sigma_xx = disk(50, 1, True)
     # print("Took: " + str(end - start) + " seconds")
     plt.show()
 
@@ -250,9 +246,12 @@ def test_disk_compression():
                        0.0141, 0.0086, 0.0044, 0.0016, 0.0000])
     sigma_xx_crouch_200 = np.array([0.0396, 0.0380, 0.0337, 0.0276, 0.0208,
                        0.0142, 0.0087, 0.0045, 0.0018, 0.0002])
-    print tools.L2_error(sigma_xx, sigma_xx_exact)
+    my_error =  tools.L2_error(sigma_xx, sigma_xx_exact)
+    print my_error
     print tools.L2_error(sigma_xx_crouch_100, sigma_xx_exact)
-    print tools.L2_error(sigma_xx_crouch_200, sigma_xx_exact)
+    their_error = tools.L2_error(sigma_xx_crouch_200, sigma_xx_exact)
+    print their_error
+    assert(my_error < their_error)
 
     plt.show()
 
