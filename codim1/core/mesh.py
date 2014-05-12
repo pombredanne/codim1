@@ -2,6 +2,7 @@ import numpy as np
 from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MeshEval
+from element import Vertex, Element
 
 class Mesh(object):
     """
@@ -30,7 +31,20 @@ class Mesh(object):
         self.vertices = vertices
         self.n_vertices = self.vertices.shape[0]
 
-        # Determine which elements touch.
+        self.vertex_objs = []
+        for v_idx in range(self.n_vertices):
+            self.vertex_objs.append(Vertex(self.vertices[v_idx, :]))
+
+        self.element_objs = []
+        next_id = 0
+        for e_idx in range(self.n_elements):
+            v0 = self.vertex_objs[self.element_to_vertex[e_idx, 0]]
+            v1 = self.vertex_objs[self.element_to_vertex[e_idx, 1]]
+            el = Element(v0, v1)
+            el.set_id(next_id)
+            next_id += 1
+            self.element_objs.append(el)
+
         self.compute_connectivity()
 
         # Compute the coefficients of the mesh basis.
@@ -48,6 +62,12 @@ class Mesh(object):
                                   self.coefficients)
         self.parts = []
 
+    def compute_connectivity(self):
+        """Loop over elements and update neighbors."""
+        # Determine which elements touch.
+        for e in self.element_objs:
+            e.update_neighbors()
+
     def condense_duplicate_vertices(self, epsilon = 1e-6):
         """
         Remove duplicate vertices and ensure continuity between their
@@ -61,7 +81,15 @@ class Mesh(object):
         """
         pairs = self._find_equivalent_pairs(epsilon)
         for idx in range(pairs.shape[0]):
-            self.element_to_vertex[self.element_to_vertex == pairs[idx, 1]] =\
+            v0 = self.vertex_objs[pairs[idx, 0]]
+            v1 = self.vertex_objs[pairs[idx, 1]]
+            elements_touching = v1.connected_to
+            for element in elements_touching:
+                if v1 is element.vertex1:
+                    element.reinit(v0, element.vertex2)
+                if v1 is element.vertex2:
+                    element.reinit(element.vertex2, v0)
+            self.element_to_vertex[self.element_to_vertex==pairs[idx, 1]] =\
                 pairs[idx, 0]
         self.compute_connectivity()
 
@@ -133,28 +161,6 @@ class Mesh(object):
             length = np.sqrt((v2[1] - v1[1]) ** 2 + (v2[0] - v1[0]) ** 2)
             self.element_widths[k] = length
 
-    def compute_connectivity(self):
-        """
-        Determine and store a representation of which elements are adjacent.
-        Simple for 2D.
-        """
-        # Create of list of which elements touch each vertex
-        # -1 if no element touches there
-        touch_vertex = -np.ones((self.n_vertices, 2))
-        for k in range(0, self.n_elements):
-            # The left vertex of an element has that element
-            # as its right neighbor and vice-versa
-            touch_vertex[self.element_to_vertex[k][0]][1] = k
-            touch_vertex[self.element_to_vertex[k][1]][0] = k
-
-        self.neighbors = np.zeros((self.n_elements, 2))
-        for k in range(0, self.n_elements):
-            self.neighbors[k][0] = \
-                touch_vertex[self.element_to_vertex[k][0]][0]
-            self.neighbors[k][1] = \
-                touch_vertex[self.element_to_vertex[k][1]][1]
-        self.neighbors = self.neighbors.astype(np.int)
-
     def is_neighbor(self, k, l, direction = 'both'):
         """
         Return whether elements k and l are neighbors in the direction
@@ -164,13 +170,21 @@ class Mesh(object):
         """
         # Check the right side
         if (direction is 'left' or direction is 'both') \
-            and self.neighbors[k][0] == l:
+            and self.element_objs[l] in self.element_objs[k].neighbors_left:
             return True
         # Check the left side
         if (direction is 'right' or direction is 'both') \
-            and self.neighbors[k][1] == l:
+            and self.element_objs[l] in self.element_objs[k].neighbors_right:
             return True
         return False
+
+    def get_neighbors(self, k, direction):
+        if direction is 'left':
+            return self.element_objs[k].neighbors_left
+        if direction is 'right':
+            return self.element_objs[k].neighbors_right
+        raise Exception('When calling get_neighbors, direction should be \'left\' or' +
+                        ' \'right\'')
 
     def get_physical_point(self, element_idx, x_hat):
         """

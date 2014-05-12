@@ -7,10 +7,15 @@ class Vertex(object):
         self.connected_to = []
 
     def connect_to_element(self, elem):
-        self.connected_to.append(elem)
+        if elem not in self.connected_to:
+            self.connected_to.append(elem)
+
 
 class Element(object):
     def __init__(self, vertex1, vertex2):
+        self.reinit(vertex1, vertex2)
+
+    def reinit(self, vertex1, vertex2):
         self.vertex1 = vertex1
         self.vertex2 = vertex2
         self.vertex1.connect_to_element(self)
@@ -30,3 +35,6 @@ class Element(object):
         self.neighbors_right = []
         self.neighbors_right.extend(self.vertex2.connected_to)
         self.neighbors_right.remove(self)
+
+    def set_id(self, id):
+        self.id = id

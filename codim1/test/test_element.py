@@ -8,6 +8,13 @@ def test_vertex_connectivity():
     a.connect_to_element(2)
     assert(a.connected_to[1] == 2)
 
+def test_element_id():
+    a = Vertex(np.ones(2))
+    b = Vertex(np.array([1.0, 0.0]))
+    e = Element(a, b)
+    e.set_id(0)
+    assert(e.id == 0)
+
 def test_element_connectivity():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
@@ -18,6 +25,12 @@ def test_element_connectivity():
     assert(b.connected_to[0] == e)
     assert(b.connected_to[1] == e2)
     assert(c.connected_to[0] == e2)
+
+def test_duplicate_connected_to():
+    a = Vertex(np.ones(2))
+    a.connect_to_element(1)
+    a.connect_to_element(1)
+    assert(a.connected_to == [1])
 
 def test_neighbors():
     a = Vertex(np.ones(2))
