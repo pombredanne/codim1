@@ -104,14 +104,14 @@ class QuadStrategy(object):
 
 
     def choose_nonsingular_interior(self, k, pt):
-        v1 = self.mesh.element_to_vertex[k, 0]
-        v2 = self.mesh.element_to_vertex[k, 1]
-        left_vertex_distance = self.mesh.vertices[v1, :] - pt
-        right_vertex_distance = self.mesh.vertices[v2, :] - pt
+        v1 = self.mesh.elements[k].vertex1
+        v2 = self.mesh.elements[k].vertex2
+        left_vertex_distance = v1.loc - pt
+        right_vertex_distance = v2.loc - pt
         # Take the minimum of the distance from either vertex. Note that this
         # will probably overestimate the distance for a higher order mesh.
-        dist = np.min([np.sqrt(np.sum(left_vertex_distance ** 2))
-                       ,np.sqrt(np.sum(right_vertex_distance ** 2))])
+        dist = np.min([np.sqrt(np.sum(left_vertex_distance ** 2)),
+                       np.sqrt(np.sum(right_vertex_distance ** 2))])
         return self._choose_nonsingular(k, dist)
 
 
@@ -121,7 +121,7 @@ class QuadStrategy(object):
         accuracy of the integration. Better algorithms are available in the
         literature. Try Sauter, Schwab 1998 or Telles 1987.
         """
-        source_width = self.mesh.element_widths[k]
+        source_width = self.mesh.elements[k].length
         ratio = dist / source_width
         how_far = np.floor(ratio)
         points = self.max_points - how_far
