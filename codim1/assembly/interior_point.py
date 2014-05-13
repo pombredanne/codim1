@@ -26,11 +26,12 @@ class InteriorPoint(object):
         kernel.set_interior_data(pt, pt_normal)
         one = ConstantEval(np.ones(2))
         for k in range(self.mesh.n_elements):
+            e_k = self.mesh.elements[k]
             # Vary quadrature order depending on distance to the point.
             quadrature = self.quad_strategy.get_interior_quadrature(k, pt)
             quad_info = quadrature.quad_info
             for i in range(solution.num_fncs):
-                integral = single_integral(self.mesh.mesh_eval,
+                integral = single_integral(e_k.mapping.eval,
                                            kernel,
                                            one,
                                            solution._basis_eval,
