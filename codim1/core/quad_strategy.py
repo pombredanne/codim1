@@ -1,3 +1,4 @@
+from segment_distance import segments_distance
 import quadrature
 import numpy as np
 
@@ -18,6 +19,34 @@ class QuadStrategy(object):
         self.quad_points_logr = quad_points_logr
         self.quad_points_oneoverr = quad_points_oneoverr
         self.setup_quadrature()
+        self.compute_element_distances()
+
+    def compute_element_distances(self):
+        """
+        Compute the pairwise distance between all the elements. In
+        2D, this is just the pairwise line segment distances. Moving to 3D,
+        this shouldn't be hard if the polygons are "reasonable", but handling
+        outliers may be harder. Because this distance is only used for
+        selecting the quadrature strategy, I should be conservative. Using too
+        many quadrature points is not as bad as using too few. Using a
+        bounding box method might be highly effective.
+        This might be unnecessary in a future implementation using a fast
+        multipole expansion or other fast BEM method.
+        """
+        self.element_distances = np.zeros((self.mesh.n_elements,
+                                           self.mesh.n_elements))
+        for k in range(self.mesh.n_elements):
+            outer_v1 = self.mesh.elements[k].vertex1
+            outer_v2 = self.mesh.elements[k].vertex2
+            # Only loop over the upper triangle of the matrix
+            for l in range(self.mesh.n_elements):
+                inner_v1 = self.mesh.elements[l].vertex1
+                inner_v2 = self.mesh.elements[l].vertex2
+                dist = segments_distance(outer_v1.loc[0], outer_v1.loc[1],
+                                         outer_v2.loc[0], outer_v2.loc[1],
+                                         inner_v1.loc[0], inner_v1.loc[1],
+                                         inner_v2.loc[0], inner_v2.loc[1])
+                self.element_distances[k, l] = dist
 
     def setup_quadrature(self):
         """
@@ -95,7 +124,7 @@ class QuadStrategy(object):
         return self.quad_nonsingular[which_nonsingular]
 
     def choose_nonsingular(self, k, l):
-        dist = self.mesh.element_distances[k, l]
+        dist = self.element_distances[k, l]
         # Is the source k or is the source l? Maybe I should use the average
         # of the two? Find some literature on choosing quadrature formulas.
         # The choice of which element to use in computing the width is
