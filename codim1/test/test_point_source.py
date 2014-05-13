@@ -18,13 +18,13 @@ def test_displacement_discontinuity_derivative():
     strength = ConstantEval([1.0, 1.0])
     k_rh.set_interior_data(np.array([-2.0, 0.0]), np.array([0.0, 1.0]))
     basis = bf.get_gradient_basis(msh)._basis_eval
-    result = single_integral(msh.mesh_eval, k_rh, strength,
+    result = single_integral(msh.elements[k].mapping.eval, k_rh, strength,
                     basis, qi, k, 0, i)
     np.testing.assert_almost_equal(result[1][1], 0.193011, 4)
     np.testing.assert_almost_equal(result[0][0], -0.0191957, 4)
 
     i = 0
-    result = single_integral(msh.mesh_eval, k_rh, strength,
+    result = single_integral(msh.elements[k].mapping.eval, k_rh, strength,
                     basis, qi, k, 0, i)
     np.testing.assert_almost_equal(result[1][1], -0.193011, 4)
     np.testing.assert_almost_equal(result[0][0], 0.0191957, 4)

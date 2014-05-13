@@ -27,6 +27,7 @@ class PointSourceRHS(object):
             strength = ConstantEval(np.array(str))
             kernel.set_interior_data(np.array(loc), np.array(normal))
             for k in range(self.mesh.n_elements):
+                e_k = self.mesh.elements[k]
                 quadrature = \
                     self.quad_strategy.get_point_source_quadrature(
                             kernel.singularity_type, loc, k)
@@ -34,7 +35,7 @@ class PointSourceRHS(object):
                 for i in range(self.basis_funcs.num_fncs):
                     dof_x = self.dof_handler.dof_map[0, k, i]
                     dof_y = self.dof_handler.dof_map[1, k, i]
-                    integral = single_integral(self.mesh.mesh_eval,
+                    integral = single_integral(e_k.mapping.eval,
                                            kernel,
                                            self.basis_funcs._basis_eval,
                                            strength,

@@ -104,7 +104,8 @@ class MatrixAssembler(object):
         quad_outer_info = quad_outer.quad_info
         quad_inner_info = [q.quad_info for q in quad_inner]
         local = fl.double_integral(
-                        self.mesh.mesh_eval,
+                        self.mesh.elements[k].mapping.eval,
+                        self.mesh.elements[l].mapping.eval,
                         kernel,
                         self.basis_funcs._basis_eval,
                         self.basis_funcs._basis_eval,

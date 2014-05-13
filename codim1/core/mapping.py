@@ -27,7 +27,7 @@ class LinearMapping(object):
         self.compute_coefficients()
 
         # The interface with the fast c++ evaluation code.
-        self.mapping_eval = MappingEval(self.basis_fncs.fncs,
+        self.eval = MappingEval(self.basis_fncs.fncs,
                                   self.basis_fncs.derivs,
                                   self.coefficients)
 
@@ -45,7 +45,7 @@ class LinearMapping(object):
         Use the mapping defined by the coefficients and basis functions
         to convert coordinates
         """
-        return np.array(self.mapping_eval.get_physical_point(x_hat))
+        return np.array(self.eval.get_physical_point(x_hat))
 
     def get_jacobian(self, x_hat):
         """
@@ -53,14 +53,14 @@ class LinearMapping(object):
         to get the determinant of the jacobian! This is used to change
         integration coordinates from physical to reference elements.
         """
-        return self.mapping_eval.get_jacobian(x_hat)
+        return self.eval.get_jacobian(x_hat)
 
     def get_normal(self, x_hat):
         """
         Use the derivative of the mapping to determine the tangent vector
         and thus to determine the local normal vector.
         """
-        return np.array(self.mapping_eval.get_normal(x_hat))
+        return np.array(self.eval.get_normal(x_hat))
 
     def in_element(self, point):
         """

@@ -159,7 +159,8 @@ class QuadStrategy(object):
         return points
 
     def get_point_source_quadrature(self, singularity_type, singular_pt, k):
-        in_element, reference_loc = self.mesh.in_element(k, singular_pt)
+        in_element, reference_loc = \
+            self.mesh.elements[k].mapping.in_element(singular_pt)
         if singularity_type == 'logr' and in_element:
             quad = quadrature.QuadSingularTelles(self.quad_points_logr,
                                                  reference_loc)

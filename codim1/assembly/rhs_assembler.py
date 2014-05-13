@@ -34,15 +34,18 @@ class RHSAssembler(object):
         return rhs
 
     def assemble_row(self, fnc, kernel, k, i):
+        e_k = self.mesh.elements[k]
         row_x = 0.0
         row_y = 0.0
         for l in range(self.mesh.n_elements):
+            e_l = self.mesh.elements[l]
             (quad_outer, quad_inner) = self.quad_strategy.get_quadrature(
                                             kernel.singularity_type, k, l)
             quad_outer_info = quad_outer.quad_info
             quad_inner_info = [q.quad_info for q in quad_inner]
             value = fl.double_integral(
-                            self.mesh.mesh_eval,
+                            e_k.mapping.eval,
+                            e_l.mapping.eval,
                             kernel,
                             self.basis_funcs._basis_eval,
                             fnc._basis_eval,

@@ -8,7 +8,7 @@ from codim1.fast_lib import *
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements = 200
+n_elements = 100
 degree = 1
 quad_min = 4
 quad_max = 10
