@@ -1,9 +1,10 @@
+import numpy as np
 from math import sqrt
 
 class Vertex(object):
     """Very simple class to allow avoiding some repeated math on vertices."""
     def __init__(self, loc):
-        self.loc = loc
+        self.loc = np.array(loc)
         self.connected_to = []
 
     def connect_to_element(self, elem):
@@ -14,6 +15,7 @@ class Vertex(object):
 class Element(object):
     def __init__(self, vertex1, vertex2):
         self.reinit(vertex1, vertex2)
+        self.mapping = "Undefined mapping. Apply a mapping!"
 
     def reinit(self, vertex1, vertex2):
         self.vertex1 = vertex1

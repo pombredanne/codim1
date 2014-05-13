@@ -2,7 +2,7 @@
 #define __codim1_integration_h
 #include <vector>
 
-class MeshEval;
+class MappingEval;
 class Kernel;
 class BasisEval;
 
@@ -18,7 +18,7 @@ struct QuadratureInfo
 };
         
 std::vector<std::vector<double> >
-double_integral(MeshEval& mesh_eval, 
+double_integral(MappingEval& mesh_eval, 
                 Kernel& kernel, 
                 BasisEval& k_basis_eval,
                 BasisEval& l_basis_eval,
@@ -38,7 +38,7 @@ double_integral(MeshEval& mesh_eval,
  * a call method taking a separation input. K(x) vs. K(x - y)
  */
 std::vector<std::vector<double> >
-single_integral(MeshEval& mesh_eval, 
+single_integral(MappingEval& mesh_eval, 
                 Kernel& kernel, 
                 BasisEval& i_basis_eval,
                 BasisEval& j_basis_eval,

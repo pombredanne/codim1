@@ -1,6 +1,16 @@
 import numpy as np
 from codim1.core import *
 
+def test_element_mapping_init():
+    a = Vertex(np.ones(2))
+    b = Vertex(np.array([1.0, 0.0]))
+    e = Element(a, b)
+    assert(type(e.mapping) == str)
+
+def test_vertex_loc_type():
+    v = Vertex((1.0, 2.0))
+    assert(type(v.loc) == np.ndarray)
+
 def test_vertex_connectivity():
     a = Vertex(np.ones(2))
     a.connect_to_element(1)
