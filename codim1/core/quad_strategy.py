@@ -1,5 +1,5 @@
-from segment_distance import segments_distance
 import quadrature
+from mapping import distance_between_mappings
 import numpy as np
 
 class QuadStrategy(object):
@@ -36,16 +36,10 @@ class QuadStrategy(object):
         self.element_distances = np.zeros((self.mesh.n_elements,
                                            self.mesh.n_elements))
         for k in range(self.mesh.n_elements):
-            outer_v1 = self.mesh.elements[k].vertex1
-            outer_v2 = self.mesh.elements[k].vertex2
-            # Only loop over the upper triangle of the matrix
+            e_k = self.mesh.elements[k]
             for l in range(self.mesh.n_elements):
-                inner_v1 = self.mesh.elements[l].vertex1
-                inner_v2 = self.mesh.elements[l].vertex2
-                dist = segments_distance(outer_v1.loc[0], outer_v1.loc[1],
-                                         outer_v2.loc[0], outer_v2.loc[1],
-                                         inner_v1.loc[0], inner_v1.loc[1],
-                                         inner_v2.loc[0], inner_v2.loc[1])
+                e_l = self.mesh.elements[l]
+                dist = distance_between_mappings(e_k.mapping, e_l.mapping)
                 self.element_distances[k, l] = dist
 
     def setup_quadrature(self):

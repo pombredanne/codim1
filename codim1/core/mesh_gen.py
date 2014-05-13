@@ -1,7 +1,7 @@
 import numpy as np
 from mesh import Mesh
 from element import Element, Vertex
-from mapping import apply_mapping, LinearMapping
+from mapping import apply_mapping, PolynomialMapping
 from basis_funcs import BasisFunctions
 
 def from_vertices_and_etov(vertices, etov):
@@ -16,7 +16,7 @@ def from_vertices_and_etov(vertices, etov):
         element_objs.append(Element(v0, v1))
 
     m = Mesh(vertex_objs, element_objs)
-    apply_mapping(m, LinearMapping)
+    apply_mapping(m, PolynomialMapping)
     return m
 
 def simple_line_mesh(n_elements,
@@ -39,7 +39,7 @@ def simple_line_mesh(n_elements,
         elements.append(Element(v0, v1))
 
     m = Mesh(vertices, elements)
-    apply_mapping(m, LinearMapping)
+    apply_mapping(m, PolynomialMapping)
     return m
 
 def circular_mesh(n_elements, radius):
@@ -60,7 +60,7 @@ def circular_mesh(n_elements, radius):
     elements.append(Element(vertices[n_elements - 1], vertices[0]))
 
     m = Mesh(vertices, elements)
-    apply_mapping(m, LinearMapping)
+    apply_mapping(m, PolynomialMapping)
     return m
 
 def combine_meshes(mesh1, mesh2, ensure_continuity = False):
