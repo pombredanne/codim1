@@ -1,4 +1,5 @@
 import numpy as np
+from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MappingEval
 
@@ -7,8 +8,30 @@ def apply_mapping(mesh, mapping_type):
     for e in mesh.elements:
         e.mapping = mapping_type(e)
 
+def distance_between_mappings(el1, el2):
+    """
+    A coarsely accurate computation of the distance between two
+    elements. The distance is computed by finding the minimum distance
+    between the segments of a linear approximation to the element.
+    """
+    el1_verts = el1.get_linear_approximation()
+    el2_verts = el2.get_linear_approximation()
+    min_dist = 1e50
+    for idx1 in range(len(el1_verts) - 1):
+        for idx2 in range(len(el2_verts) - 1):
+            dist = segments_distance(el1_verts[idx1].loc[0],
+                                     el1_verts[idx1].loc[1],
+                                     el1_verts[idx1 + 1].loc[0],
+                                     el1_verts[idx1 + 1].loc[1],
+                                     el2_verts[idx2].loc[0],
+                                     el2_verts[idx2].loc[1],
+                                     el2_verts[idx2 + 1].loc[0],
+                                     el2_verts[idx2 + 1].loc[1])
+            min_dist = min(dist, min_dist)
+    return min_dist
 
-class LinearMapping(object):
+
+class PolynomialMapping(object):
     """
     This class manages the mapping between physical coordinates and reference
     coordinates. In this case, the mapping is linear. However, the same
@@ -19,9 +42,9 @@ class LinearMapping(object):
     provides jacobians to be used when a change of variables is performed
     under an integral. Normal vectors are also provided.
     """
-    def __init__(self, element):
+    def __init__(self, element, degree = 1):
         self.element = element
-        self.basis_fncs = BasisFunctions.from_degree(1)
+        self.basis_fncs = BasisFunctions.from_degree(degree)
 
         # Compute the coefficients of the mapping basis.
         self.compute_coefficients()
@@ -113,3 +136,16 @@ class LinearMapping(object):
             on_segment = False
 
         return on_segment, line_pt
+
+    def get_linear_approximation(self):
+        """
+        Computes a small number of linear segments that approximate this
+        element.
+        """
+        verts = [self.element.vertex1]
+        for i in range(1, self.basis_fncs.num_fncs - 1):
+            x_hat = self.basis_fncs.nodes[i]
+            phys_pt = self.get_physical_point(x_hat)
+            verts.append(Vertex(phys_pt))
+        verts.append(self.element.vertex2)
+        return verts
