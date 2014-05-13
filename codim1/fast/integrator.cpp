@@ -5,7 +5,7 @@
 
 //TODO: Play with some strategy pattern ideas for making this flexible
 std::vector<std::vector<double> >
-double_integral(MeshEval& mesh_eval, 
+double_integral(MappingEval& mapping_eval, 
                 Kernel& kernel, 
                 BasisEval& k_basis_eval,
                 BasisEval& l_basis_eval,
@@ -40,10 +40,10 @@ double_integral(MeshEval& mesh_eval,
     double kernel_val;
 
 
-    k_jacobian = mesh_eval.get_jacobian(k, 0.0);
-    l_jacobian = mesh_eval.get_jacobian(l, 0.0);
-    k_normal = mesh_eval.get_normal(k, 0.0);
-    l_normal = mesh_eval.get_normal(l, 0.0);  
+    k_jacobian = mapping_eval.get_jacobian(0.0);
+    l_jacobian = mapping_eval.get_jacobian(0.0);
+    k_normal = mapping_eval.get_normal(0.0);
+    l_normal = mapping_eval.get_normal(0.0);  
     k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
     l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
 
@@ -55,7 +55,7 @@ double_integral(MeshEval& mesh_eval,
 
         // Translate from reference segment coordinates to 
         // real, physical coordinates
-        k_phys_pt = mesh_eval.get_physical_point(k, q_pt_k);
+        k_phys_pt = mapping_eval.get_physical_point(q_pt_k);
 
         // The basis functions should be evaluated on reference
         // coordinates
@@ -76,7 +76,7 @@ double_integral(MeshEval& mesh_eval,
 
             // Translate from reference segment coordinates to 
             // real, physical coordinates
-            l_phys_pt = mesh_eval.get_physical_point(l, q_pt_l);
+            l_phys_pt = mapping_eval.get_physical_point(q_pt_l);
 
             // The basis functions should be evaluated on reference
             // coordinates
@@ -126,7 +126,7 @@ double_integral(MeshEval& mesh_eval,
  * a call method taking a separation input. K(x) vs. K(x - y)
  */
 std::vector<std::vector<double> >
-single_integral(MeshEval& mesh_eval, 
+single_integral(MappingEval& mapping_eval, 
                 Kernel& kernel, 
                 BasisEval& i_basis_eval,
                 BasisEval& j_basis_eval,
@@ -142,8 +142,8 @@ single_integral(MeshEval& mesh_eval,
 
     double jacobian;
     std::vector<double> k_normal;
-    jacobian = mesh_eval.get_jacobian(k, 0.0);
-    k_normal = mesh_eval.get_normal(k, 0.0);
+    jacobian = mapping_eval.get_jacobian(0.0);
+    k_normal = mapping_eval.get_normal(0.0);
     jacobian *= i_basis_eval.chain_rule(jacobian);
     jacobian *= j_basis_eval.chain_rule(jacobian);
 
@@ -158,7 +158,7 @@ single_integral(MeshEval& mesh_eval,
         const double q_pt = quadrature.x[q_idx];
         const double q_w = quadrature.w[q_idx];
 
-        phys_pt = mesh_eval.get_physical_point(k, q_pt);
+        phys_pt = mapping_eval.get_physical_point(q_pt);
 
         i_basis_val = i_basis_eval.evaluate_vector(k, i, q_pt, phys_pt);
         j_basis_val = j_basis_eval.evaluate_vector(k, j, q_pt, phys_pt);

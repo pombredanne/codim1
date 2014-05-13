@@ -7,9 +7,6 @@
 
 namespace bp = boost::python;
 
-//Forward declare MeshEval
-class MeshEval;
-
 /* Abstract base class (interface) for the basis functions in an
  * integral. 
  */

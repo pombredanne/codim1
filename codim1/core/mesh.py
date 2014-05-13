@@ -1,6 +1,3 @@
-import numpy as np
-from basis_funcs import BasisFunctions
-from codim1.fast_lib import MeshEval
 from element import Vertex, Element
 
 class Mesh(object):
@@ -18,9 +15,6 @@ class Mesh(object):
     interior domain boundaries should be traversed counterclockwise.
     """
     def __init__(self, vertices, elements):
-
-        self.basis_fncs = BasisFunctions.from_degree(1)
-
         # Elements connect vertices and define edge properties
         self.elements = elements
         self.n_elements = len(elements)
@@ -32,15 +26,8 @@ class Mesh(object):
         for e_idx in range(self.n_elements):
             self.elements[e_idx].set_id(e_idx)
 
+        # Update the adjacency lists of each element.
         self.compute_connectivity()
-
-        # Compute the coefficients of the mesh basis.
-        self.compute_coefficients()
-
-        # The interface with the fast c++ evaluation code.
-        self.mesh_eval = MeshEval(self.basis_fncs.fncs,
-                                  self.basis_fncs.derivs,
-                                  self.coefficients)
 
     def compute_connectivity(self):
         """Loop over elements and update neighbors."""
@@ -81,9 +68,9 @@ class Mesh(object):
         sorted_vertices = sorted(self.vertices, key = lambda v: v.loc[0])
         equivalent_pairs = []
         for (idx, v) in enumerate(sorted_vertices[:-1]):
-            if np.abs(v.loc[0] - sorted_vertices[idx + 1].loc[0]) > epsilon:
+            if abs(v.loc[0] - sorted_vertices[idx + 1].loc[0]) > epsilon:
                 continue
-            if np.abs(v.loc[1] - sorted_vertices[idx + 1].loc[1]) > epsilon:
+            if abs(v.loc[1] - sorted_vertices[idx + 1].loc[1]) > epsilon:
                 continue
             equivalent_pairs.append((v, sorted_vertices[idx + 1]))
         return equivalent_pairs
@@ -112,90 +99,3 @@ class Mesh(object):
             return self.elements[k].neighbors_right
         raise Exception('When calling get_neighbors, direction should be '
                         '\'left\' or \'right\'')
-
-    def compute_coefficients(self):
-        # This is basically an interpolation of the boundary function
-        # onto the basis
-        coefficients = np.empty((2, self.n_elements,
-                                 self.basis_fncs.num_fncs))
-        for k in range(self.n_elements):
-            left_vertex = self.elements[k].vertex1
-            right_vertex = self.elements[k].vertex2
-            coefficients[:, k, 0] = left_vertex.loc
-            coefficients[:, k, 1] = right_vertex.loc
-        self.coefficients = coefficients
-
-
-    def get_physical_point(self, element_idx, x_hat):
-        """
-        Use the mapping defined by the coefficients and basis functions
-        to convert coordinates
-        """
-        return np.array(self.mesh_eval.get_physical_point(element_idx, x_hat))
-
-    def get_jacobian(self, element_idx, x_hat):
-        """
-        Use the derivative of the mapping defined by the coefficients/basis
-        to get the determinant of the jacobian! This is used to change
-        integration coordinates from physical to reference elements.
-        """
-        return self.mesh_eval.get_jacobian(element_idx, x_hat)
-
-    def get_normal(self, element_idx, x_hat):
-        """
-        Use the derivative of the mapping to determine the tangent vector
-        and thus to determine the local normal vector.
-        """
-        return np.array(self.mesh_eval.get_normal(element_idx, x_hat))
-
-    def in_element(self, element_idx, point):
-        """
-        Returns whether the point is within the element specified
-        and the reference location of the point if it is within the
-        element.
-        The probably suboptimal method for a quadratic mesh:
-        The mapping from reference coordinates to physical coordinates
-        is:
-        x = CB\vec{\hat{x}}
-        where \vec{\hat{x}} is the reference coordinate to each relevant power
-        [\hat{x}^2, \hat{x}^1, 1.0]
-        B is a 3x3 matrix representing the basis function and
-        C is a 2x3 matrix containing the coefficients.
-        If we solve
-        \vec{\hat{x}} = (CB)^{-1}x
-        then the reference coordinate vector must be consistent for the
-        point to lie on the curve. And, for the point to be within the element,
-        \hat{x} must be within [0, 1].
-        This should work with some minor modifications for higher order
-        elements.
-        """
-        x_coeffs = self.coefficients[0, element_idx, :]
-        y_coeffs = self.coefficients[1, element_idx, :]
-        basis_vals = self.basis_fncs.fncs
-        coeffs_matrix = np.vstack((x_coeffs, y_coeffs))
-        mapping_matrix = coeffs_matrix.dot(basis_vals)
-        x_hat_row_mapping_matrix = mapping_matrix[:, -2]
-        offset = mapping_matrix[:, -1]
-
-        old_settings = np.seterr(divide='ignore', invalid='ignore')
-        inv_x_hat_row_mapping_matrix = 1.0 / x_hat_row_mapping_matrix
-        x_hat = inv_x_hat_row_mapping_matrix * (point - offset)
-        np.seterr(**old_settings)
-
-        on_line = True
-        line_pt = 0.0
-        if x_hat[1] == x_hat[0]:
-            line_pt = x_hat[0]
-        elif np.isnan(x_hat[0]):
-            line_pt = x_hat[1]
-        elif np.isnan(x_hat[1]):
-            line_pt = x_hat[0]
-        else:
-            on_line = False
-
-        if on_line:
-            on_segment = (line_pt >= 0.0) and (line_pt <= 1.0)
-        else:
-            on_segment = False
-
-        return on_segment, line_pt

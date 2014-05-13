@@ -1,6 +1,7 @@
 import numpy as np
 from mesh import Mesh
 from element import Element, Vertex
+from mapping import apply_mapping, LinearMapping
 from basis_funcs import BasisFunctions
 
 def from_vertices_and_etov(vertices, etov):
@@ -14,7 +15,9 @@ def from_vertices_and_etov(vertices, etov):
         v1 = vertex_objs[etov[e_idx, 1]]
         element_objs.append(Element(v0, v1))
 
-    return Mesh(vertex_objs, element_objs)
+    m = Mesh(vertex_objs, element_objs)
+    apply_mapping(m, LinearMapping)
+    return m
 
 def simple_line_mesh(n_elements,
         left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
@@ -35,7 +38,9 @@ def simple_line_mesh(n_elements,
         v1 = vertices[i + 1]
         elements.append(Element(v0, v1))
 
-    return Mesh(vertices, elements)
+    m = Mesh(vertices, elements)
+    apply_mapping(m, LinearMapping)
+    return m
 
 def circular_mesh(n_elements, radius):
     n_vertices = n_elements
@@ -54,7 +59,9 @@ def circular_mesh(n_elements, radius):
         elements.append(Element(v0, v1))
     elements.append(Element(vertices[n_elements - 1], vertices[0]))
 
-    return Mesh(vertices, elements)
+    m = Mesh(vertices, elements)
+    apply_mapping(m, LinearMapping)
+    return m
 
 def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     """
@@ -66,6 +73,9 @@ def combine_meshes(mesh1, mesh2, ensure_continuity = False):
 
     Note that this function destroys the internals of mesh1 and mesh2.
     Should this be fixed?
+
+    Also, this function does not apply any mappings -- it assumes they have
+    already been applied to the elements of the subordinate meshes.
     """
     vertices = mesh1.vertices
     vertices.extend(mesh2.vertices)

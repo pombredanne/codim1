@@ -1,5 +1,6 @@
 from element import Element, Vertex
 from mesh import Mesh
+from mapping import LinearMapping, apply_mapping
 from dof_handler import DOFHandler
 from quadrature import QuadGauss, QuadSingularTelles, QuadOneOverR
 from basis_funcs import Function, Solution, BasisFunctions

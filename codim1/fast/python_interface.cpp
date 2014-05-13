@@ -69,16 +69,16 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def("evaluate", &SolutionEval::evaluate);
 
     // Expose mesh calculation functions
-    class_<MeshEval>("MeshEval",
+    class_<MappingEval>("MappingEval",
             init<std::vector<std::vector<double> >,
             std::vector<std::vector<double> >,
-            std::vector<std::vector<std::vector<double> > > >())
-        .def("eval_function", &MeshEval::eval_function)
-        .def("get_physical_point", &MeshEval::get_physical_point)
-        .def("get_jacobian", &MeshEval::get_jacobian)
-        .def("get_normal", &MeshEval::get_normal)
-        .def_readonly("basis_eval", &MeshEval::basis_eval)
-        .def_readonly("deriv_eval", &MeshEval::deriv_eval);
+            std::vector<std::vector<double> > >())
+        .def("eval_function", &MappingEval::eval_function)
+        .def("get_physical_point", &MappingEval::get_physical_point)
+        .def("get_jacobian", &MappingEval::get_jacobian)
+        .def("get_normal", &MappingEval::get_normal)
+        .def_readonly("basis_eval", &MappingEval::basis_eval)
+        .def_readonly("deriv_eval", &MappingEval::deriv_eval);
 
     // Expose the elastic kernels.
     class_<KernelWrap, boost::noncopyable>("Kernel")

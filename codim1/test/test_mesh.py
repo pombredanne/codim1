@@ -1,5 +1,4 @@
 import numpy as np
-import warnings
 
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
@@ -9,31 +8,6 @@ from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
 def test_get_neighbors():
     m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
     assert(m.get_neighbors(0, 'right') == m.elements[0].neighbors_right)
-
-def test_in_element_doesnt_break_warnings():
-    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
-    m.in_element(0, (-0.5, 0.0))
-    with warnings.catch_warnings(record=True) as w:
-        a = np.ones(2) / np.zeros(2)
-    assert(len(w) == 1)
-
-def test_in_element():
-    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
-    assert(m.in_element(0, (-0.5, 0.0))[0])
-    assert(not m.in_element(0, (0.5, 0.0))[0])
-    assert(not m.in_element(0, (0.5, 0.5))[0])
-
-def test_in_element_diag():
-    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
-    assert(m.in_element(0, (-0.5, 0.5))[0])
-    assert(not m.in_element(0, (0.5, 0.0))[0])
-    assert(not m.in_element(0, (0.5, 0.5))[0])
-
-def test_in_element_corner():
-    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
-    assert(m.in_element(1, (1.0, -1.0))[0])
-    assert(not m.in_element(1, (1.01, -1.0))[0])
-
 
 def test_equivalent_pairs():
     m1 = simple_line_mesh(1, (-1.0, 0.0), (0.0, 1.0))
@@ -53,29 +27,6 @@ def test_multisegment_mesh():
     assert(m.elements[1].vertex2 == m.vertices[3])
     assert(m.is_neighbor(0, 1, 'right'))
     assert(m.is_neighbor(1, 0, 'left'))
-
-def test_get_phys_pts():
-    m = simple_line_mesh(4)
-
-    # Element 2 should lie from 0 to 0.5
-    pts = m.get_physical_point(2, 0.5)
-    np.testing.assert_almost_equal(pts[0], 0.25)
-    pts = m.get_physical_point(2, 0.0)
-    np.testing.assert_almost_equal(pts[0], 0.0)
-    pts = m.get_physical_point(2, 1.0)
-    np.testing.assert_almost_equal(pts[0], 0.5)
-    np.testing.assert_almost_equal(pts[1], 0.0)
-
-def test_jacobian():
-    m = simple_line_mesh(4)
-    j = m.get_jacobian(1, 0.0)
-    np.testing.assert_almost_equal(j, 0.5)
-
-def test_normals():
-    m = simple_line_mesh(4)
-    for i in range(4):
-        assert(m.get_normal(0, 0.5)[0] == 0)
-        assert(m.get_normal(0, 0.5)[1] == 1)
 
 def test_connectivity():
     m = simple_line_mesh(4)
@@ -122,7 +73,6 @@ def test_combine_meshes():
     m = simple_line_mesh(1)
     m2 = simple_line_mesh(1, (-2.0, 1.0), (0.0, 1.0))
     m3 = combine_meshes(m, m2)
-    assert((m3.get_physical_point(0, 0.5) == (0.0, 0.0)).all())
     assert((m3.vertices[0].loc == (-1.0, 0.0)).all())
     assert((m3.vertices[1].loc == (1.0, 0.0)).all())
     assert((m3.vertices[2].loc == (-2.0, 1.0)).all())
@@ -130,7 +80,4 @@ def test_combine_meshes():
     assert(m3.elements[1].vertex1 == m3.vertices[2])
     assert(m3.elements[1].vertex2 == m3.vertices[3])
 
-def test_jacobian_type():
-    m = simple_line_mesh(1)
-    jacobian = m.get_jacobian(0, 0.0)
-    assert(type(jacobian) == float)
+
