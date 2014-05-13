@@ -1,5 +1,4 @@
 import numpy as np
-from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MeshEval
 from element import Vertex, Element
@@ -37,9 +36,6 @@ class Mesh(object):
 
         # Compute the coefficients of the mesh basis.
         self.compute_coefficients()
-
-        # Compute the separation between elements
-        self.compute_element_distances()
 
         # The interface with the fast c++ evaluation code.
         self.mesh_eval = MeshEval(self.basis_fncs.fncs,
@@ -92,45 +88,6 @@ class Mesh(object):
             equivalent_pairs.append((v, sorted_vertices[idx + 1]))
         return equivalent_pairs
 
-    def compute_coefficients(self):
-        # This is basically an interpolation of the boundary function
-        # onto the basis
-        coefficients = np.empty((2, self.n_elements,
-                                 self.basis_fncs.num_fncs))
-        for k in range(self.n_elements):
-            left_vertex = self.elements[k].vertex1
-            right_vertex = self.elements[k].vertex2
-            coefficients[:, k, 0] = left_vertex.loc
-            coefficients[:, k, 1] = right_vertex.loc
-        self.coefficients = coefficients
-
-    def compute_element_distances(self):
-        """
-        Compute the pairwise distance between all the elements. In
-        2D, this is just the pairwise line segment distances. Moving to 3D,
-        this shouldn't be hard if the polygons are "reasonable", but handling
-        outliers may be harder. Because this distance is only used for
-        selecting the quadrature strategy, I should be conservative. Using too
-        many quadrature points is not as bad as using too few. Using a
-        bounding box method might be highly effective.
-        """
-        self.element_distances = np.zeros((self.n_elements, self.n_elements))
-        for k in range(self.n_elements):
-            outer_v1 = self.elements[k].vertex1
-            outer_v2 = self.elements[k].vertex2
-            # Only loop over the upper triangle of the matrix
-            for l in range(k, self.n_elements):
-                inner_v1 = self.elements[l].vertex1
-                inner_v2 = self.elements[l].vertex2
-                dist = segments_distance(outer_v1.loc[0], outer_v1.loc[1],
-                                         outer_v2.loc[0], outer_v2.loc[1],
-                                         inner_v1.loc[0], inner_v1.loc[1],
-                                         inner_v2.loc[0], inner_v2.loc[1])
-                self.element_distances[k, l] = dist
-        # Make it symmetric. No need to worry about doubling the diagonal
-        # because the diagonal *should* be zero!
-        self.element_distances += self.element_distances.T
-
     def is_neighbor(self, k, l, direction = 'both'):
         """
         Return whether elements k and l are neighbors in the direction
@@ -155,6 +112,19 @@ class Mesh(object):
             return self.elements[k].neighbors_right
         raise Exception('When calling get_neighbors, direction should be '
                         '\'left\' or \'right\'')
+
+    def compute_coefficients(self):
+        # This is basically an interpolation of the boundary function
+        # onto the basis
+        coefficients = np.empty((2, self.n_elements,
+                                 self.basis_fncs.num_fncs))
+        for k in range(self.n_elements):
+            left_vertex = self.elements[k].vertex1
+            right_vertex = self.elements[k].vertex2
+            coefficients[:, k, 0] = left_vertex.loc
+            coefficients[:, k, 1] = right_vertex.loc
+        self.coefficients = coefficients
+
 
     def get_physical_point(self, element_idx, x_hat):
         """

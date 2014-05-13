@@ -3,7 +3,6 @@ import warnings
 
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
-from codim1.core.segment_distance import segments_distance
 from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
                                  circular_mesh, from_vertices_and_etov
 
@@ -102,28 +101,6 @@ def test_is_neighbor():
     assert(m.is_neighbor(2, 3, 'left') == False)
     assert(m.is_neighbor(1, 0, 'left') == True)
 
-def test_segment_distance():
-    v1 = (0, 0)
-    v2 = (0, 1)
-    v3 = (1, 0)
-    v4 = (1, 1)
-    dist = segments_distance(v1[0], v1[1], v2[0], v2[1],
-                             v3[0], v3[1], v4[0], v4[1])
-    assert(dist == 1.0)
-    dist2 = segments_distance(v3[0], v3[1], v4[0], v4[1],
-                             v1[0], v1[1], v2[0], v2[1])
-    assert(dist2 == 1.0)
-
-def test_element_distances():
-    m = simple_line_mesh(4)
-    assert(m.element_distances[0, 3] == 1.0)
-    assert(m.element_distances[0, 2] == 0.5)
-    assert(m.element_distances[0, 1] == 0.0)
-    assert(m.element_distances[0, 0] == 0.0)
-    assert(m.element_distances[2, 0] == 0.5)
-    np.testing.assert_almost_equal(
-            m.element_distances.T - m.element_distances,
-            np.zeros_like(m.element_distances))
 
 def test_element_widths():
     vertices = np.array([(0.0, 0.0), (1.0, 0.0), (3.0, 0.0)])
