@@ -3,8 +3,9 @@ from math import sqrt
 
 class Vertex(object):
     """Very simple class to allow avoiding some repeated math on vertices."""
-    def __init__(self, loc):
+    def __init__(self, loc, param = 0):
         self.loc = np.array(loc)
+        self.param = param
         self.connected_to = []
 
     def connect_to_element(self, elem):

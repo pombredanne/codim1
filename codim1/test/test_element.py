@@ -7,17 +7,6 @@ def test_element_mapping_init():
     e = Element(a, b)
     assert(type(e.mapping) == str)
 
-def test_vertex_loc_type():
-    v = Vertex((1.0, 2.0))
-    assert(type(v.loc) == np.ndarray)
-
-def test_vertex_connectivity():
-    a = Vertex(np.ones(2))
-    a.connect_to_element(1)
-    assert(a.connected_to[0] == 1)
-    a.connect_to_element(2)
-    assert(a.connected_to[1] == 2)
-
 def test_element_id():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
@@ -54,3 +43,20 @@ def test_neighbors():
     assert(e.neighbors_right == [e2])
     assert(e2.neighbors_left == [e])
     assert(e2.neighbors_right == [])
+
+def test_vertex_param():
+    a = Vertex(np.ones(2), 1.0)
+    assert(a.param == 1.0)
+
+
+def test_vertex_loc_type():
+    v = Vertex((1.0, 2.0))
+    assert(type(v.loc) == np.ndarray)
+
+def test_vertex_connectivity():
+    a = Vertex(np.ones(2))
+    a.connect_to_element(1)
+    assert(a.connected_to[0] == 1)
+    a.connect_to_element(2)
+    assert(a.connected_to[1] == 2)
+

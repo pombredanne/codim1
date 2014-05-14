@@ -1,3 +1,5 @@
+from math import cos, sin
+from functools import partial
 import numpy as np
 from mesh import Mesh
 from element import Element, Vertex
@@ -21,8 +23,7 @@ def from_vertices_and_etov(vertices, etov):
 
 def simple_line_mesh(n_elements,
                      left_edge = (-1.0, 0.0),
-                     right_edge = (1.0, 0.0),
-                     mapping_gen = PolynomialMapping):
+                     right_edge = (1.0, 0.0)):
     """
     Create a mesh consisting of a line of elements starting at -1 and
     extending to +1 in x coordinate, y = 0.
@@ -41,18 +42,18 @@ def simple_line_mesh(n_elements,
         elements.append(Element(v0, v1))
 
     m = Mesh(vertices, elements)
-    apply_mapping(m, mapping_gen)
+    apply_mapping(m, PolynomialMapping)
     return m
 
-def circular_mesh(n_elements, radius):
+def circular_mesh(n_elements, radius, mapping_gen = PolynomialMapping):
     n_vertices = n_elements
 
-    t = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
-    x_list = radius * np.cos(t)
-    y_list = radius * np.sin(t)
+    t_list = np.linspace(0, 2 * np.pi, n_vertices + 1)[:-1]
+    circle_func = lambda t: (radius * np.cos(t), radius * np.sin(t))
+    x_list, y_list = circle_func(t_list)
     vertices = []
-    for (x, y) in zip(x_list, y_list):
-        vertices.append(Vertex(np.array((x, y))))
+    for (x, y, t) in zip(x_list, y_list, t_list):
+        vertices.append(Vertex(np.array((x, y)), t))
 
     elements = []
     for i in range(0, n_elements - 1):
@@ -61,8 +62,9 @@ def circular_mesh(n_elements, radius):
         elements.append(Element(v0, v1))
     elements.append(Element(vertices[n_elements - 1], vertices[0]))
 
+
     m = Mesh(vertices, elements)
-    apply_mapping(m, PolynomialMapping)
+    apply_mapping(m, partial(mapping_gen, boundary_function = circle_func))
     return m
 
 def combine_meshes(mesh1, mesh2, ensure_continuity = False):

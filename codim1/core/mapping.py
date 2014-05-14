@@ -34,9 +34,11 @@ def distance_between_mappings(el1, el2):
 class PolynomialMapping(object):
     """
     This class manages the mapping between physical coordinates and reference
-    coordinates. In this case, the mapping is linear. However, the same
-    interface could be implemented for a variety of nonlinear mappings. The
-    simplest would be higher order polynomial mappings.
+    coordinates. Most of the time, this class will be used as a linear
+    mapping. However, if a curved mesh is desired, a higher degree mapping
+    can be used. Just specify degree > 1 and a boundary function. It
+    is also necessary to properly specify the vertex parameter for each
+    vertex. These will be linearly interpolated when a new point is added.
 
     Besides translating reference to physical points, the class also
     provides jacobians to be used when a change of variables is performed
