@@ -20,7 +20,9 @@ def from_vertices_and_etov(vertices, etov):
     return m
 
 def simple_line_mesh(n_elements,
-        left_edge = (-1.0, 0.0), right_edge = (1.0, 0.0)):
+                     left_edge = (-1.0, 0.0),
+                     right_edge = (1.0, 0.0),
+                     mapping_gen = PolynomialMapping):
     """
     Create a mesh consisting of a line of elements starting at -1 and
     extending to +1 in x coordinate, y = 0.
@@ -39,7 +41,7 @@ def simple_line_mesh(n_elements,
         elements.append(Element(v0, v1))
 
     m = Mesh(vertices, elements)
-    apply_mapping(m, PolynomialMapping)
+    apply_mapping(m, mapping_gen)
     return m
 
 def circular_mesh(n_elements, radius):

@@ -3,10 +3,10 @@ from segment_distance import segments_distance
 from basis_funcs import BasisFunctions
 from codim1.fast_lib import MappingEval
 
-def apply_mapping(mesh, mapping_type):
+def apply_mapping(mesh, mapping_gen):
     """ Apply the same mapping to all elements in a mesh. """
     for e in mesh.elements:
-        e.mapping = mapping_type(e)
+        e.mapping = mapping_gen(e)
 
 def distance_between_mappings(el1, el2):
     """
@@ -42,9 +42,16 @@ class PolynomialMapping(object):
     provides jacobians to be used when a change of variables is performed
     under an integral. Normal vectors are also provided.
     """
-    def __init__(self, element, degree = 1):
+    def __init__(self, element, degree = 1, boundary_function = None):
+        if degree > 1 and boundary_function is None:
+            raise Exception("Sorry. A boundary function is needed in" +
+                            " order to describe a higher order polynomial" +
+                            " mapping. Either choose degree = 1 or provide" +
+                            " a boundary function.")
+
         self.element = element
         self.basis_fncs = BasisFunctions.from_degree(degree)
+        self.boundary_function = boundary_function
 
         # Compute the coefficients of the mapping basis.
         self.compute_coefficients()
@@ -61,7 +68,11 @@ class PolynomialMapping(object):
         left_vertex = self.element.vertex1
         right_vertex = self.element.vertex2
         self.coefficients[:, 0] = left_vertex.loc
-        self.coefficients[:, 1] = right_vertex.loc
+        for i in range(1, self.basis_fncs.num_fncs - 1):
+            self.coefficients[:, i] =\
+                self.boundary_function(left_vertex, right_vertex,
+                                       self.basis_fncs.nodes[i])
+        self.coefficients[:, -1] = right_vertex.loc
 
     def get_physical_point(self, x_hat):
         """
