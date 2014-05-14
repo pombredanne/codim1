@@ -9,8 +9,8 @@ mpl.rcParams['lines.linewidth'] = 2
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements_surface = 60
-degree = 1
+n_elements_surface = 150
+degree = 2
 quad_min = degree + 1
 quad_mult = 3
 quad_max = quad_mult * degree
@@ -25,7 +25,7 @@ k_h = HypersingularKernel(shear_modulus, poisson_ratio)
 k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
 
-di = 0.4
+di = 0.2
 df = 1.4
 x_di = 0.0
 x_df = 1.0
@@ -48,7 +48,6 @@ right_surface = np.array((30.0, 0.3))
 mesh1 = simple_line_mesh(n_elements_surface, left_surface, rise_begin)
 mesh2 = simple_line_mesh(n_elements_surface, rise_begin, rise_end)
 mesh3 = simple_line_mesh(n_elements_surface / 3, rise_end, right_surface)
-import ipdb;ipdb.set_trace()
 mesh = combine_meshes(mesh1, combine_meshes(mesh2, mesh3),
                       ensure_continuity = True)
 tools.plot_mesh(mesh)

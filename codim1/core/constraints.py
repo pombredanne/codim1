@@ -17,10 +17,11 @@ def apply_average_constraint(matrix, rhs, mesh, bf, dh):
     kernel = MassMatrixKernel(0, 0)
     one = ConstantEval([1.0, 1.0])
     for k in range(mesh.n_elements):
+        e_k = mesh.elements[k]
         for i in range(bf.num_fncs):
             dof_x = dh.dof_map[0, k, i]
             dof_y = dh.dof_map[1, k, i]
-            integral = single_integral(mesh.mesh_eval,
+            integral = single_integral(e_k.mapping.eval,
                                        kernel,
                                        bf._basis_eval,
                                        one,

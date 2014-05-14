@@ -57,10 +57,8 @@ def test_higher_mesh_not_linear():
     assert(not m.is_linear)
 
 def test_higher_order_coeff_gen():
-    quad_map_gen = partial(PolynomialMapping,
-                           degree = 2
-                           boundary_function = )
-    m = circular_mesh(2, 1.0, bf)
+    quad_map_gen = partial(PolynomialMapping, degree = 2)
+    m = circular_mesh(2, 1.0, quad_map_gen)
     coeffs_exact = np.array([[1.0, 0.0, -1.0],
                              [0.0, 1.0, 0.0]])
     np.testing.assert_almost_equal(m.coefficients[:, 0, :], coeffs_exact)
