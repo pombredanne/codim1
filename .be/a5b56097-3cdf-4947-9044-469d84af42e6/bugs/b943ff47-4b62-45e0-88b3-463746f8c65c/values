@@ -26,21 +26,21 @@
 
 
 
-    "status": "closed", 
+    "status": "open", 
 
 
 
 
 
 
-    "summary": "Created some sort of controller class that turns BCs into a problem to be solved.", 
+    "summary": "Do a real convergence test. Confirm the orders on a smooth problem.", 
 
 
 
 
 
 
-    "time": "Mon, 24 Mar 2014 02:30:17 +0000"
+    "time": "Wed, 14 May 2014 02:02:18 +0000"
 
 
 

@@ -70,7 +70,14 @@ def test_apply_mapping():
         assert(m.elements[i].mapping.get_normal(0.5)[1] == 1)
 
 def test_get_linear_approx():
-    assert(True == "Write this test once nonlinear mappings are impl.")
+    m = simple_line_mesh(4)
+    apply_mapping(m, PolynomialMapping)
+    for i in range(4):
+        verts = m.elements[i].mapping.get_linear_approximation()
+        np.testing.assert_almost_equal(verts[0].loc,
+                                       m.elements[i].vertex1.loc)
+        np.testing.assert_almost_equal(verts[1].loc,
+                                       m.elements[i].vertex2.loc)
 
 def test_distance_between_mappings():
     m = simple_line_mesh(4)
