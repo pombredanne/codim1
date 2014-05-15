@@ -100,54 +100,6 @@ class PolynomialMapping(object):
         """
         return np.array(self.eval.get_normal(x_hat))
 
-    def in_element(self, point):
-        """
-        Returns whether the point is within the element specified
-        and the reference location of the point if it is within the
-        element.
-        The mapping from reference coordinates to physical coordinates
-        is:
-        x = CB\vec{\hat{x}}
-        where \vec{\hat{x}} is the reference coordinate to each relevant power
-        [\hat{x}^2, \hat{x}^1, 1.0]
-        B is a 3x3 matrix representing the basis function and
-        C is a 2x3 matrix containing the coefficients.
-        If we solve
-        \vec{\hat{x}} = (CB)^{-1}x
-        then the reference coordinate vector must be consistent for the
-        point to lie on the curve. And, for the point to be within the element,
-        \hat{x} must be within [0, 1].
-        """
-        x_coeffs = self.coefficients[0, :]
-        y_coeffs = self.coefficients[1, :]
-        basis_vals = self.basis_fncs.fncs
-        mapping_matrix = self.coefficients.dot(basis_vals)
-        x_hat_row_mapping_matrix = mapping_matrix[:, -2]
-        offset = mapping_matrix[:, -1]
-
-        old_settings = np.seterr(divide='ignore', invalid='ignore')
-        inv_x_hat_row_mapping_matrix = 1.0 / x_hat_row_mapping_matrix
-        x_hat = inv_x_hat_row_mapping_matrix * (point - offset)
-        np.seterr(**old_settings)
-
-        on_line = True
-        line_pt = 0.0
-        if x_hat[1] == x_hat[0]:
-            line_pt = x_hat[0]
-        elif np.isnan(x_hat[0]):
-            line_pt = x_hat[1]
-        elif np.isnan(x_hat[1]):
-            line_pt = x_hat[0]
-        else:
-            on_line = False
-
-        if on_line:
-            on_segment = (line_pt >= 0.0) and (line_pt <= 1.0)
-        else:
-            on_segment = False
-
-        return on_segment, line_pt
-
     def get_linear_approximation(self):
         """
         Computes a small number of linear segments that approximate this

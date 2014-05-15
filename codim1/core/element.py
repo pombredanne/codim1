@@ -17,6 +17,7 @@ class Element(object):
     def __init__(self, vertex1, vertex2):
         self.reinit(vertex1, vertex2)
         self.mapping = "Undefined mapping. Apply a mapping!"
+        self.basis = "Undefined basis. Apply a basis!"
 
     def reinit(self, vertex1, vertex2):
         self.vertex1 = vertex1
