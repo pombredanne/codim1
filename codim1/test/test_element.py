@@ -1,11 +1,12 @@
 import numpy as np
 from codim1.core import *
 
-def test_element_mapping_init():
+def test_element_init():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
     e = Element(a, b)
     assert(type(e.mapping) == str)
+    assert(type(e.basis) == str)
 
 def test_element_id():
     a = Vertex(np.ones(2))

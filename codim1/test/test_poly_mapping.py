@@ -67,18 +67,3 @@ def test_higher_order_normal():
     x_hat = np.linspace(0, 1, 100)
     normal = m.elements[0].mapping.get_normal(0.5)
     np.testing.assert_almost_equal(normal, (0.0, -1.0))
-
-
-def test_in_element_quadratic():
-    quad_map_gen = partial(PolynomialMapping, degree = 2)
-    m = circular_mesh(2, 1.0, quad_map_gen)
-    import ipdb;ipdb.set_trace()
-    assert(m.elements[0].mapping.in_element((0.0, 1.0))[0])
-    assert(not lm.in_element((0.5, 0.0))[0])
-    assert(not lm.in_element((0.5, 0.5))[0])
-
-def test_in_element_corner():
-    quad_map_gen = partial(PolynomialMapping, degree = 2)
-    m = circular_mesh(2, 1.0, quad_map_gen)
-    assert(m.elements[0].mapping.in_element((1.0, 0.0))[0])
-    assert(not m.elements[0].mapping.in_element((1.01, 0.0))[0])

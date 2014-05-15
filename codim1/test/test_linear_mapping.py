@@ -2,34 +2,6 @@ import numpy as np
 import warnings
 from codim1.core import *
 
-def test_in_element_doesnt_break_warnings():
-    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
-    lm = PolynomialMapping(m.elements[0])
-    lm.in_element((-0.5, 0.0))
-    with warnings.catch_warnings(record=True) as w:
-        a = np.ones(2) / np.zeros(2)
-    assert(len(w) == 1)
-
-def test_in_element():
-    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
-    lm = PolynomialMapping(m.elements[0])
-    assert(lm.in_element((-0.5, 0.0))[0])
-    assert(not lm.in_element((0.5, 0.0))[0])
-    assert(not lm.in_element((0.5, 0.5))[0])
-
-def test_in_element_diag():
-    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
-    lm = PolynomialMapping(m.elements[0])
-    assert(lm.in_element((-0.5, 0.5))[0])
-    assert(not lm.in_element((0.5, 0.0))[0])
-    assert(not lm.in_element((0.5, 0.5))[0])
-
-def test_in_element_corner():
-    m = simple_line_mesh(2, (-1.0, 1.0), (1.0, -1.0))
-    lm = PolynomialMapping(m.elements[1])
-    assert(lm.in_element((1.0, -1.0))[0])
-    assert(not lm.in_element((1.01, -1.0))[0])
-
 def test_jacobian_type():
     m = simple_line_mesh(1)
     lm = PolynomialMapping(m.elements[0])
