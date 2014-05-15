@@ -33,7 +33,7 @@ def simple_line_mesh(n_elements,
     y_list = np.linspace(left_edge[1], right_edge[1], n_vertices)
     vertices = []
     for (x, y) in zip(x_list, y_list):
-        vertices.append(Vertex(np.array((x, y))))
+        vertices.append(Vertex(np.array((x, y)), x))
 
     elements = []
     for i in range(0, n_elements):
