@@ -69,11 +69,13 @@ class PolynomialMapping(object):
         self.coefficients = np.empty((2, self.basis_fncs.num_fncs))
         left_vertex = self.element.vertex1
         right_vertex = self.element.vertex2
+        left_param = left_vertex.param
+        right_param = right_vertex.param
         self.coefficients[:, 0] = left_vertex.loc
         for i in range(1, self.basis_fncs.num_fncs - 1):
-            self.coefficients[:, i] =\
-                self.boundary_function(left_vertex, right_vertex,
-                                       self.basis_fncs.nodes[i])
+            x_hat = self.basis_fncs.nodes[i]
+            t = (1 - x_hat) * left_param + x_hat * right_param
+            self.coefficients[:, i] = self.boundary_function(t)
         self.coefficients[:, -1] = right_vertex.loc
 
     def get_physical_point(self, x_hat):
@@ -103,7 +105,6 @@ class PolynomialMapping(object):
         Returns whether the point is within the element specified
         and the reference location of the point if it is within the
         element.
-        The probably suboptimal method for a quadratic mesh:
         The mapping from reference coordinates to physical coordinates
         is:
         x = CB\vec{\hat{x}}
@@ -116,14 +117,11 @@ class PolynomialMapping(object):
         then the reference coordinate vector must be consistent for the
         point to lie on the curve. And, for the point to be within the element,
         \hat{x} must be within [0, 1].
-        This should work with some minor modifications for higher order
-        elements.
         """
         x_coeffs = self.coefficients[0, :]
         y_coeffs = self.coefficients[1, :]
         basis_vals = self.basis_fncs.fncs
-        coeffs_matrix = np.vstack((x_coeffs, y_coeffs))
-        mapping_matrix = coeffs_matrix.dot(basis_vals)
+        mapping_matrix = self.coefficients.dot(basis_vals)
         x_hat_row_mapping_matrix = mapping_matrix[:, -2]
         offset = mapping_matrix[:, -1]
 
