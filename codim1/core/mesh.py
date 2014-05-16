@@ -1,5 +1,20 @@
 from element import Vertex, Element
 
+class MeshIterator(object):
+    def __init__(self, mesh):
+        self.mesh = mesh
+        self.cur_element_idx = 0
+        self.cur_element = mesh.elements[0]
+
+    def next(self):
+        self.cur_element_idx += 1
+        if self.cur_element_idx > self.mesh.n_elements:
+            raise StopIteration
+        old_element = self.cur_element
+        if self.cur_element_idx < self.mesh.n_elements:
+            self.cur_element = self.mesh.elements[self.cur_element_idx]
+        return old_element
+
 class Mesh(object):
     """
     A class for managing a one dimensional mesh within a two dimensional
@@ -99,3 +114,6 @@ class Mesh(object):
             return self.elements[k].neighbors_right
         raise Exception('When calling get_neighbors, direction should be '
                         '\'left\' or \'right\'')
+
+    def __iter__(self):
+        return MeshIterator(self)

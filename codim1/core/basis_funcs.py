@@ -4,6 +4,13 @@ import copy
 from codim1.fast_lib import PolyBasisEval, FuncEval,\
                             GradientBasisEval, SolutionEval
 
+"""
+This stuff should be reworked so that basis functions exist elementwise.
+
+Use another function like apply_mapping that applies a basis function to each
+member of an iterable.
+"""
+
 class Function(object):
     """
     A thin wrapper around a normal python function in order to trick all
@@ -37,12 +44,12 @@ class Solution(object):
 
 class BasisFunctions(object):
     """
-        This class handles interactions with Lagrange polynomials defined on
-        the unit reference interval [0, 1].
-        The basis functions are defined such that
-        \hat{\phi}_i(\hat{x}) = \phi_i(x)
-        In other words, there is no transformation factor between reference
-        and physical space. So, there is no chain rule contribution.
+    This class handles interactions with Lagrange polynomials defined on
+    the unit reference interval [0, 1].
+    The basis functions are defined such that
+    \hat{\phi}_i(\hat{x}) = \phi_i(x)
+    In other words, there is no transformation factor between reference
+    and physical space. So, there is no chain rule contribution.
     """
     @classmethod
     def from_function(cls, f):

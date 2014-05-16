@@ -1,6 +1,18 @@
 import numpy as np
 from math import sqrt
 
+"""
+I think that integration operations should become element-wise.
+The integration controller should be a "mediator" between the
+basis functions, the boundary conditions, the kernel, and the mapping.
+
+These are the four pieces of information required to integrate something.
+mapping and basis are stored locally on an element.
+What to integrate is handled locally by each type of integrator.
+
+This will massively simplify most of the assembly routines.
+"""
+
 class Vertex(object):
     """Very simple class to allow avoiding some repeated math on vertices."""
     def __init__(self, loc, param = 0):
@@ -42,3 +54,7 @@ class Element(object):
 
     def set_id(self, id):
         self.id = id
+
+def apply_to_elements(element_list, property_name, value_gen):
+    for e in element_list:
+        e.data[property_name] = value_gen(e)
