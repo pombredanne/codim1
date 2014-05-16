@@ -1,9 +1,18 @@
 import numpy as np
 
+from codim1.core.element import Element
 from codim1.core.mesh import Mesh
 from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
                                  circular_mesh, from_vertices_and_etov
+
+def test_iterate_mesh():
+    m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    count = 0
+    for cell in m:
+        assert(type(cell) == Element)
+        count += 1
+    assert(count == 2)
 
 def test_get_neighbors():
     m = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))

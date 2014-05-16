@@ -1,6 +1,11 @@
 import numpy as np
 from codim1.core import *
 
+def test_apply():
+    # TODO: group all of the apply things (basis, mapping, BCs) into
+    # one apply function
+    pass
+
 def test_element_init():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
