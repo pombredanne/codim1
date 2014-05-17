@@ -1,8 +1,3 @@
-
-class BC(object):
-    def __init__(self):
-        pass
-
 """
 Types of BCs
 Traction
@@ -28,6 +23,21 @@ Pass in an element and a reference location?
 The mapping can be used to get the physical point
 Need a behind-the-scenes way of preventing the mapping from recomputing
 the physical point each time, maybe just pass the physical point?
-
-
+In an ideal world, we can exactly precompute all the physical points.
+Maybe this is the easiest route... in such a world, the mapping functions do
+not actually ever do any work during the integration routines. they simply
+pop out precomputed values
 """
+
+class ConstantBC(object):
+    def __init__(self, type, value, element):
+        self.type = type
+        self.value = value
+        self.element = element
+
+    def get_value(self, x_hat):
+        return self.value
+
+class ZeroBC(ConstantBC):
+    def __init__(self, type, element):
+        super(ZeroBC, self).__init__(type, 0, element)

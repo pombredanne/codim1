@@ -28,8 +28,16 @@ class Vertex(object):
 class Element(object):
     def __init__(self, vertex1, vertex2):
         self.reinit(vertex1, vertex2)
+        # An alternative to declaring these variables here would be to
+        # create some way of copying the structure of a mesh and store each
+        # piece in its relevant action class (dofs in DOFHandler, etc)
         self.mapping = "Undefined mapping. Apply a mapping!"
         self.basis = "Undefined basis. Apply a basis!"
+        self.bc = "Undefined boundary conditions. Apply a BC!"
+        self.continuous = "Undefined continuity. Set to True or False!"
+        self.dofs = "Undefined dof list. Use a DOFHandler."
+        self.dofs_initialized = False
+        self.data = dict()
 
     def reinit(self, vertex1, vertex2):
         self.vertex1 = vertex1
@@ -55,6 +63,11 @@ class Element(object):
     def set_id(self, id):
         self.id = id
 
-def apply_to_elements(element_list, property_name, value_gen):
+def apply_to_elements(element_list, property_name,
+                      value_gen, non_gen = False):
+    if non_gen:
+        value_gen_fnc = lambda e: value_gen
+    else:
+        value_gen_fnc = value_gen
     for e in element_list:
-        e.data[property_name] = value_gen(e)
+        e.__dict__[property_name] = value_gen_fnc(e)

@@ -5,14 +5,15 @@
 
 //TODO: Play with some strategy pattern ideas for making this flexible
 std::vector<std::vector<double> >
-double_integral(MappingEval& k_mapping_eval, 
-                MappingEval& l_mapping_eval,  
+double_integral(MappingEval& test_mapping_eval, 
+                MappingEval& soln_mapping_eval,  
                 Kernel& kernel, 
-                BasisEval& k_basis_eval,
-                BasisEval& l_basis_eval,
-                QuadratureInfo& k_quadrature,
-                std::vector<QuadratureInfo> l_quadrature,
-                int k, int i, int l, int j)
+                BasisEval& test_basis_eval,
+                BasisEval& soln_basis_eval,
+                QuadratureInfo& test_quadrature,
+                std::vector<QuadratureInfo> soln_quadrature,
+                int test_basis_idx,
+                int soln_basis_idx)
 {
     std::vector<std::vector<double> > result(2);
     std::vector<double> result_x(2);
@@ -23,77 +24,78 @@ double_integral(MappingEval& k_mapping_eval,
     
     // Jacobian determinants are necessary to scale the integral with the
     // change of variables. 
-    double k_jacobian, l_jacobian;
+    double test_jacobian, soln_jacobian;
 
-    // The l_normal is needed for the traction kernel -- the solution normal.
-    // The k_normal is normally needed for the adjoint traction kernel
+    // The soln_normal is needed for the traction kernel -- the solution normal.
+    // The test_normal is normally needed for the adjoint traction kernel
     // and for the hypersingular kernel -- the source normal.
-    std::vector<double> k_normal, l_normal; 
+    std::vector<double> test_normal, soln_normal; 
 
     // The basis functions are evaluated on each of the elements
-    std::vector<double> k_basis_val, l_basis_val;
+    std::vector<double> test_basis_val, soln_basis_val;
 
     // Evaluating the kernel function requires knowledge of the physical
     // location of each quadrature point.
-    std::vector<double> k_phys_pt, l_phys_pt;
+    std::vector<double> test_phys_pt, soln_phys_pt;
 
     std::vector<double> r(2);
     double kernel_val;
 
 
-    k_jacobian = k_mapping_eval.get_jacobian(0.0);
-    l_jacobian = l_mapping_eval.get_jacobian(0.0);
-    k_normal = k_mapping_eval.get_normal(0.0);
-    l_normal = l_mapping_eval.get_normal(0.0);  
-    k_jacobian *= k_basis_eval.chain_rule(k_jacobian);
-    l_jacobian *= l_basis_eval.chain_rule(l_jacobian);
+    test_jacobian = test_mapping_eval.get_jacobian(0.0);
+    soln_jacobian = soln_mapping_eval.get_jacobian(0.0);
+    test_normal = test_mapping_eval.get_normal(0.0);
+    soln_normal = soln_mapping_eval.get_normal(0.0);  
+    test_jacobian *= test_basis_eval.chain_rule(test_jacobian);
+    soln_jacobian *= soln_basis_eval.chain_rule(soln_jacobian);
 
-    const int num_k_pts = k_quadrature.x.size();
-    for(int q_k_idx = 0; q_k_idx < num_k_pts; q_k_idx++)
+    const int num_test_pts = test_quadrature.x.size();
+    for(int q_test_idx = 0; q_test_idx < num_test_pts; q_test_idx++)
     {
-        const double q_pt_k = k_quadrature.x[q_k_idx];
-        const double q_w_k = k_quadrature.w[q_k_idx];
+        const double q_pt_test = test_quadrature.x[q_test_idx];
+        const double q_w_test = test_quadrature.w[q_test_idx];
 
         // Translate from reference segment coordinates to 
         // real, physical coordinates
-        k_phys_pt = k_mapping_eval.get_physical_point(q_pt_k);
+        test_phys_pt = test_mapping_eval.get_physical_point(q_pt_test);
 
         // The basis functions should be evaluated on reference
         // coordinates
-        k_basis_val = k_basis_eval.evaluate_vector(k, i, q_pt_k, k_phys_pt);
+        test_basis_val = test_basis_eval.\
+            evaluate_vector(test_basis_idx, q_pt_test, test_phys_pt);
 
         // If the integrand is singular, we need to use the appropriate
         // inner quadrature method. Which points the inner quadrature
         // chooses will depend on the current outer quadrature point
         // which will be the point of singularity, assuming same element
-        const QuadratureInfo cur_l_quad = l_quadrature[q_k_idx];
-        const int num_l_pts = cur_l_quad.x.size();
-        for(int q_l_idx = 0; q_l_idx < num_l_pts; q_l_idx++)
+        const QuadratureInfo cur_soln_quad = soln_quadrature[q_test_idx];
+        const int num_soln_pts = cur_soln_quad.x.size();
+        for(int q_soln_idx = 0; q_soln_idx < num_soln_pts; q_soln_idx++)
         {
-            const double q_pt_l = cur_l_quad.x[q_l_idx];
-            const double q_w_l = cur_l_quad.w[q_l_idx];
+            const double q_pt_soln = cur_soln_quad.x[q_soln_idx];
+            const double q_w_soln = cur_soln_quad.w[q_soln_idx];
 
             // TODO: Refactor idea: make a "get_quad_point_data" function.
 
             // Translate from reference segment coordinates to 
             // real, physical coordinates
-            l_phys_pt = l_mapping_eval.get_physical_point(q_pt_l);
+            soln_phys_pt = soln_mapping_eval.get_physical_point(q_pt_soln);
 
             // The basis functions should be evaluated on reference
             // coordinates
-            l_basis_val = l_basis_eval.evaluate_vector(l, j,
-                                                       q_pt_l, l_phys_pt);
+            soln_basis_val = soln_basis_eval.\
+                evaluate_vector(soln_basis_idx, q_pt_soln, soln_phys_pt);
 
             // Separation of the two quadrature points, use real,
             // physical coordinates!
             // From source to solution.
-            r[0] = l_phys_pt[0] - k_phys_pt[0];
-            r[1] = l_phys_pt[1] - k_phys_pt[1];
+            r[0] = soln_phys_pt[0] - test_phys_pt[0];
+            r[1] = soln_phys_pt[1] - test_phys_pt[1];
 
             // Determine the various location parameters that the kernels
             // need -- dr, drdn, drdm, dist
-            KernelData kernel_data =
-                kernel.get_double_integral_data(r, k_normal, l_normal);
+            KernelData kernel_data = kernel.\
+                get_double_integral_data(r, test_normal, soln_normal);
 
             // Account for the vector form of the problem.
             // and weight by the quadrature values and the jacobian
@@ -104,8 +106,8 @@ double_integral(MappingEval& k_mapping_eval,
                     // Actually perform the integration.
                     kernel_val = kernel.call(kernel_data, idx_x, idx_y);
                     result[idx_x][idx_y] += kernel_val * 
-                        k_basis_val[idx_x] * l_basis_val[idx_y] *
-                        k_jacobian * l_jacobian * q_w_k * q_w_l;
+                        test_basis_val[idx_x] * soln_basis_val[idx_y] *
+                        test_jacobian * soln_jacobian * q_w_test * q_w_soln;
                 }
             }
         }
@@ -127,12 +129,13 @@ double_integral(MappingEval& k_mapping_eval,
  * a call method taking a separation input. K(x) vs. K(x - y)
  */
 std::vector<std::vector<double> >
-single_integral(MappingEval& k_mapping_eval, 
+single_integral(MappingEval& test_mapping_eval, 
                 Kernel& kernel, 
-                BasisEval& i_basis_eval,
-                BasisEval& j_basis_eval,
+                BasisEval& test_basis_eval,
+                BasisEval& soln_basis_eval,
                 QuadratureInfo& quadrature,
-                int k, int i, int j)
+                int test_basis_idx,
+                int soln_basis_idx)
 {
     std::vector<std::vector<double> > result(2);
     std::vector<double> result_x(2);
@@ -142,14 +145,14 @@ single_integral(MappingEval& k_mapping_eval,
     result[1] = result_y;
 
     double jacobian;
-    std::vector<double> k_normal;
-    jacobian = k_mapping_eval.get_jacobian(0.0);
-    k_normal = k_mapping_eval.get_normal(0.0);
-    jacobian *= i_basis_eval.chain_rule(jacobian);
-    jacobian *= j_basis_eval.chain_rule(jacobian);
+    std::vector<double> test_normal;
+    jacobian = test_mapping_eval.get_jacobian(0.0);
+    test_normal = test_mapping_eval.get_normal(0.0);
+    jacobian *= test_basis_eval.chain_rule(jacobian);
+    jacobian *= soln_basis_eval.chain_rule(jacobian);
 
     std::vector<double> phys_pt;
-    std::vector<double> i_basis_val, j_basis_val;
+    std::vector<double> test_basis_val, soln_basis_val;
     std::vector<double> r(2);
     double kernel_val;
 
@@ -159,15 +162,17 @@ single_integral(MappingEval& k_mapping_eval,
         const double q_pt = quadrature.x[q_idx];
         const double q_w = quadrature.w[q_idx];
 
-        phys_pt = k_mapping_eval.get_physical_point(q_pt);
+        phys_pt = test_mapping_eval.get_physical_point(q_pt);
 
-        i_basis_val = i_basis_eval.evaluate_vector(k, i, q_pt, phys_pt);
-        j_basis_val = j_basis_eval.evaluate_vector(k, j, q_pt, phys_pt);
+        test_basis_val = test_basis_eval.\
+            evaluate_vector(test_basis_idx, q_pt, phys_pt);
+        soln_basis_val = soln_basis_eval.\
+            evaluate_vector(soln_basis_idx, q_pt, phys_pt);
 
         // Determine the various location parameters that the kernels
         // need -- dr, drdn, drdm, dist
         KernelData kernel_data =
-            kernel.get_interior_integral_data(phys_pt, k_normal);
+            kernel.get_interior_integral_data(phys_pt, test_normal);
 
             // Account for the vector form of the problem.
             // and weight by the quadrature values and the jacobian
@@ -178,7 +183,7 @@ single_integral(MappingEval& k_mapping_eval,
                 // Actually perform the integration.
                 kernel_val = kernel.call(kernel_data, idx_x, idx_y);
                 result[idx_x][idx_y] += kernel_val * 
-                    i_basis_val[idx_x] * j_basis_val[idx_y] *
+                    test_basis_val[idx_x] * soln_basis_val[idx_y] *
                     jacobian * q_w;
             }
         }

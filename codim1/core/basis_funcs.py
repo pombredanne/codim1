@@ -2,13 +2,14 @@ import numpy as np
 import scipy.interpolate as spi
 import copy
 from codim1.fast_lib import PolyBasisEval, FuncEval,\
-                            GradientBasisEval, SolutionEval
+                            GradientBasisEval
 
 """
 This stuff should be reworked so that basis functions exist elementwise.
 
-Use another function like apply_mapping that applies a basis function to each
-member of an iterable.
+Use another function like apply_mapping that applies a basis function to each member of an iterable.
+
+This is partially (mostly) done.
 """
 
 class Function(object):
@@ -21,26 +22,8 @@ class Function(object):
         self.num_fncs = 1
         self._basis_eval = FuncEval(f)
 
-    def evaluate(self, element_idx, i, x_hat, x):
+    def evaluate(self, i, x_hat, x):
         return self.f(x)
-
-class Solution(object):
-    """
-    Represents a solution by some coefficients multiplied by a set of
-    basis functions defined on the reference element
-    """
-    def __init__(self, basis, dof_handler, coeffs):
-        self.dof_handler = dof_handler
-        self.basis = basis
-        self.coeffs = coeffs
-        self.num_fncs = basis.num_fncs
-        self._basis_eval = SolutionEval(self.basis._basis_eval, self.coeffs,
-                                        self.dof_handler.dof_map)
-
-    def evaluate(self, element_idx, i, x_hat, x):
-        val_x = self._basis_eval.evaluate(element_idx, i, x_hat, x, 0)
-        val_y = self._basis_eval.evaluate(element_idx, i, x_hat, x, 1)
-        return np.array([val_x, val_y])
 
 class BasisFunctions(object):
     """
@@ -51,6 +34,8 @@ class BasisFunctions(object):
     In other words, there is no transformation factor between reference
     and physical space. So, there is no chain rule contribution.
     """
+    #TODO: It would be cool to make BasisFunctions iterable and return an
+    # individual function...
     @classmethod
     def from_function(cls, f):
         return Function(f)
@@ -71,7 +56,9 @@ class BasisFunctions(object):
             Builds the Lagrange interpolating polynomials with nodes at the
             points specified.
         """
+        # TODO: remove num_fncs
         self.num_fncs = len(nodes)
+        self.n_fncs = len(nodes)
         self.nodes = copy.copy(nodes)
         self.fncs = np.empty((self.num_fncs, self.num_fncs))
         self.derivs = np.empty((self.num_fncs, self.num_fncs))
@@ -90,26 +77,26 @@ class BasisFunctions(object):
     def get_gradient_basis(self, mesh):
         return _GradientBasisFunctions(self.nodes, self.derivs, mesh)
 
-    def evaluate(self, element_idx, i, x_hat, x):
+    def evaluate(self, i, x_hat, x):
         """
         Evaluate a basis function at a point in reference space.
 
         Calls into the fast c++ extension.
         """
-        val = self._basis_eval.evaluate(element_idx, i, x_hat, [0, 0], 0)
+        val = self._basis_eval.evaluate(i, x_hat, [0, 0], 0)
         return np.array([val, val])
 
     def chain_rule(self, jacobian):
         return self._basis_eval.chain_rule(jacobian)
 
-    def evaluate_derivative(self, element_idx, i, x_hat, x):
+    def evaluate_derivative(self, i, x_hat, x):
         """
         Evaluate the derivative in reference space. Note that this does not
         include the chain rule term that would arise if the derivative were
         taken in physical space. Use _GradientBasisFunctions for that
         purpose.
         """
-        val = self._deriv_eval.evaluate(element_idx, i, x_hat, [0, 0], 0)
+        val = self._deriv_eval.evaluate(i, x_hat, [0, 0], 0)
         return np.array([val, val])
 
 class _GradientBasisFunctions(BasisFunctions):

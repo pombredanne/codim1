@@ -18,12 +18,7 @@ quad_logr = quad_mult * degree + (degree % 2)
 quad_oneoverr = quad_mult * degree + (degree % 2)
 interior_quad_pts = 13
 
-k_d = DisplacementKernel(shear_modulus, poisson_ratio)
-k_t = TractionKernel(shear_modulus, poisson_ratio)
-k_tp = AdjointTractionKernel(shear_modulus, poisson_ratio)
-k_h = HypersingularKernel(shear_modulus, poisson_ratio)
-k_sh = SemiRegularizedHypersingularKernel(shear_modulus, poisson_ratio)
-k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
+ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
 di = 0.2
 df = 1.4
@@ -46,7 +41,7 @@ rise_begin = np.array((0.0, 0.0))
 rise_end = np.array((3.0, 0.3))
 right_surface = np.array((30.0, 0.3))
 mesh1 = simple_line_mesh(n_elements_surface, left_surface, rise_begin)
-mesh2 = simple_line_mesh(n_elements_surface, rise_begin, rise_end)
+mesh2 = simple_line_mesh(n_elements_surface, risea_begin, rise_end)
 mesh3 = simple_line_mesh(n_elements_surface / 3, rise_end, right_surface)
 mesh = combine_meshes(mesh1, combine_meshes(mesh2, mesh3),
                       ensure_continuity = True)
@@ -70,10 +65,10 @@ dh = DOFHandler(mesh, bf)
 str_and_loc = [(-fault_tangential, left_end, fault_normal),
                (fault_tangential, right_end, fault_normal)]
 rhs_assembler = PointSourceRHS(mesh, bf.get_gradient_basis(mesh), dh, qs)
-rhs = -rhs_assembler.assemble_rhs(str_and_loc, k_rh)
+rhs = -rhs_assembler.assemble_rhs(str_and_loc, ek.k_rh)
 
 matrix_assembler = MatrixAssembler(mesh, bf.get_gradient_basis(mesh), dh, qs)
-matrix = matrix_assembler.assemble_matrix(k_rh)
+matrix = matrix_assembler.assemble_matrix(ek.k_rh)
 
 # The matrix produced by the hypersingular kernel is singular, so I need
 # to provide some further constraint in order to remove rigid body motions.

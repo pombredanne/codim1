@@ -18,11 +18,9 @@ std::vector<double>
     for(int i = 0; i < basis_eval.order; i++)
     {
         // This is assuming that the basis is the same for both dimensions
-        // in the mesh. This is a reasonable assumption.
-        // I pass 0 in as the element_idx because PolyBasisEval doesn't use
-        // element index. After full refactoring/redesign, this argument
-        // will be removed.
-        basis = evaluator.evaluate(0, i, x_hat, empty_vec, 0);
+        // in the mesh. This is a reasonable assumption and is enforced
+        // by the python interface layer.
+        basis = evaluator.evaluate(i, x_hat, empty_vec, 0);
         val[0] += coeffs[0][i] * basis;
         val[1] += coeffs[1][i] * basis;
     }

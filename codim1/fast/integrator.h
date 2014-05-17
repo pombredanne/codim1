@@ -25,7 +25,7 @@ double_integral(MappingEval& k_mesh_eval,
                 BasisEval& l_basis_eval,
                 QuadratureInfo& k_quadrature,
                 std::vector<QuadratureInfo> l_quadrature,
-                int k, int i, int l, int j);
+                int test_basis_idx, int soln_basis_idx);
 /*
  * Performs a single integral over one element. The operations are all 
  * almost identical to those in the double_integral method. Thus, read 
@@ -44,5 +44,5 @@ single_integral(MappingEval& k_mesh_eval,
                 BasisEval& i_basis_eval,
                 BasisEval& j_basis_eval,
                 QuadratureInfo& quadrature,
-                int k, int i, int j);
+                int test_basis_idx, int soln_basis_idx);
 #endif

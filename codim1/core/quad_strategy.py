@@ -79,7 +79,7 @@ class QuadStrategy(object):
         """Get whatever quadrature rule is used for a non singular case."""
         return self.highest_nonsingular
 
-    def get_quadrature(self, singularity_type, k, l):
+    def get_quadrature(self, singularity_type, e_k, e_l):
         """
         This function computes which quadrature formula should be used in
         which case.
@@ -87,6 +87,8 @@ class QuadStrategy(object):
         and all edges
         A Piessen method is used for 1/r singularities.
         """
+        k = e_k.id
+        l = e_l.id
 
         # The double integration methods require one quadrature formula
         # per point of the outer quadrature. So, if we want them to all

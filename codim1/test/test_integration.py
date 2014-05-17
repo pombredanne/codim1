@@ -19,21 +19,21 @@ def test_exact_dbl_integrals_H_same_element():
                            msh.elements[0].mapping.eval,
                            kernel,
                            bf._basis_eval, bf._basis_eval, qo,
-                           qi, 0, 0, 0, 0)
+                           qi, 0, 0)
     np.testing.assert_almost_equal(H_00, np.zeros((2, 2)), 3)
 
     H_11 = double_integral(msh.elements[0].mapping.eval,
                            msh.elements[0].mapping.eval,
                            kernel,
                            bf._basis_eval, bf._basis_eval, qo,
-                           qi, 0, 1, 0, 1)
+                           qi, 1, 1)
     np.testing.assert_almost_equal(H_11, np.zeros((2, 2)), 3)
 
     H_01 = double_integral(msh.elements[0].mapping.eval,
                            msh.elements[0].mapping.eval,
                            kernel, bf._basis_eval,
                            bf._basis_eval, qo,
-                           qi, 0, 0, 0, 1)
+                           qi, 0, 1)
     H_01_exact = np.array([[0.0, 1 / (6 * np.pi)],
                            [-1 / (6 * np.pi), 0.0]])
     np.testing.assert_almost_equal(H_01, H_01_exact, 3)
@@ -42,7 +42,7 @@ def test_exact_dbl_integrals_H_same_element():
                            msh.elements[0].mapping.eval,
                            kernel, bf._basis_eval,
                            bf._basis_eval, qo,
-                           qi, 0, 1, 0, 0)
+                           qi, 1, 0)
     H_10_exact = np.array([[0.0, -1 / (6 * np.pi)],
                            [1 / (6 * np.pi), 0.0]])
     np.testing.assert_almost_equal(H_10, H_10_exact, 3)
@@ -57,19 +57,19 @@ def test_exact_dbl_integrals_G_same_element():
     kernel = DisplacementKernel(1.0, 0.25)
     G_00 = double_integral(msh.elements[0].mapping.eval,
             msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 0, 0, 0)
+                           bf._basis_eval, qo, qi, 0, 0)
     np.testing.assert_almost_equal(G_00, [[0.165187, 0], [0, 0.112136]], 4)
     G_10 = double_integral(msh.elements[0].mapping.eval,
             msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 1, 0, 0)
+                           bf._basis_eval, qo, qi, 1, 0)
     np.testing.assert_almost_equal(G_10, [[0.112136, 0], [0, 0.0590839]], 4)
     G_01 = double_integral(msh.elements[0].mapping.eval,
                 msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 0, 0, 1)
+                           bf._basis_eval, qo, qi, 0, 1)
     np.testing.assert_almost_equal(G_01, [[0.112136, 0], [0, 0.0590839]], 4)
     G_11 = double_integral(msh.elements[0].mapping.eval,
                     msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 1, 0, 1)
+                           bf._basis_eval, qo, qi, 1, 1)
     np.testing.assert_almost_equal(G_11, [[0.165187, 0], [0, 0.112136]], 4)
 
 
@@ -82,13 +82,13 @@ def test_exact_dbl_integrals_G_different_element():
     kernel = DisplacementKernel(1.0, 0.25)
 
     G_00 = double_integral(msh.elements[0].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 0, 1, 0)
+                           bf._basis_eval, qo, qi, 0, 0)
     G_10 = double_integral(msh.elements[0].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 1, 1, 0)
+                           bf._basis_eval, qo, qi, 1, 0)
     G_01 = double_integral(msh.elements[0].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 0, 1, 1)
+                           bf._basis_eval, qo, qi, 0, 1)
     G_11 = double_integral(msh.elements[0].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
-                           bf._basis_eval, qo, qi, 0, 1, 1, 1)
+                           bf._basis_eval, qo, qi, 1, 1)
 
     np.testing.assert_almost_equal(G_10,
                                    [[0.02833119, 0], [0, 0.01506828]], 4)
@@ -107,11 +107,11 @@ def test_realistic_double_integral_symmetry():
     # fnc = lambda r, n: 1 / r[0]
     one = double_integral(msh.elements[1].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
                           bf._basis_eval, qs.get_simple().quad_info,
-                          [q.quad_info for q in qs.quad_logr], 1, 0, 1, 1)
+                          [q.quad_info for q in qs.quad_logr], 0, 1)
 
     two = double_integral(msh.elements[1].mapping.eval, msh.elements[1].mapping.eval, kernel, bf._basis_eval,
                           bf._basis_eval, qs.get_simple().quad_info,
-                          [q.quad_info for q in qs.quad_logr], 1, 1, 1, 0)
+                          [q.quad_info for q in qs.quad_logr], 1, 0)
     one = np.array(one)
     two = np.array(two)
     np.testing.assert_almost_equal(one, two)
@@ -123,7 +123,7 @@ def test_M_integral_same_dof():
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                              bf._basis_eval, q.quad_info, 0, 0, 0)
+                              bf._basis_eval, q.quad_info, 0, 0)
     # integral of (1-x)^2 from 0 to 1
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 3.0)
 
@@ -133,7 +133,7 @@ def test_M_integral_same_dof_with_jacobian():
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-                              bf._basis_eval, q.quad_info, 0, 0, 0)
+                              bf._basis_eval, q.quad_info, 0, 0)
     # Element size divided by two so the M value should be divided by two
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)
 
@@ -143,6 +143,6 @@ def test_M_integral_diff_dof():
     bf = basis_funcs.BasisFunctions.from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf._basis_eval,
-          bf._basis_eval, q.quad_info, 0, 0, 1)
+          bf._basis_eval, q.quad_info, 0, 1)
     # integral of (1-x)*x from 0 to 1
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)
