@@ -1,10 +1,21 @@
 import numpy as np
 from codim1.core import *
 
-def test_apply():
-    # TODO: group all of the apply things (basis, mapping, BCs) into
-    # one apply function
-    pass
+def test_apply_non_gen():
+    a = Vertex(np.ones(2))
+    b = Vertex(np.array([1.0, 0.0]))
+    e = Element(a, b)
+    bf = lambda e: BasisFunctions.from_degree(2)
+    apply_to_elements([e], "basis", bf)
+    assert(e.basis == bf)
+
+def test_apply_non_gen():
+    a = Vertex(np.ones(2))
+    b = Vertex(np.array([1.0, 0.0]))
+    e = Element(a, b)
+    bf = BasisFunctions.from_degree(2),
+    apply_to_elements([e], "basis", bf, non_gen = True)
+    assert(e.basis == bf)
 
 def test_element_init():
     a = Vertex(np.ones(2))
@@ -12,6 +23,8 @@ def test_element_init():
     e = Element(a, b)
     assert(type(e.mapping) == str)
     assert(type(e.basis) == str)
+    assert(type(e.bc) == str)
+    assert(type(e.continuous) == str)
 
 def test_element_id():
     a = Vertex(np.ones(2))

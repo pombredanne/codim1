@@ -44,6 +44,10 @@ class Mesh(object):
         # Update the adjacency lists of each element.
         self.compute_connectivity()
 
+        # Data required by other objects. These don't need to be initialized
+        # here, but will give nicer errors if they are.
+        self.total_dofs = "Total dofs not set. Initialize the mesh dofs!"
+
     def compute_connectivity(self):
         """Loop over elements and update neighbors."""
         # Determine which elements touch.

@@ -2,7 +2,7 @@ from math import cos, sin
 from functools import partial
 import numpy as np
 from mesh import Mesh
-from element import Element, Vertex
+from element import Element, Vertex, apply_to_elements
 from mapping import apply_mapping, PolynomialMapping
 from basis_funcs import BasisFunctions
 
@@ -90,4 +90,37 @@ def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     if ensure_continuity:
         result.condense_duplicate_vertices()
     return result
+
+def rect_mesh(n_elements_per_side, upper_left, lower_right, bc_gen):
+    """
+    Create a rectangular mesh with corners upper_left and lower_right.
+    The members of bc_types are expected to be functions that return
+    a boundary condition object that is applied to the edges.
+    bc_types[0] is applied to the bottom
+    bc_types[1] is applied to the right
+    bc_types[2] is applied to the left
+    bc_types[3]
+
+    This could be easily extended to make general polygons
+    """
+    lower_left = (upper_left[0], lower_right[1])
+    upper_right = (upper_left[1], lower_right[0])
+
+    # Create the segments counter clockwise
+    parts = [0] * 4
+    bottom = simple_line_mesh(n_elements_per_side, lower_left, lower_right)
+    right = simple_line_mesh(n_elements_per_side, lower_right, upper_right)
+    top = simple_line_mesh(n_elements_per_side, upper_right, upper_left)
+    left = simple_line_mesh(n_elements_per_side, upper_left, lower_left)
+
+    apply_to_elements(bottom, "bc", bc_gen["bottom"])
+    apply_to_elements(right, "bc", bc_gen["right"])
+    whole = combine_meshes(bottom, right)
+    apply_to_elements(left, "bc", bc_gen["left"])
+    whole = combine_meshes(whole, left)
+    apply_to_elements(top, "bc", bc_gen["top"])
+    whole = combine_meshes(whole, top)
+    whole.condense_duplicate_vertices()
+
+    return whole
 

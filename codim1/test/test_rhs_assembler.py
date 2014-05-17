@@ -21,9 +21,11 @@ correct_matrix = \
 def rhs_assembler():
     bf = BasisFunctions.from_degree(1)
     msh = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
-    dh = DOFHandler(msh, bf)
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", True, non_gen = True)
+    init_dofs(msh)
     qs = QuadStrategy(msh, 10, 10, 10, 10)
-    assembler = RHSAssembler(msh, bf, dh, qs)
+    assembler = RHSAssembler(msh, qs)
     return assembler
 
 def test_rhs_row_not_shared():
@@ -49,8 +51,8 @@ def test_rhs_row_shared():
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = BasisFunctions.from_function(f)
-    row_x, row_y = a.assemble_row(fnc, kernel, 0, 1)
-    row_x2, row_y2 = a.assemble_row(fnc, kernel, 1, 0)
+    row_x, row_y = a.assemble_row(a.mesh.elements[0], fnc, kernel, 1)
+    row_x2, row_y2 = a.assemble_row(a.mesh.elements[1], fnc, kernel, 0)
     row_x += row_x2
     row_y += row_y2
 

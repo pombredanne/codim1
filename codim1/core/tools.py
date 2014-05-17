@@ -64,19 +64,19 @@ def plot_matrix(M, title, show = True):
         plt.show()
 
 
-def interpolate(fnc, dof_handler, basis_funcs, mesh):
+def interpolate(fnc, mesh):
     """
     Interpolate the value of fnc onto the polynomial basis function space
     defined by basis_funcs and mesh. This simply sets the coefficient of each
     basis function to be the value of fnc at the node (where phi(x) = 1).
     """
-    result = np.empty(dof_handler.total_dofs)
+    result = np.empty(mesh.total_dofs)
     for k in range(mesh.n_elements):
         e = mesh.elements[k]
-        for i in range(basis_funcs.num_fncs):
-            dof_x = dof_handler.dof_map[0, k, i]
-            dof_y = dof_handler.dof_map[1, k, i]
-            ref_pt = basis_funcs.nodes[i]
+        for i in range(e.basis.num_fncs):
+            dof_x = e.dofs[0, i]
+            dof_y = e.dofs[1, i]
+            ref_pt = e.basis.nodes[i]
             node_pt = e.mapping.get_physical_point(ref_pt)
             normal = e.mapping.get_normal(ref_pt)
             f_val = fnc(node_pt, normal)
@@ -100,21 +100,23 @@ def evaluate_boundary_solution(points_per_element, soln, mesh):
         e = mesh.elements[k]
         for pt in np.linspace(0.0, 1.0, points_per_element):
             x.append(e.mapping.get_physical_point(pt))
-            u = evaluate_solution_on_element(k, pt, soln, mesh)
+            u = evaluate_solution_on_element(e, pt, soln)
             y.append(u)
     x = np.array(x)
     y = np.array(y)
     return x, y
 
-def evaluate_solution_on_element(element_idx, reference_point, soln, mesh):
-    e = mesh.elements[element_idx]
-    phys_pt = e.mapping.get_physical_point(reference_point)
+def evaluate_solution_on_element(element, reference_point, soln):
+    phys_pt = element.mapping.get_physical_point(reference_point)
     soln_x = 0.0
     soln_y = 0.0
     # The value is the sum over all the basis functions.
-    for i in range(soln.basis.num_fncs):
-        soln_x += soln.evaluate(element_idx, i, reference_point, phys_pt)[0]
-        soln_y += soln.evaluate(element_idx, i, reference_point, phys_pt)[1]
+    for i in range(element.basis.num_fncs):
+        dof_x = element.dofs[0, i]
+        dof_y = element.dofs[1, i]
+        # TODO: remove element_idx from basis_funcs!
+        soln_x += soln[dof_x] * element.basis.evaluate(i, reference_point, phys_pt)[0]
+        soln_y += soln[dof_y] * element.basis.evaluate(i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 
 # def interior_stresses(lower_left, upper_right, n_pts_per_dim,

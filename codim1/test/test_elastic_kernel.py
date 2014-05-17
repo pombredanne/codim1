@@ -8,6 +8,10 @@ from codim1.fast_lib import DisplacementKernel,\
 from codim1.core import *
 import numpy as np
 
+def test_kernel_set():
+    eks = ElasticKernelSet(1.0, 0.25)
+    assert(eks.k_d)
+
 def test_traction_kernel_elements():
     E = 1e5
     nu = 0.3
@@ -301,6 +305,7 @@ def test_hypersingular_vs_regularized_across_elements():
     np.testing.assert_almost_equal(a, b)
     np.testing.assert_almost_equal(b, c)
     np.testing.assert_almost_equal(a, c)
+
 
 if __name__ == "__main__":
     test_traction()

@@ -62,11 +62,6 @@ BOOST_PYTHON_MODULE(fast_lib)
             init<std::vector<double> >())
         .def("chain_rule", &ConstantEval::chain_rule)
         .def("evaluate", &ConstantEval::evaluate);
-    class_<SolutionEval, bases<BasisEval> >("SolutionEval",
-            init<PolyBasisEval&, std::vector<double>,
-                 std::vector<std::vector<std::vector<double> > > >())
-        .def("chain_rule", &SolutionEval::chain_rule)
-        .def("evaluate", &SolutionEval::evaluate);
 
     // Expose mesh calculation functions
     class_<MappingEval>("MappingEval",

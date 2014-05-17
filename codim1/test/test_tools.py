@@ -18,9 +18,11 @@ def test_interpolate():
     element_deg = 0
     msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
-    dh = DOFHandler(msh, bf, range(n_elements))
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
     fnc = lambda x, n: (x[0], x[1])
-    val = interpolate(fnc, dh, bf, msh)
+    val = interpolate(fnc, msh)
 
     # The second half should be zero, because simple_line_mesh is
     # completely on the x axis.
@@ -33,10 +35,12 @@ def test_evaluate_boundary_solution_easy():
     element_deg = 0
     msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
-    dh = DOFHandler(msh, bf, range(n_elements))
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+
     fnc = lambda x, n: (x[0], x[1])
-    solution_coeffs = interpolate(fnc, dh, bf, msh)
-    solution = Solution(bf, dh, solution_coeffs)
+    solution = interpolate(fnc, msh)
     x, soln = evaluate_boundary_solution(11, solution, msh)
     # Constant basis, so it should be 0.5 everywhere on the element [0,1]
     assert(x[-2][0] == 0.9)
@@ -48,11 +52,13 @@ def test_evaluate_solution_on_element():
     element_deg = 1
     msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
-    dh = DOFHandler(msh, bf, range(n_elements))
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+
     fnc = lambda x, n: (x[0], x[1])
-    solution_coeffs = interpolate(fnc, dh, bf, msh)
-    solution = Solution(bf, dh, solution_coeffs)
-    eval = evaluate_solution_on_element(1, 1.0, solution, msh)
+    solution = interpolate(fnc, msh)
+    eval = evaluate_solution_on_element(msh.elements[1], 1.0, solution)
     assert(eval[0] == 1.0)
     assert(eval[1] == 0.0)
 
@@ -63,10 +69,12 @@ def test_interpolate_evaluate_hard():
     element_deg = 6
     msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
-    dh = DOFHandler(msh, bf, range(n_elements))
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+
     fnc = lambda x, n: (x[0] ** 6, 0)
-    solution_coeffs = interpolate(fnc, dh, bf, msh)
-    solution = Solution(bf, dh, solution_coeffs)
+    solution = interpolate(fnc, msh)
     x, soln = evaluate_boundary_solution(5, solution, msh)
     assert(x[-2][0] == 0.9)
     np.testing.assert_almost_equal(soln[-2][0], (0.9 ** 6))
@@ -76,9 +84,11 @@ def test_interpolate_normal():
     element_deg = 0
     msh = simple_line_mesh(n_elements)
     bf = BasisFunctions.from_degree(element_deg)
-    dh = DOFHandler(msh, bf, range(n_elements))
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
     fnc = lambda x, n: (x[0] * n[0], x[1])
-    val = interpolate(fnc, dh, bf, msh)
+    val = interpolate(fnc, msh)
 
     # All zero!
     assert((val[:] == 0).all())

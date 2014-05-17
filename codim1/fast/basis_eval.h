@@ -17,13 +17,12 @@ class BasisEval
 
         /* Evaluate a basis function at a point.
          */
-        virtual double evaluate(int element_idx,
-                                int i, 
+        virtual double evaluate(int i, 
                                 double x_hat,
                                 std::vector<double> x,
                                 int d) = 0;
         virtual inline double chain_rule(double jacobian) {return 1.0;}
-        virtual std::vector<double> evaluate_vector(int element_idx, int i, 
+        virtual std::vector<double> evaluate_vector(int i, 
                                 double x_hat,
                                 std::vector<double> x) = 0;
 };
@@ -40,11 +39,11 @@ class FuncEval: public BasisEval
             this->function = function;
         }
         bp::object function;
-        virtual double evaluate(int element_idx, int i, 
+        virtual double evaluate(int i, 
                                 double x_hat,
                                 std::vector<double> x,
                                 int d);
-        virtual std::vector<double> evaluate_vector(int element_idx, int i, 
+        virtual std::vector<double> evaluate_vector(int i, 
                                 double x_hat,
                                 std::vector<double> x);
 };
@@ -58,10 +57,10 @@ class ConstantEval: public BasisEval
             this->values = values;
         }
 
-        virtual double evaluate(int element_idx, int i, double x_hat,
+        virtual double evaluate(int i, double x_hat,
                                 std::vector<double> x,
                                 int d);
-        virtual std::vector<double> evaluate_vector(int element_idx, int i, 
+        virtual std::vector<double> evaluate_vector(int i, 
                                 double x_hat,
                                 std::vector<double> x);
 
@@ -74,11 +73,11 @@ class PolyBasisEval: public BasisEval
 {
     public:
         PolyBasisEval(std::vector<std::vector<double> > basis);
-        virtual double evaluate(int element_idx, int i, 
+        virtual double evaluate(int i, 
                                 double x_hat,
                                 std::vector<double> x,
                                 int d);
-        virtual std::vector<double> evaluate_vector(int element_idx, int i, 
+        virtual std::vector<double> evaluate_vector(int i, 
                                 double x_hat,
                                 std::vector<double> x);
 
@@ -92,11 +91,11 @@ class SolutionEval: public BasisEval
         SolutionEval(PolyBasisEval &under_basis,
                   std::vector<double> coeffs, 
                   std::vector<std::vector<std::vector<double> > > dof_map);
-        virtual double evaluate(int element_idx, int i, 
+        virtual double evaluate(int i, 
                                 double x_hat,
                                 std::vector<double> x,
                                 int d);
-        virtual std::vector<double> evaluate_vector(int element_idx, int i, 
+        virtual std::vector<double> evaluate_vector(int i, 
                                 double x_hat,
                                 std::vector<double> x);
 
