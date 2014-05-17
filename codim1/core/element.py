@@ -61,6 +61,11 @@ class Element(object):
         self.neighbors_right.remove(self)
 
     def set_id(self, id):
+        # TODO: This id link the element back to its location in the
+        # mesh. This is a bad thing. Remove this reverse dependency.
+        # Might take a bit of work. Especially with respect to the
+        # inter-element distance calculations done by quad strategy. But,
+        # those will hopefully be unnecessary soon.
         self.id = id
 
 def apply_to_elements(element_list, property_name,

@@ -31,14 +31,15 @@ class InteriorPoint(object):
             quadrature = self.quad_strategy.get_interior_quadrature(k, pt)
             quad_info = quadrature.quad_info
             for i in range(solution.num_fncs):
+                dof = e_k[:, i]
                 integral = single_integral(e_k.mapping.eval,
                                            kernel,
                                            one,
-                                           solution._basis_eval,
+                                           e_k.basis.eval,
                                            quad_info,
-                                           k, 0, i)
-                result[0] += integral[0][0]
-                result[0] += integral[0][1]
-                result[1] += integral[1][0]
-                result[1] += integral[1][1]
+                                           0, i)
+                for idx1 in range(2)
+                    for idx2 in range(2)
+                        result[idx1] += \
+                            integral[idx1][idx2] * solution[dof[idx2]]
         return result
