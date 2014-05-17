@@ -115,8 +115,8 @@ class QuadStrategy(object):
             inner = _make_inner(outer)
         return outer, inner
 
-    def get_interior_quadrature(self, k, pt):
-        which_nonsingular = self.choose_nonsingular_interior(k, pt)
+    def get_interior_quadrature(self, e_k, pt):
+        which_nonsingular = self.choose_nonsingular_interior(e_k, pt)
         return self.quad_nonsingular[which_nonsingular]
 
     def choose_nonsingular(self, k, l):
@@ -125,28 +125,28 @@ class QuadStrategy(object):
         # of the two? Find some literature on choosing quadrature formulas.
         # The choice of which element to use in computing the width is
         # irrelevant until elements get highly variable in width.
-        return self._choose_nonsingular(k, dist)
+        return self._choose_nonsingular(self.mesh.elements[k], dist)
 
 
-    def choose_nonsingular_interior(self, k, pt):
-        v1 = self.mesh.elements[k].vertex1
-        v2 = self.mesh.elements[k].vertex2
+    def choose_nonsingular_interior(self, e_k, pt):
+        v1 = e_k.vertex1
+        v2 = e_k.vertex2
         left_vertex_distance = v1.loc - pt
         right_vertex_distance = v2.loc - pt
         # Take the minimum of the distance from either vertex. Note that this
         # will probably overestimate the distance for a higher order mesh.
         dist = np.min([np.sqrt(np.sum(left_vertex_distance ** 2)),
                        np.sqrt(np.sum(right_vertex_distance ** 2))])
-        return self._choose_nonsingular(k, dist)
+        return self._choose_nonsingular(e_k, dist)
 
 
-    def _choose_nonsingular(self, k, dist):
+    def _choose_nonsingular(self, e_k, dist):
         """
         Simple algorithm to choose how many points are necessary for good
         accuracy of the integration. Better algorithms are available in the
         literature. Try Sauter, Schwab 1998 or Telles 1987.
         """
-        source_width = self.mesh.elements[k].length
+        source_width = e_k.length
         ratio = dist / source_width
         how_far = np.floor(ratio)
         points = self.max_points - how_far

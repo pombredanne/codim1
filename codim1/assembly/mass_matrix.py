@@ -31,10 +31,10 @@ class MassMatrix(object):
         kernel = MassMatrixKernel(0, 0)
         q_info = self.quadrature.quad_info
         for e_k in self.mesh:
-            for i in range(e_k.basis.n_fncs)
+            for i in range(e_k.basis.n_fncs):
                 i_dof_x = e_k.mesh.dofs[0, i]
                 i_dof_y = e_k.mesh.dofs[1, i]
-                for j in range(e_k.basis.n_fncs)
+                for j in range(e_k.basis.n_fncs):
                     j_dof_x = e_k.mesh.dofs[0, j]
                     j_dof_y = e_k.mesh.dofs[1, j]
                     M_local = single_integral(e_k.mapping.eval,
