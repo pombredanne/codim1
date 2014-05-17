@@ -1,5 +1,5 @@
 from mass_matrix import MassMatrix
 from rhs_assembler import RHSAssembler
 from matrix_assembler import MatrixAssembler
-from interior_point import InteriorPoint
+from interior_point import interior_pt_soln, interior_pt_rhs
 from point_source_rhs import PointSourceRHS

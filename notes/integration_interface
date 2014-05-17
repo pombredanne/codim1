@@ -19,3 +19,6 @@ For the rhs integrals, I want to integrate a singular thing over a very
 large area (the whole mesh!). Should I do this elementwise like I am now,
 or could it be done globally with one function. I think it has to be done
 elementwise because of the piecewise definition of the mesh.
+
+I think I should get rid of the class form and turn these all into 
+functions. They aren't objects in any sense of the word normally
