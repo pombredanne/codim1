@@ -14,15 +14,9 @@ class MassMatrix(object):
     """
     def __init__(self,
                  mesh,
-                 src_basis_funcs,
-                 soln_basis_funcs,
-                 dof_handler,
                  quadrature,
                  compute_on_init = False):
         self.mesh = mesh
-        self.src_basis_funcs = src_basis_funcs
-        self.soln_basis_funcs = soln_basis_funcs
-        self.dof_handler = dof_handler
         self.quadrature = quadrature
         self.computed = False
         if compute_on_init:
@@ -32,24 +26,23 @@ class MassMatrix(object):
         if self.computed:
             return
 
-        total_dofs = self.dof_handler.total_dofs
+        total_dofs = self.mesh.total_dofs
         self.M = np.zeros((total_dofs, total_dofs))
         kernel = MassMatrixKernel(0, 0)
         q_info = self.quadrature.quad_info
-        for k in range(self.mesh.n_elements):
-            e_k = self.mesh.elements[k]
-            for i in range(self.src_basis_funcs.num_fncs):
-                i_dof_x = self.dof_handler.dof_map[0, k, i]
-                i_dof_y = self.dof_handler.dof_map[1, k, i]
-                for j in range(self.soln_basis_funcs.num_fncs):
-                    j_dof_x = self.dof_handler.dof_map[0, k, j]
-                    j_dof_y = self.dof_handler.dof_map[1, k, j]
+        for e_k in self.mesh:
+            for i in range(e_k.basis.n_fncs)
+                i_dof_x = e_k.mesh.dofs[0, i]
+                i_dof_y = e_k.mesh.dofs[1, i]
+                for j in range(e_k.basis.n_fncs)
+                    j_dof_x = e_k.mesh.dofs[0, j]
+                    j_dof_y = e_k.mesh.dofs[1, j]
                     M_local = single_integral(e_k.mapping.eval,
                                       kernel,
-                                      self.src_basis_funcs._basis_eval,
-                                      self.soln_basis_funcs._basis_eval,
+                                      e_k.basis.eval,
+                                      e_k.basis.eval,
                                       q_info,
-                                      k, i, j)
+                                      i, j)
                     self.M[i_dof_x, j_dof_x] += M_local[0][0]
                     self.M[i_dof_y, j_dof_y] += M_local[1][1]
         self.computed = True

@@ -1,6 +1,13 @@
 from quadrature import QuadGauss
 from codim1.fast_lib import ConstantEval, MassMatrixKernel, single_integral
 
+# TODO: Move this file to the assembly directory. That is far more
+# appropriate.
+# TODO: Move this file to the assembly directory. That is far more
+# appropriate.
+# TODO: Move this file to the assembly directory. That is far more
+# appropriate.
+
 def apply_average_constraint(matrix, rhs, mesh, bf, dh):
     """
     Convert the first two rows of the matrix and right hand side

@@ -20,7 +20,7 @@ class RHSAssembler(object):
     def assemble_rhs(self, fnc, kernel):
         rhs = np.zeros(self.mesh.total_dofs)
         for e_k in self.mesh:
-            for i in range(self.basis_funcs.num_fncs):
+            for i in range(e_k.basis.n_fncs):
                 dof_x = e_k.dofs[0, i]
                 dof_y = e_k.dofs[1, i]
                 row_x, row_y = self.assemble_row(e_k, fnc, kernel, i)
@@ -40,7 +40,7 @@ class RHSAssembler(object):
                             e_k.mapping.eval,
                             e_l.mapping.eval,
                             kernel,
-                            e_k.basis_funcs._basis_eval,
+                            e_k.basis._basis_eval,
                             fnc._basis_eval,
                             quad_outer_info, quad_inner_info,
                             i, 0)

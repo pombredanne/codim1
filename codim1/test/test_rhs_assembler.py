@@ -37,7 +37,7 @@ def test_rhs_row_not_shared():
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = BasisFunctions.from_function(f)
-    row_x, row_y = a.assemble_row(fnc, kernel, 0, 0)
+    row_x, row_y = a.assemble_row(a.mesh.elements[0], fnc, kernel, 0)
 
     np.testing.assert_almost_equal(row_correct_x, row_x)
     np.testing.assert_almost_equal(row_correct_y, row_y)
