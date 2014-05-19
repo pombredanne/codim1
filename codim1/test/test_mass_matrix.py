@@ -37,3 +37,21 @@ def test_mass_matrix_rhs():
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
     np.testing.assert_almost_equal(mass_matrix_for_rhs(m)[0:4],
                                    np.sum(M_exact, axis = 1))
+
+def test_mass_matrix_functional():
+    bf = basis_funcs.BasisFunctions.from_degree(1)
+    msh = simple_line_mesh(2)
+    q = quadrature.QuadGauss(2)
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+
+    fnc = BasisFunctions.from_function(lambda x,d: [1,2][x[0] > 0])
+    basis_grabber = lambda e: fnc
+    m = assemble_mass_matrix(msh, q, basis_grabber)
+    M_exact = np.zeros((4,4))
+    M_exact[0,0] = 0.5
+    M_exact[1,0] = 0.5
+    M_exact[2,2] = 1
+    M_exact[3,2] = 1
+    np.testing.assert_almost_equal(M_exact, m[0:4, 0:4])

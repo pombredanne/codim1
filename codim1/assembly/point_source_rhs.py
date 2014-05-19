@@ -18,7 +18,7 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
         for e_k in mesh:
             quad_info = qs.get_point_source_quadrature(
                     kernel.singularity_type, loc, e_k).quad_info
-            for i in range(e_k.basis.num_fncs):
+            for i in range(e_k.basis.n_fncs):
                 integral = single_integral(e_k.mapping.eval,
                                        kernel,
                                        e_k.basis._basis_eval,

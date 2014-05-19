@@ -119,7 +119,3 @@ def evaluate_solution_on_element(element, reference_point, soln):
         soln_y += soln[dof_y] * element.basis.evaluate(i, reference_point, phys_pt)[1]
     return np.array([soln_x, soln_y])
 
-# def interior_stresses(lower_left, upper_right, n_pts_per_dim,
-#                       mesh, dh, qs, k_ta, k_h):
-#     if type(n_pts_per_dim) == int:
-#         n_pts_per_dim = (n_pts_per_dim, n_pts_per_dim)
