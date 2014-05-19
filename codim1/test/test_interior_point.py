@@ -4,8 +4,8 @@ from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel
 from codim1.assembly.interior_point import interior_pt_rhs,\
                                            interior_pt_soln
 
-def setup():
-    msh = circular_mesh(10, 1.0)
+def int_pt_test_setup(n):
+    msh = circular_mesh(n, 1.0)
     bf = basis_funcs.BasisFunctions.from_degree(0)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
@@ -17,7 +17,7 @@ def setup():
 # Some ugly but real world tests. Couldn't think of anything simpler to try it
 # on....
 def test_interior_point_hypersingular():
-    msh, qs = setup()
+    msh, qs = int_pt_test_setup(10)
     coeffs = np.array([ -1.51048858e-02,  -6.11343409e-03,  -1.97679606e-11,
          6.11343405e-03,   1.51048857e-02,   1.51048857e-02,
          6.11343405e-03,  -1.97684512e-11,  -6.11343409e-03,
@@ -32,7 +32,7 @@ def test_interior_point_hypersingular():
     np.testing.assert_almost_equal(result[1], 0.0)
 
 def test_interior_point_traction_adjoint():
-    msh, qs = setup()
+    msh, qs = int_pt_test_setup(50)
     def section_traction(x, d):
         if np.abs(x[0]) < np.cos(24 * (np.pi / 50)):
             x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
