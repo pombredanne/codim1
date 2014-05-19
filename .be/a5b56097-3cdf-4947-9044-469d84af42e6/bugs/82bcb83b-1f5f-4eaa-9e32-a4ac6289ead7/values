@@ -26,21 +26,21 @@
 
 
 
-    "status": "closed", 
+    "status": "open", 
 
 
 
 
 
 
-    "summary": "Element-wise boundary conditions.", 
+    "summary": "More speedups. Stuff has gotten slow again =(", 
 
 
 
 
 
 
-    "time": "Wed, 14 May 2014 01:59:18 +0000"
+    "time": "Mon, 19 May 2014 18:46:44 +0000"
 
 
 
