@@ -7,6 +7,5 @@ from basis_funcs import Function, BasisFunctions
 from quad_strategy import QuadStrategy
 from mesh_gen import combine_meshes, simple_line_mesh, circular_mesh
 from mesh_gen import from_vertices_and_etov, rect_mesh
-from constraints import apply_average_constraint, pin_ends_constraint
 from bc_descriptor import ConstantBC, ZeroBC
 from kernel_set import ElasticKernelSet

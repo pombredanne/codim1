@@ -66,13 +66,13 @@ class PolynomialMapping(object):
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function
         # onto the basis
-        self.coefficients = np.empty((2, self.basis_fncs.num_fncs))
+        self.coefficients = np.empty((2, self.basis_fncs.n_fncs))
         left_vertex = self.element.vertex1
         right_vertex = self.element.vertex2
         left_param = left_vertex.param
         right_param = right_vertex.param
         self.coefficients[:, 0] = left_vertex.loc
-        for i in range(1, self.basis_fncs.num_fncs - 1):
+        for i in range(1, self.basis_fncs.n_fncs - 1):
             x_hat = self.basis_fncs.nodes[i]
             t = (1 - x_hat) * left_param + x_hat * right_param
             self.coefficients[:, i] = self.boundary_function(t)
@@ -106,7 +106,7 @@ class PolynomialMapping(object):
         element.
         """
         verts = [self.element.vertex1]
-        for i in range(1, self.basis_fncs.num_fncs - 1):
+        for i in range(1, self.basis_fncs.n_fncs - 1):
             x_hat = self.basis_fncs.nodes[i]
             phys_pt = self.get_physical_point(x_hat)
             verts.append(Vertex(phys_pt))
