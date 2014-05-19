@@ -1,3 +1,2 @@
 #!/bin/bash
-rm -r source/__pycache__
 py.test -m "slow" -s --tb=short $@

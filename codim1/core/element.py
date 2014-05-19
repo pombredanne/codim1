@@ -68,8 +68,27 @@ class Element(object):
         # those will hopefully be unnecessary soon.
         self.id = id
 
+
 def apply_to_elements(element_list, property_name,
                       value_gen, non_gen = False):
+    """
+    This function can be used to set a general property of some iterable set
+    of elements. For example to set the the type of functional basis used on
+    all the elements in a mesh, write:
+
+    apply_to_elements(mesh, "basis",
+                      BasisFunctions.from_degree(degree),
+                      non_gen = True)
+
+    In this example, non_gen = True, which means that the provided property
+    value should not be copied for each element. In other words, all the
+    elements will reference the same BasisFunctions object.
+
+    If non_gen = False, the property value should be a function taking
+    the element as its only input. Apply a reference to physical mapping is
+    a case where this is desirable because the mapping needs to be specialized
+    for each element.
+    """
     if non_gen:
         value_gen_fnc = lambda e: value_gen
     else:

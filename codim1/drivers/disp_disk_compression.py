@@ -39,7 +39,6 @@ def run(shear_mod, pr, rad, disp_distance):
 
     # Assemble the rhs, composed of the displacements induced by the
     # traction inputs.
-    print("Assembling RHS")
     rhs = simple_rhs_assemble(mesh, qs, displacement_function, ek.k_t)
 
     q = QuadGauss(degree + 1)
@@ -67,22 +66,21 @@ def run(shear_mod, pr, rad, disp_distance):
 def test_elastic_scaling():
     t1 = run(shear_modulus, poisson_ratio, radius, displace)
     t2 = run(shear_modulus * 5, poisson_ratio, radius, displace)
-    # Should be equal to machine precision. The discrete problem exactly
-    # preserves the shear_mod scaling property of the continuous problem.
-    np.testing.assert_almost_equal(t1 * 5, t2, 14)
+    # Should be small -- close to machine precision.
+    # The discrete problem exactly preserves the shear_mod scaling
+    # property of the continuous problem.
+    np.testing.assert_almost_equal(t1 * 5, t2, 12)
 
 @pytest.mark.slow
 def test_displace_scaling():
     t1 = run(shear_modulus, poisson_ratio, radius, displace)
     t2 = run(shear_modulus, poisson_ratio, radius, displace / 5)
-    np.testing.assert_almost_equal(t1 / 5, t2, 14)
+    np.testing.assert_almost_equal(t1 / 5, t2, 12)
 
 @pytest.mark.slow
 def test_spatial_scaling():
     t1 = run(shear_modulus, poisson_ratio, radius, displace)
     t2 = run(shear_modulus, poisson_ratio, radius / 5, displace)
-    # Not quite equal to machine precision. The smaller radius seems to cause
-    # some precision loss
     np.testing.assert_almost_equal(t1 * 5, t2, 12)
 
 if __name__ == "__main__":
