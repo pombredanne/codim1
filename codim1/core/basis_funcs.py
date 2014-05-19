@@ -19,7 +19,7 @@ class Function(object):
     """
     def __init__(self, f):
         self.f = f
-        self.num_fncs = 1
+        self.n_fncs = 1
         self._basis_eval = FuncEval(f)
 
     def evaluate(self, i, x_hat, x):
@@ -56,12 +56,10 @@ class BasisFunctions(object):
             Builds the Lagrange interpolating polynomials with nodes at the
             points specified.
         """
-        # TODO: remove num_fncs
-        self.num_fncs = len(nodes)
         self.n_fncs = len(nodes)
         self.nodes = copy.copy(nodes)
-        self.fncs = np.empty((self.num_fncs, self.num_fncs))
-        self.derivs = np.empty((self.num_fncs, self.num_fncs))
+        self.fncs = np.empty((self.n_fncs, self.n_fncs))
+        self.derivs = np.empty((self.n_fncs, self.n_fncs))
         for (i, n) in enumerate(nodes):
             w = np.zeros_like(nodes)
             w[i] = 1.0
@@ -110,7 +108,7 @@ class _GradientBasisFunctions(BasisFunctions):
     """
     def __init__(self, nodes, fncs, mesh):
         self.mesh = mesh
-        self.num_fncs = len(fncs)
+        self.n_fncs = len(fncs)
         self.nodes = nodes
         self.fncs = fncs
         self._basis_eval = GradientBasisEval(self.fncs)

@@ -11,26 +11,26 @@ cauchy singularity term that arises when some kernels' integrals
 are taken to the boundary. See, for example, the first term in
 equations 97 and 98 in Bonnet 1998 -- SGBEM.
 """
-def assemble_mass_matrix(mesh, quadrature):
+def assemble_mass_matrix(mesh, quadrature,
+        basis_grabber = lambda e: e.basis):
     total_dofs = mesh.total_dofs
     M = np.zeros((total_dofs, total_dofs))
     kernel = MassMatrixKernel(0, 0)
     q_info = quadrature.quad_info
     for e_k in mesh:
+        rhs_basis = basis_grabber(e_k)
         for i in range(e_k.basis.n_fncs):
-            i_dof_x = e_k.dofs[0, i]
-            i_dof_y = e_k.dofs[1, i]
-            for j in range(e_k.basis.n_fncs):
-                j_dof_x = e_k.dofs[0, j]
-                j_dof_y = e_k.dofs[1, j]
+            for j in range(rhs_basis.n_fncs):
                 M_local = single_integral(e_k.mapping.eval,
                                   kernel,
                                   e_k.basis._basis_eval,
-                                  e_k.basis._basis_eval,
+                                  rhs_basis._basis_eval,
                                   q_info,
                                   i, j)
-                M[i_dof_x, j_dof_x] += M_local[0][0]
-                M[i_dof_y, j_dof_y] += M_local[1][1]
+                # Don't take the off diagonal components because we don't
+                # want to couple the x and y dimensions in the mass matrix
+                M[e_k.dofs[0,i], e_k.dofs[0,j]] += M_local[0][0]
+                M[e_k.dofs[1,i], e_k.dofs[1,j]] += M_local[1][1]
     return M
 
 def mass_matrix_for_rhs(matrix):
