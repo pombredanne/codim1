@@ -157,7 +157,7 @@ class QuadStrategy(object):
     def get_point_source_quadrature(self,
                                     singularity_type,
                                     singular_pt,
-                                    k,
+                                    e_k,
                                     in_element = False,
                                     reference_loc = 0.0):
         if singularity_type == 'logr' and in_element:
@@ -168,7 +168,7 @@ class QuadStrategy(object):
                                                reference_loc,
                                                self.max_points)
         else:
-            quad = self.get_interior_quadrature(k, singular_pt)
+            quad = self.get_interior_quadrature(e_k, singular_pt)
         return quad
 
 

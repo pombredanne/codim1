@@ -135,7 +135,9 @@ def test_hypersingular_vs_regularized():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = DOFHandler(mesh, bf)
+    apply_to_elements(mesh, "basis", bf, non_gen = True)
+    apply_to_elements(mesh, "continuous", True, non_gen = True)
+    init_dofs(mesh)
 
     el1 = 15
     # pp0 = mesh.get_physical_point(el1, 0.5)
@@ -157,20 +159,19 @@ def test_hypersingular_vs_regularized():
             continue
         i = 1
         j = 1
-        o_q, i_q = qs.get_quadrature('logr', el1, el2)
+        o_q, i_q = qs.get_quadrature('logr', mesh.elements[el1], mesh.elements[el2])
         o_q = o_q.quad_info
         i_q = [q.quad_info for q in i_q]
         a[el2, :, :] = double_integral(mesh.elements[el1].mapping.eval, mesh.elements[el2].mapping.eval, k_rh,
                                              grad_bf._basis_eval,
                                              grad_bf._basis_eval,
-                                             o_q, i_q, el1, i,
-                                             el2, j)
+                                             o_q, i_q, i, j)
         b[el2, :, :] = double_integral(mesh.elements[el1].mapping.eval, mesh.elements[el2].mapping.eval, k_h,
                             bf._basis_eval, bf._basis_eval,
-                            o_q, i_q, el1, i, el2, j)
+                            o_q, i_q, i, j)
         c[el2, :, :] = double_integral(mesh.elements[el1].mapping.eval, mesh.elements[el2].mapping.eval, k_sh,
                             grad_bf._basis_eval, bf._basis_eval,
-                            o_q, i_q, el1, i, el2, j)
+                            o_q, i_q, i, j)
         # qq[el2, :, :] = double_integral(mesh, k_rh, bf, bf,
         #                     o_q, i_q, el1, 1, el2, 1)
         # # cr1[el2] = grad_bf.chain_rule(el1, 0.5)[0]
@@ -239,13 +240,15 @@ def test_hypersingular_vs_regularized_across_elements():
     bf = BasisFunctions.from_degree(2)
     grad_bf = bf.get_gradient_basis(mesh)
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
-    dh = DOFHandler(mesh, bf)
+    apply_to_elements(mesh, "basis", bf, non_gen = True)
+    apply_to_elements(mesh, "continuous", True, non_gen = True)
+    init_dofs(mesh)
 
     el1a = 15
     el1b = 14
     el2a = 25
     el2b = 26
-    o_q, i_q = qs.get_quadrature('logr', el1a, el2a)
+    o_q, i_q = qs.get_quadrature('logr', mesh.elements[el1a], mesh.elements[el2a])
     o_q = o_q.quad_info
     i_q = [q.quad_info for q in i_q]
 
@@ -253,51 +256,51 @@ def test_hypersingular_vs_regularized_across_elements():
     # and two choices of solution element.
     a1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2a, 2)
+                        o_q, i_q, 0, 2)
 
     a2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2b, 0)
+                        o_q, i_q, 0, 0)
 
     a3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2a, 2)
+                        o_q, i_q, 2, 2)
 
     a4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_rh,
             grad_bf._basis_eval, grad_bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2b, 0)
+                        o_q, i_q, 2, 0)
 
     b1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_h,
             bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2a, 2)
+                        o_q, i_q, 0, 2)
 
     b2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_h,
             bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2b, 0)
+                        o_q, i_q, 0, 0)
 
     b3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_h,
             bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2a, 2)
+                        o_q, i_q, 2, 2)
 
     b4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_h,
             bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2b, 0)
+                        o_q, i_q, 2, 0)
 
     c1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2a, 2)
+                        o_q, i_q, 0, 2)
 
     c2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1a, 0, el2b, 0)
+                        o_q, i_q, 0, 0)
 
     c3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2a, 2)
+                        o_q, i_q, 2, 2)
 
     c4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_sh,
             grad_bf._basis_eval, bf._basis_eval,
-                        o_q, i_q, el1b, 2, el2b, 0)
+                        o_q, i_q, 2, 0)
 
     a = np.array(a1) + np.array(a2) + np.array(a3) + np.array(a4)
     b = np.array(b1) + np.array(b2) + np.array(b3) + np.array(b4)

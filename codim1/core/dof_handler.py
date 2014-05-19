@@ -22,7 +22,7 @@ def init_dofs(mesh):
     return total_dofs
 
 def _process_discontinuous_element(e, next_dof):
-    for i in range(e.basis.num_fncs):
+    for i in range(e.basis.n_fncs):
         e.dofs[0, i] = next_dof
         next_dof += 1
     return next_dof
@@ -46,7 +46,7 @@ def _process_continuous_element(e, next_dof):
         next_dof += 1
 
     # Handle internal dofs.
-    for i in range(1, e.basis.num_fncs - 1):
+    for i in range(1, e.basis.n_fncs - 1):
         e.dofs[0, i] = next_dof
         next_dof += 1
 

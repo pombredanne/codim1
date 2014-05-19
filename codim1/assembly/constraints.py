@@ -1,4 +1,4 @@
-from quadrature import QuadGauss
+from codim1.core.quadrature import QuadGauss
 from codim1.fast_lib import ConstantEval, MassMatrixKernel, single_integral
 
 # TODO: Move this file to the assembly directory. That is far more
@@ -8,48 +8,52 @@ from codim1.fast_lib import ConstantEval, MassMatrixKernel, single_integral
 # TODO: Move this file to the assembly directory. That is far more
 # appropriate.
 
-def apply_average_constraint(matrix, rhs, mesh, bf, dh):
+def apply_average_constraint(matrix, rhs, mesh):
     """
     Convert the first two rows of the matrix and right hand side
     into a constraint that enforces a total solution in both the x and y
     direction of 0.
     """
     # Set the rhs to 0 for the first two rows
-    first_x_dof = dh.dof_map[0, 0, 0]
+    first_x_dof = mesh.elements[0].dofs[0, 0]
     rhs[first_x_dof] = 0
-    first_y_dof = dh.dof_map[1, 0, 0]
+    first_y_dof = mesh.elements[0].dofs[1, 0]
     rhs[first_y_dof] = 0
 
-    quad_info = QuadGauss(bf.num_fncs).quad_info
     kernel = MassMatrixKernel(0, 0)
     one = ConstantEval([1.0, 1.0])
-    for k in range(mesh.n_elements):
-        e_k = mesh.elements[k]
-        for i in range(bf.num_fncs):
-            dof_x = dh.dof_map[0, k, i]
-            dof_y = dh.dof_map[1, k, i]
+    for e_k in mesh:
+        for i in range(e_k.basis.n_fncs):
+            # TODO: Either pass in a quad_strategy object or make sure this
+            # behaves like a flyweight
+            quad_info = QuadGauss(e_k.basis.n_fncs).quad_info
+            dof_x = e_k.dofs[0,i]
+            dof_y = e_k.dofs[1, i]
             integral = single_integral(e_k.mapping.eval,
                                        kernel,
-                                       bf._basis_eval,
+                                       e_k.basis._basis_eval,
                                        one,
                                        quad_info,
-                                       k, i, 0)
+                                       i, 0)
             matrix[first_x_dof, dof_x] += integral[0][0]
             matrix[first_y_dof, dof_y] += integral[1][1]
 
 # TODO: Refactor this into a "pin-element" constraint that takes an
 # element id as an input and a left-right flag
-def pin_ends_constraint(matrix, rhs, left_end, right_end, dh):
+def pin_ends_constraint(matrix, rhs, mesh, left_end, right_end):
     """
     Pin the values at the ends of a simple line mesh. This is useful
     for crack solutions with only traction boundary conditions, because
     the matrix is singular. Pinning the ends removes the rigid body motion
     modes of solution and results in a nonsingular matrix.
     """
-    first_x_dof = dh.dof_map[0, 0, 0]
-    last_x_dof = dh.dof_map[0, -1, -1]
-    first_y_dof = dh.dof_map[1, 0, 0]
-    last_y_dof = dh.dof_map[1, -1, -1]
+    # TODO: This is dependent on the linear storage of the elements
+    # and would not be compatible with a tree structure like in a FMM
+    # BAD!
+    first_x_dof = mesh.elements[0].dofs[0, 0]
+    last_x_dof = mesh.elements[-1].dofs[0, -1]
+    first_y_dof = mesh.elements[0].dofs[1, 0]
+    last_y_dof = mesh.elements[-1].dofs[1, -1]
     matrix[first_x_dof, :] = 0.0
     matrix[first_x_dof, first_x_dof] = 1.0
     rhs[first_x_dof] = left_end[0]

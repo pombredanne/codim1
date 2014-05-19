@@ -73,7 +73,7 @@ def interpolate(fnc, mesh):
     result = np.empty(mesh.total_dofs)
     for k in range(mesh.n_elements):
         e = mesh.elements[k]
-        for i in range(e.basis.num_fncs):
+        for i in range(e.basis.n_fncs):
             dof_x = e.dofs[0, i]
             dof_y = e.dofs[1, i]
             ref_pt = e.basis.nodes[i]
@@ -111,7 +111,7 @@ def evaluate_solution_on_element(element, reference_point, soln):
     soln_x = 0.0
     soln_y = 0.0
     # The value is the sum over all the basis functions.
-    for i in range(element.basis.num_fncs):
+    for i in range(element.basis.n_fncs):
         dof_x = element.dofs[0, i]
         dof_y = element.dofs[1, i]
         # TODO: remove element_idx from basis_funcs!

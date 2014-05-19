@@ -1,45 +1,39 @@
 import numpy as np
-from codim1.assembly import MassMatrix
+from codim1.assembly import mass_matrix_for_rhs, assemble_mass_matrix
 from codim1.core import *
 import codim1.core.basis_funcs as basis_funcs
 import codim1.core.dof_handler as dof_handler
 import codim1.core.quadrature as quadrature
 
-def simple_mass_matrix(n_elements = 2):
+def simple_mass_matrix(n_elements = 2, continuous = False):
     bf = basis_funcs.BasisFunctions.from_degree(1)
     msh = simple_line_mesh(n_elements)
     q = quadrature.QuadGauss(2)
-    dh = dof_handler.DOFHandler(msh, bf, range(n_elements))
-    m = MassMatrix(msh, bf, bf, dh, q)
-    return m
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", continuous, non_gen = True)
+    init_dofs(msh)
+    return assemble_mass_matrix(msh, q)
 
 def test_mass_matrix():
     m = simple_mass_matrix()
-    m.compute()
     M_exact = np.array([[1.0 / 3.0, 1.0 / 6.0, 0, 0],
                         [1.0 / 6.0, 1.0 / 3.0, 0, 0],
                         [0, 0, 1.0 / 3.0, 1.0 / 6.0],
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
-    np.testing.assert_almost_equal(M_exact, m.M[0:4, 0:4])
+    np.testing.assert_almost_equal(M_exact, m[0:4, 0:4])
 
 def test_mass_matrix_continuous():
-    bf = basis_funcs.BasisFunctions.from_degree(1)
-    msh = simple_line_mesh(2)
-    q = quadrature.QuadGauss(2)
-    dh = dof_handler.DOFHandler(msh, bf)
-    m = MassMatrix(msh, bf, bf, dh, q)
-    m.compute()
+    m = simple_mass_matrix(continuous = True)
     M_exact = np.array([[1.0 / 3.0, 1.0 / 6.0, 0],
                         [1.0 / 6.0, 2.0 / 3.0, 1.0 / 6.0],
                         [0, 1.0 / 6.0, 1.0 / 3.0]])
-    np.testing.assert_almost_equal(M_exact, m.M[0:3, 0:3])
+    np.testing.assert_almost_equal(M_exact, m[0:3, 0:3])
 
 def test_mass_matrix_rhs():
     m = simple_mass_matrix()
-    m.compute()
     M_exact = np.array([[1.0 / 3.0, 1.0 / 6.0, 0, 0],
                         [1.0 / 6.0, 1.0 / 3.0, 0, 0],
                         [0, 0, 1.0 / 3.0, 1.0 / 6.0],
                         [0, 0, 1.0 / 6.0, 1.0 / 3.0]])
-    np.testing.assert_almost_equal(m.for_rhs()[0:4],
+    np.testing.assert_almost_equal(mass_matrix_for_rhs(m)[0:4],
                                    np.sum(M_exact, axis = 1))

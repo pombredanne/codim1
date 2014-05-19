@@ -1,5 +1,6 @@
 import numpy as np
-from codim1.assembly import MatrixAssembler
+from codim1.assembly.matrix_assembler import \
+    simple_matrix_assemble, compute_one_interaction, compute_element_pair
 import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import Kernel, DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh
@@ -41,78 +42,63 @@ def simple_assembler(degree = 0,
     qs = quad_strategy.QuadStrategy(msh, nonsing_pts, nonsing_pts,
                      logr_pts, oneoverr_pts)
     bf = basis_funcs.BasisFunctions.from_degree(degree)
-    dh = dof_handler.DOFHandler(msh, bf, range(n_elements))
-    assembler = MatrixAssembler(msh, bf, dh, qs)
-    return assembler
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+    return msh, qs
 
 def test_assemble_one_element_off_diagonal():
-    a = simple_assembler(nonsing_pts = 10, logr_pts = 10, oneoverr_pts = 10)
+    msh, qs = simple_assembler(nonsing_pts = 10, logr_pts = 10, oneoverr_pts = 10)
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G_local = a.assemble_one_interaction(k_d, 0, 0, 1, 0)
-    H_local = a.assemble_one_interaction(k_t, 0, 0, 1, 0)
+    G_local = compute_one_interaction(qs, k_d, msh.elements[0], 0,
+                                      msh.elements[1], 0)
+    H_local = compute_one_interaction(qs, k_t, msh.elements[0], 0,
+                                      msh.elements[1], 0)
     np.testing.assert_almost_equal(H_local, np.ones((2, 2)))
     np.testing.assert_almost_equal(G_local,
             np.array([[0.113706, 1.0], [1.0, 0.113706]]), 4)
 
 
 def test_assemble_one_element_on_diagonal():
-    a = simple_assembler(nonsing_pts = 12, logr_pts = 17, oneoverr_pts = 10)
+    msh,qs = simple_assembler(nonsing_pts = 12, logr_pts = 17, oneoverr_pts = 10)
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G_local = a.assemble_one_interaction(k_d, 0, 0, 0, 0)
-    H_local = a.assemble_one_interaction(k_t, 0, 0, 0, 0)
+    G_local = compute_one_interaction(qs, k_d, msh.elements[0], 0,
+                                      msh.elements[0], 0)
+    H_local = compute_one_interaction(qs, k_t, msh.elements[0], 0,
+                                      msh.elements[0], 0)
     np.testing.assert_almost_equal(H_local,
                                    np.array([[1.0, 1.0], [1.0, 1.0]]))
     np.testing.assert_almost_equal(G_local,
                                    np.array([[1.5, 1.0], [1.0, 1.5]]), 4)
 
 
-def test_assemble_row():
-    a = simple_assembler(nonsing_pts = 16, logr_pts = 16, oneoverr_pts = 16)
-    k_d = TDispKernel()
-    k_t = TTracKernel()
-
-    # The row functions should return one vector for each dimension.
-    (G_row_x, G_row_y) = a.assemble_row(k_d, 0, 0)
-    (H_row_x, H_row_y) = a.assemble_row(k_t, 0, 0)
-
-    np.testing.assert_almost_equal(H_row_x, np.array([1.0, 1.0, 1.0, 1.0]))
-    np.testing.assert_almost_equal(H_row_y, np.array([1.0, 1.0, 1.0, 1.0]))
-
-    # Haha, I made a pun.
-    G_row_xact = np.array([1.5, 0.113706, 1.0, 1.0])
-    G_row_yact = np.array([1.0, 1.0, 1.5, 0.113706])
-    np.testing.assert_almost_equal(G_row_x, G_row_xact, 4)
-    np.testing.assert_almost_equal(G_row_y, G_row_yact, 4)
-
-
 def test_assemble():
-    a = simple_assembler()
+    msh,qs = simple_assembler()
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     # Just make sure it worked. Don't check for correctness.
-    assert(H.shape[0] == a.dof_handler.total_dofs)
-    assert(H.shape[1] == a.dof_handler.total_dofs)
-    assert(G.shape[0] == a.dof_handler.total_dofs)
-    assert(G.shape[1] == a.dof_handler.total_dofs)
+    assert(H.shape[0] == msh.total_dofs)
+    assert(H.shape[1] == msh.total_dofs)
+    assert(G.shape[0] == msh.total_dofs)
+    assert(G.shape[1] == msh.total_dofs)
     assert(not np.isnan(np.sum(H)))
     assert(not np.isnan(np.sum(G)))
 
 
 def test_simple_symmetric_linear():
     # The test kernel is completely symmetric as are the basis functions.
-    a = simple_assembler(n_elements = 1, degree = 1,
+    msh,qs = simple_assembler(n_elements = 1, degree = 1,
                          nonsing_pts = 4, logr_pts = 4, oneoverr_pts = 4)
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     np.testing.assert_almost_equal((H - H.T), np.zeros_like(H))
     np.testing.assert_almost_equal((G - G.T), np.zeros_like(G))
-
 
 ##
 ## Some more realistic assembly tests.
@@ -129,52 +115,53 @@ def realistic_assembler(n_elements = 4,
         quad_points_oneoverr += 1
     msh = simple_line_mesh(n_elements, (left, 0.0), (right, 0.0))
     bf = basis_funcs.BasisFunctions.from_degree(element_deg)
-    dh = dof_handler.DOFHandler(msh, bf)
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", True, non_gen = True)
+    init_dofs(msh)
     qs = quad_strategy.QuadStrategy(msh, quad_points_nonsingular,
                         quad_points_nonsingular,
                         quad_points_logr, quad_points_oneoverr)
-    assembler = MatrixAssembler(msh, bf, dh, qs)
-    return assembler
+    return msh, qs
 
 
 def test_realistic_nan():
-    a = realistic_assembler()
+    msh,qs = realistic_assembler()
     k_d = DisplacementKernel(1.0, 0.25)
     k_t = TractionKernel(1.0, 0.25)
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     assert(not np.isnan(np.sum(H)))
     assert(not np.isnan(np.sum(G)))
 
 
 def test_realistic_symmetric_linear():
-    a = realistic_assembler()
+    msh,qs = realistic_assembler()
     k_d = DisplacementKernel(1.0, 0.25)
     k_t = TractionKernel(1.0, 0.25)
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     np.testing.assert_almost_equal((G - G.T) /
                                     np.mean(G), np.zeros_like(G), 4)
 
 
 def test_realistic_symmetric_quadratic():
-    a = realistic_assembler(quad_points_nonsingular = 10,
+    msh,qs = realistic_assembler(quad_points_nonsingular = 10,
                             quad_points_logr = 12,
                             quad_points_oneoverr = 10,
                             n_elements = 1, element_deg = 2)
     k_d = DisplacementKernel(1.0, 0.25)
     k_t = TractionKernel(1.0, 0.25)
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     np.testing.assert_almost_equal((G - G.T) / np.mean(G), np.zeros_like(G), 4)
 
 
 def test_reciprocal_effects():
-    a = realistic_assembler(n_elements = 2)
+    msh,qs = realistic_assembler(n_elements = 2)
     k_d = DisplacementKernel(1.0, 0.25)
     k_t = TractionKernel(1.0, 0.25)
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     # The influence of u_x(0) on u_y(1) should be the opposite of the
     # effect of u_x(1) on u_y(0), where the parenthesis indicate which element
     np.testing.assert_almost_equal(H[4,0], -H[3,1], 2)
@@ -187,19 +174,18 @@ def test_reciprocal_effects():
 
 
 def test_realistic_zero_discontinuity():
-    a = realistic_assembler(element_deg = 1)
+    msh,qs = realistic_assembler(element_deg = 1)
     k_d = DisplacementKernel(1.0, 0.25)
     k_t = TractionKernel(1.0, 0.25)
-    G = a.assemble_matrix(k_d)
-    H = a.assemble_matrix(k_t)
+    G = simple_matrix_assemble(msh, qs, k_d)
+    H = simple_matrix_assemble(msh, qs, k_t)
     fnc = lambda x, n: (0.0, 1.0)
-    displacements = tools.interpolate(fnc, a.dof_handler,
-                                  a.basis_funcs, a.mesh)
+    displacements = tools.interpolate(fnc, msh)
     rhs = np.dot(H, displacements)
     soln_coeffs = np.linalg.solve(G, rhs)
-    soln = basis_funcs.Solution(a.basis_funcs, a.dof_handler, soln_coeffs)
-    for k in range(a.mesh.n_elements - 1):
-        value_left = tools.evaluate_solution_on_element(k, 1.0, soln, a.mesh)
-        value_right = tools.evaluate_solution_on_element(k + 1, 0.0, soln,
-                                                         a.mesh)
+    for k in range(msh.n_elements - 1):
+        e_k = msh.elements[k]
+        e_kp1 = msh.elements[k + 1]
+        value_left = tools.evaluate_solution_on_element(e_k, 1.0, soln_coeffs)
+        value_right = tools.evaluate_solution_on_element(e_kp1, 0.0, soln_coeffs)
         np.testing.assert_almost_equal(value_left, value_right)
