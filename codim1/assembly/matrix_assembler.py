@@ -53,7 +53,7 @@ def simple_matrix_assemble(mesh, qs, kernel):
 def _compute_element_pair(matrix, e_k, e_l, qs, kernel):
     for i in range(e_k.basis.n_fncs):
         for j in range(e_k.basis.n_fncs):
-            integral = compute_one_interaction(qs, kernel, e_k, i, e_l, j)
+            integral = _compute_one_interaction(qs, kernel, e_k, i, e_l, j)
             for idx1 in range(2):
                 for idx2 in range(2):
                     matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] += \

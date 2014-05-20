@@ -26,7 +26,7 @@ the physical point each time, maybe just pass the physical point?
 In an ideal world, we can exactly precompute all the physical points.
 Maybe this is the easiest route... in such a world, the mapping functions do
 not actually ever do any work during the integration routines. they simply
-pop out precomputed values
+pop out precomputed values.
 """
 
 class ConstantBC(object):

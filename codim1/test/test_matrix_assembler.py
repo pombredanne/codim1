@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.assembly.matrix_assembler import \
-    simple_matrix_assemble, compute_one_interaction, compute_element_pair
+    simple_matrix_assemble, _compute_one_interaction, _compute_element_pair
 import codim1.core.basis_funcs as basis_funcs
 from codim1.fast_lib import Kernel, DisplacementKernel, TractionKernel
 import codim1.core.mesh as mesh
@@ -51,9 +51,9 @@ def test_assemble_one_element_off_diagonal():
     msh, qs = simple_assembler(nonsing_pts = 10, logr_pts = 10, oneoverr_pts = 10)
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G_local = compute_one_interaction(qs, k_d, msh.elements[0], 0,
+    G_local = _compute_one_interaction(qs, k_d, msh.elements[0], 0,
                                       msh.elements[1], 0)
-    H_local = compute_one_interaction(qs, k_t, msh.elements[0], 0,
+    H_local = _compute_one_interaction(qs, k_t, msh.elements[0], 0,
                                       msh.elements[1], 0)
     np.testing.assert_almost_equal(H_local, np.ones((2, 2)))
     np.testing.assert_almost_equal(G_local,
@@ -64,9 +64,9 @@ def test_assemble_one_element_on_diagonal():
     msh,qs = simple_assembler(nonsing_pts = 12, logr_pts = 17, oneoverr_pts = 10)
     k_d = TDispKernel()
     k_t = TTracKernel()
-    G_local = compute_one_interaction(qs, k_d, msh.elements[0], 0,
+    G_local = _compute_one_interaction(qs, k_d, msh.elements[0], 0,
                                       msh.elements[0], 0)
-    H_local = compute_one_interaction(qs, k_t, msh.elements[0], 0,
+    H_local = _compute_one_interaction(qs, k_t, msh.elements[0], 0,
                                       msh.elements[0], 0)
     np.testing.assert_almost_equal(H_local,
                                    np.array([[1.0, 1.0], [1.0, 1.0]]))
