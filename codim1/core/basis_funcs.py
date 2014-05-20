@@ -71,9 +71,11 @@ class BasisFunctions(object):
             self.derivs[i, 1:] = poly.deriv().c
         self._basis_eval = PolyBasisEval(self.fncs)
         self._deriv_eval = PolyBasisEval(self.derivs)
+        self._gradient_basis =\
+            _GradientBasisFunctions(self.nodes, self.derivs)
 
-    def get_gradient_basis(self, mesh):
-        return _GradientBasisFunctions(self.nodes, self.derivs, mesh)
+    def get_gradient_basis(self):
+        return self._gradient_basis
 
     def evaluate(self, i, x_hat, x):
         """
@@ -106,8 +108,7 @@ class _GradientBasisFunctions(BasisFunctions):
     basis functions cannot be defined except in reference to a specific
     mesh.
     """
-    def __init__(self, nodes, fncs, mesh):
-        self.mesh = mesh
+    def __init__(self, nodes, fncs):
         self.n_fncs = len(fncs)
         self.nodes = nodes
         self.fncs = fncs

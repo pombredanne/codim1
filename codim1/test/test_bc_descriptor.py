@@ -1,5 +1,7 @@
 from codim1.core import *
 
+def test_function_bc():
+
 def test_constant_bc():
     cbc = ConstantBC("traction", 2.0, 1)
     assert(cbc.get_value(0) == 2.0)

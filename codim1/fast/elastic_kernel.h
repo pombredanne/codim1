@@ -24,6 +24,8 @@ class Kernel
         {
             shear_modulus = 1.0;
             poisson_ratio = 0.25;
+            test_gradient = false;
+            soln_gradient = false;
         }
 
         // All a kernel needs to know are the elastic parameters.
@@ -54,9 +56,11 @@ class Kernel
         double shear_modulus;
         double poisson_ratio;
 
-        // assembly only needs to use the upper triangle (or lower) if
-        // the matrix resulting from the kernel is symmetric
-        bool symmetric_matrix;
+        // For regularized kernels, gradients of the basis functions are
+        // required. For the fully regularized hypersingular kernel, both
+        // the gradient of the test basis and solution basis are needed.
+        bool test_gradient;
+        bool soln_gradient;
 
         // we need to use different quadrature formulae for log(r) and 1/r
         // singular kernels.
