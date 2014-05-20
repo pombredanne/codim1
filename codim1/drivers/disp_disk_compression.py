@@ -11,14 +11,12 @@ displace = 0.2
 radius = 1.0
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements = 30
-degree = 1
 quad_min = 4
 quad_max = 10
 quad_logr = 10
 quad_oneoverr = 10
 
-def run(shear_mod, pr, rad, disp_distance):
+def run(shear_mod, pr, rad, disp_distance, n_elements = 30, degree = 1):
     bf = BasisFunctions.from_degree(degree)
     mesh = circular_mesh(n_elements, rad)
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
@@ -48,7 +46,7 @@ def run(shear_mod, pr, rad, disp_distance):
     soln_coeffs = np.linalg.solve(matrix, rhs)
 
     # Evaluate that solution at 400 points around the circle
-    x, t = tools.evaluate_boundary_solution(400 / n_elements, soln_coeffs, mesh)
+    x, t = tools.evaluate_boundary_solution(512.0 / n_elements, soln_coeffs, mesh)
 
     # plt.figure(2)
     # plt.plot(x[:, 0], t[:, 0])
