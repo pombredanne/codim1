@@ -84,7 +84,6 @@ DisplacementKernel::DisplacementKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
-    symmetric_matrix = true;
     singularity_type = "logr";
     const3 = 1.0 / (8.0 * PI * shear_modulus * (1 - poisson_ratio));
     const4 = (3.0 - 4.0 * poisson_ratio);
@@ -100,7 +99,6 @@ TractionKernel::TractionKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
-    symmetric_matrix = false;
     singularity_type = "oneoverr";
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
@@ -119,7 +117,6 @@ AdjointTractionKernel::AdjointTractionKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
-    symmetric_matrix = false;
     singularity_type = "oneoverr";
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
@@ -138,8 +135,9 @@ RegularizedHypersingularKernel::RegularizedHypersingularKernel(
     double shear_modulus, double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
-    symmetric_matrix = true;
     singularity_type = "logr";
+    test_gradient = true;
+    soln_gradient = true;
     const5 = shear_modulus / (2 * PI * (1 - poisson_ratio));
 }
 
@@ -153,7 +151,7 @@ SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
     Kernel(shear_modulus, poisson_ratio),
     e{{0, 1},{-1, 0}}
 {
-    symmetric_matrix = true;
+    soln_gradient = true;
     singularity_type = "oneoverr";
     const double lambda =
         2 * shear_modulus * poisson_ratio / (1 - 2 * poisson_ratio);
@@ -192,7 +190,6 @@ HypersingularKernel::HypersingularKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
-    symmetric_matrix = true;
     singularity_type = "oneoverr";
     const1 = 1 - 2 * poisson_ratio;
     const5 = shear_modulus / (2 * PI * (1 - poisson_ratio));

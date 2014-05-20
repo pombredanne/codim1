@@ -64,7 +64,7 @@ def test_function():
 def test_gradient():
     msh = circular_mesh(200, 1.0)
     bf = BasisFunctions([0.0, 1.0])
-    gradient = bf.get_gradient_basis(msh)
+    gradient = bf.get_gradient_basis()
     e = msh.elements[57]
     chain_rule = gradient.chain_rule(e.mapping.get_jacobian(0.0))
     np.testing.assert_almost_equal(chain_rule *

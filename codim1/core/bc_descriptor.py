@@ -27,7 +27,17 @@ In an ideal world, we can exactly precompute all the physical points.
 Maybe this is the easiest route... in such a world, the mapping functions do
 not actually ever do any work during the integration routines. they simply
 pop out precomputed values.
+
+Important:
+These seem very closely related to basis functions. An integration of the
+two modules seems to be in order.
 """
+from basis_funcs import Function
+class FunctionBC(Function):
+    def __init__(self, type, f, element):
+        super(FunctionBC, self).__init__(f)
+        self.type = type
+        self.element = element
 
 class ConstantBC(object):
     def __init__(self, type, value, element):

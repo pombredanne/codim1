@@ -133,7 +133,7 @@ def test_hypersingular_vs_regularized():
     K = 30
     mesh = circular_mesh(K, 2.0)
     bf = BasisFunctions.from_degree(2)
-    grad_bf = bf.get_gradient_basis(mesh)
+    grad_bf = bf.get_gradient_basis()
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
     apply_to_elements(mesh, "basis", bf, non_gen = True)
     apply_to_elements(mesh, "continuous", True, non_gen = True)
@@ -238,7 +238,7 @@ def test_hypersingular_vs_regularized_across_elements():
     K = 30
     mesh = circular_mesh(K, 2.0)
     bf = BasisFunctions.from_degree(2)
-    grad_bf = bf.get_gradient_basis(mesh)
+    grad_bf = bf.get_gradient_basis()
     qs = QuadStrategy(mesh, 10, 10, 10, 10)
     apply_to_elements(mesh, "basis", bf, non_gen = True)
     apply_to_elements(mesh, "continuous", True, non_gen = True)

@@ -16,7 +16,8 @@ quad_max = 10
 quad_logr = 10
 quad_oneoverr = 10
 
-def run(shear_mod, pr, rad, disp_distance, n_elements = 30, degree = 1):
+def run(shear_mod, pr, rad, disp_distance,
+        n_elements = 30, degree = 1, plot = False):
     bf = BasisFunctions.from_degree(degree)
     mesh = circular_mesh(n_elements, rad)
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
@@ -31,7 +32,7 @@ def run(shear_mod, pr, rad, disp_distance, n_elements = 30, degree = 1):
     # Uniform compression displacement
     def compress(x, d):
         x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
-        return disp_distance * x[d] / x_length
+        return disp_distance * x[d]# / x_length
 
     displacement_function = BasisFunctions.from_function(compress)
 
@@ -45,19 +46,20 @@ def run(shear_mod, pr, rad, disp_distance, n_elements = 30, degree = 1):
 
     soln_coeffs = np.linalg.solve(matrix, rhs)
 
-    # Evaluate that solution at 400 points around the circle
+    # Evaluate that solution at 512 points around the circle
     x, t = tools.evaluate_boundary_solution(512.0 / n_elements, soln_coeffs, mesh)
 
-    # plt.figure(2)
-    # plt.plot(x[:, 0], t[:, 0])
-    # plt.xlabel(r'X')
-    # plt.ylabel(r'$t_x$', fontsize = 18)
+    if plot:
+        plt.figure(2)
+        plt.plot(x[:, 0], t[:, 0])
+        plt.xlabel(r'X')
+        plt.ylabel(r'$t_x$', fontsize = 18)
 
-    # plt.figure(3)
-    # plt.plot(x[:, 0], t[:, 1])
-    # plt.xlabel(r'X')
-    # plt.ylabel(r'$t_y$', fontsize = 18)
-    # plt.show()
+        plt.figure(3)
+        plt.plot(x[:, 0], t[:, 1])
+        plt.xlabel(r'X')
+        plt.ylabel(r'$t_y$', fontsize = 18)
+        plt.show()
     return t
 
 @pytest.mark.slow
