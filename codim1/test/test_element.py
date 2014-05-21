@@ -5,7 +5,7 @@ def test_apply_non_gen():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
     e = Element(a, b)
-    bf = lambda e: BasisFunctions.from_degree(2)
+    bf = lambda e: basis_from_degree(2)
     apply_to_elements([e], "basis", bf)
     assert(e.basis == bf)
 
@@ -13,7 +13,7 @@ def test_apply_non_gen():
     a = Vertex(np.ones(2))
     b = Vertex(np.array([1.0, 0.0]))
     e = Element(a, b)
-    bf = BasisFunctions.from_degree(2),
+    bf = basis_from_degree(2),
     apply_to_elements([e], "basis", bf, non_gen = True)
     assert(e.basis == bf)
 

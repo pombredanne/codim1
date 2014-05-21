@@ -2,7 +2,6 @@ import numpy as np
 
 from codim1.core.element import Element
 from codim1.core.mesh import Mesh
-from codim1.core.basis_funcs import BasisFunctions
 from codim1.core.mesh_gen import combine_meshes, simple_line_mesh,\
                                  circular_mesh, from_vertices_and_etov
 

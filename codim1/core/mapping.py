@@ -1,6 +1,6 @@
 import numpy as np
 from segment_distance import segments_distance
-from basis_funcs import BasisFunctions
+from basis_funcs import basis_from_degree
 from codim1.fast_lib import MappingEval
 
 def apply_mapping(mesh, mapping_gen):
@@ -52,16 +52,14 @@ class PolynomialMapping(object):
                             " a boundary function.")
 
         self.element = element
-        self.basis_fncs = BasisFunctions.from_degree(degree)
+        self.basis_fncs = basis_from_degree(degree)
         self.boundary_function = boundary_function
 
         # Compute the coefficients of the mapping basis.
         self.compute_coefficients()
 
         # The interface with the fast c++ evaluation code.
-        self.eval = MappingEval(self.basis_fncs.fncs,
-                                  self.basis_fncs.derivs,
-                                  self.coefficients)
+        self.eval = MappingEval(self.basis_fncs, self.coefficients)
 
     def compute_coefficients(self):
         # This is basically an interpolation of the boundary function

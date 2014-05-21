@@ -1,5 +1,5 @@
 import numpy as np
-from codim1.fast_lib import single_integral, ConstantEval
+from codim1.fast_lib import single_integral, ConstantBasis
 from codim1.core.quadrature import QuadSingularTelles
 
 def point_source_rhs(mesh, qs, str_loc_norm, kernel):
@@ -13,7 +13,7 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
     total_dofs = mesh.total_dofs
     rhs = np.zeros(total_dofs)
     for (str, loc, normal) in str_loc_norm:
-        strength = ConstantEval(np.array(str))
+        strength = ConstantBasis(np.array(str))
         kernel.set_interior_data(np.array(loc), np.array(normal))
         for e_k in mesh:
             quad_info = qs.get_point_source_quadrature(
@@ -21,7 +21,7 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
             for i in range(e_k.basis.n_fncs):
                 integral = single_integral(e_k.mapping.eval,
                                        kernel,
-                                       e_k.basis._basis_eval,
+                                       e_k.basis,
                                        strength,
                                        quad_info,
                                        i, 0)

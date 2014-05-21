@@ -1,5 +1,6 @@
 import numpy as np
-from codim1.core import *
+from codim1.core.mesh_gen import circular_mesh, simple_line_mesh,\
+                                 ray_mesh, combine_meshes
 
 def test_circular_mesh():
     a = circular_mesh(4, 1.0)
@@ -29,3 +30,12 @@ def test_angular_simple_line_mesh():
     assert(m.vertices[1].loc[1] == 0.0)
     assert(m.vertices[2].loc[0] == 1.0)
     assert(m.vertices[2].loc[1] == -1.0)
+
+def test_ray_mesh():
+    m = ray_mesh((0.0, 0.0), (1.0, 0.5), [1.0, 2.0])
+    assert(m.vertices[0].loc[0] == 0.0)
+    assert(m.vertices[0].loc[1] == 0.0)
+    assert(m.vertices[1].loc[0] == 1.0)
+    assert(m.vertices[1].loc[1] == 0.5)
+    assert(m.vertices[2].loc[0] == 3.0)
+    assert(m.vertices[2].loc[1] == 1.5)

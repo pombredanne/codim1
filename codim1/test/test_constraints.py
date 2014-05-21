@@ -5,7 +5,7 @@ from codim1.assembly.constraints import apply_average_constraint, \
 
 def constraints_setup():
     msh = simple_line_mesh(2)
-    bf = BasisFunctions.from_degree(1)
+    bf = basis_from_degree(1)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)

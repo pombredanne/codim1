@@ -41,7 +41,7 @@ def simple_assembler(degree = 0,
     msh = simple_line_mesh(n_elements)
     qs = quad_strategy.QuadStrategy(msh, nonsing_pts, nonsing_pts,
                      logr_pts, oneoverr_pts)
-    bf = basis_funcs.BasisFunctions.from_degree(degree)
+    bf = basis_funcs.basis_from_degree(degree)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -114,7 +114,7 @@ def realistic_assembler(n_elements = 4,
     if quad_points_oneoverr % 2 == 1:
         quad_points_oneoverr += 1
     msh = simple_line_mesh(n_elements, (left, 0.0), (right, 0.0))
-    bf = basis_funcs.BasisFunctions.from_degree(element_deg)
+    bf = basis_funcs.basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", True, non_gen = True)
     init_dofs(msh)

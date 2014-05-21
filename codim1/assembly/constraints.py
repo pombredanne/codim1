@@ -1,12 +1,5 @@
 from codim1.core.quadrature import QuadGauss
-from codim1.fast_lib import ConstantEval, MassMatrixKernel, single_integral
-
-# TODO: Move this file to the assembly directory. That is far more
-# appropriate.
-# TODO: Move this file to the assembly directory. That is far more
-# appropriate.
-# TODO: Move this file to the assembly directory. That is far more
-# appropriate.
+from codim1.fast_lib import ConstantBasis, MassMatrixKernel, single_integral
 
 def apply_average_constraint(matrix, rhs, mesh):
     """
@@ -21,7 +14,7 @@ def apply_average_constraint(matrix, rhs, mesh):
     rhs[first_y_dof] = 0
 
     kernel = MassMatrixKernel(0, 0)
-    one = ConstantEval([1.0, 1.0])
+    one = ConstantBasis([1.0, 1.0])
     for e_k in mesh:
         for i in range(e_k.basis.n_fncs):
             # TODO: Either pass in a quad_strategy object or make sure this
@@ -31,7 +24,7 @@ def apply_average_constraint(matrix, rhs, mesh):
             dof_y = e_k.dofs[1, i]
             integral = single_integral(e_k.mapping.eval,
                                        kernel,
-                                       e_k.basis._basis_eval,
+                                       e_k.basis,
                                        one,
                                        quad_info,
                                        i, 0)

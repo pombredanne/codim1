@@ -4,9 +4,10 @@ from codim1.core import *
 import codim1.core.basis_funcs as basis_funcs
 import codim1.core.dof_handler as dof_handler
 import codim1.core.quadrature as quadrature
+from codim1.fast_lib import SingleFunctionBasis
 
 def simple_mass_matrix(n_elements = 2, continuous = False):
-    bf = basis_funcs.BasisFunctions.from_degree(1)
+    bf = basis_funcs.basis_from_degree(1)
     msh = simple_line_mesh(n_elements)
     q = quadrature.QuadGauss(2)
     apply_to_elements(msh, "basis", bf, non_gen = True)
@@ -39,9 +40,9 @@ def test_mass_matrix_rhs():
     np.testing.assert_almost_equal(rhs[0:4], np.sum(M_exact, axis = 1))
 
 def test_mass_matrix_functional():
-    fnc = BasisFunctions.from_function(lambda x,d: [1,2][x[0] > 0])
+    fnc = SingleFunctionBasis(lambda x,d: [1,2][x[0] > 0])
     basis_grabber = lambda e: fnc
-    bf = basis_funcs.BasisFunctions.from_degree(1)
+    bf = basis_funcs.basis_from_degree(1)
     msh = simple_line_mesh(2)
     q = quadrature.QuadGauss(2)
     apply_to_elements(msh, "basis", bf, non_gen = True)

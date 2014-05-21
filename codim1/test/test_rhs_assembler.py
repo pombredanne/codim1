@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.assembly import simple_rhs_assemble
-from codim1.fast_lib import TractionKernel
+from codim1.fast_lib import TractionKernel, SingleFunctionBasis
 from codim1.core import *
 
 # A presumed-to-be correct matrix formed from the G_up kernel
@@ -19,7 +19,7 @@ correct_matrix = \
       0.00000000e+00,   0.00000000e+00,   0.00000000e+00]])
 
 def rhs_assembler():
-    bf = BasisFunctions.from_degree(1)
+    bf = basis_from_degree(1)
     msh = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", True, non_gen = True)
@@ -36,7 +36,7 @@ def test_rhs():
 
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
-    fnc = BasisFunctions.from_function(f)
+    fnc = SingleFunctionBasis(f)
     rhs = simple_rhs_assemble(msh, qs, fnc, kernel)
     np.testing.assert_almost_equal(rhs_correct, rhs)
 

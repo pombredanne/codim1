@@ -4,7 +4,6 @@ import numpy as np
 from mesh import Mesh
 from element import Element, Vertex, apply_to_elements
 from mapping import apply_mapping, PolynomialMapping
-from basis_funcs import BasisFunctions
 
 def from_vertices_and_etov(vertices, etov):
     vertex_objs = []
@@ -124,3 +123,29 @@ def rect_mesh(n_elements_per_side, upper_left, lower_right, bc_gen):
 
     return whole
 
+
+def ray_mesh(start_point, direction, length):
+    """
+    Create a mesh starting at start_point and going in the
+    direction specified with elements with a specified length.
+    This is a obviously linear mesh, so there is no point in adding the
+    necessary data to allow higher order mappings. This means that
+    higher order mappings will fail.
+    """
+    vertices = []
+    vertices.append(Vertex(np.array(start_point)))
+    sum_l = 0
+    for l in length:
+        sum_l += l
+        new_point = start_point + sum_l * direction
+        vertices.append(Vertex(new_point))
+
+    elements = []
+    for i in range(0, n_elements):
+        v0 = vertices[i]
+        v1 = vertices[i + 1]
+        elements.append(Element(v0, v1))
+
+    m = Mesh(vertices, elements)
+    apply_mapping(m, PolynomialMapping)
+    return m
