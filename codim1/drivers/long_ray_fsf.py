@@ -9,8 +9,8 @@ mpl.rcParams['lines.linewidth'] = 2
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements_surface = 100
-degree = 2
+n_elements_surface = 200
+degree = 4
 quad_min = degree + 1
 quad_mult = 3
 quad_max = quad_mult * degree
@@ -37,10 +37,17 @@ main_surface_right = (10.0, 0.0)
 mesh1 = simple_line_mesh(n_elements_surface,
                         main_surface_left,
                         main_surface_right)
+
+per_step = 5
+steps = 10
+ray_lengths = [1.0] * per_step
+for i in range(1, steps):
+    ray_lengths.extend([2.0 ** float(i)] * per_step)
+
 ray_left_dir = (-1.0, 0.0)
-mesh2 = ray_mesh(main_surface_left, ray_left_dir, [1.0] * 20)
+mesh2 = ray_mesh(main_surface_left, ray_left_dir, ray_lengths, flip = True)
 ray_right_dir = (1.0, 0.0)
-mesh3 = ray_mesh(main_surface_right, ray_right_dir, [1.0] * 20)
+mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths)
 mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                       ensure_continuity = True)
 
@@ -82,22 +89,40 @@ def analytical_free_surface(x, x_d, d, delta, s):
     uy = -factor * (term1 + term2)
     return ux, uy
 
+# Compute the exact solution
 x_e = x[:, 0]
 ux_exact1, uy_exact1 = analytical_free_surface(x_e, x_di, di, delta, -1.0)
 ux_exact2, uy_exact2 = analytical_free_surface(x_e, x_df, df, delta, 1.0)
 ux_exact = ux_exact1 + ux_exact2
 uy_exact = uy_exact1 + uy_exact2
 
-plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
-plt.plot(x_e, uy_exact, '*', label = 'Exact Y Displacement')
-plt.plot(x[:, 0],
-         u_soln[:, 0], '8',
-         linewidth = 2, label = 'Estimated X displacement')
-plt.plot(x[:, 0],
-         u_soln[:, 1], '8',
-         linewidth = 2, label = 'Estimated Y displacement')
-plt.xlabel(r'$x/d$', fontsize = 18)
-plt.ylabel(r'$u/s$', fontsize = 18)
-plt.legend()
-plt.show()
+def comparison_plot():
+    plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
+    plt.plot(x_e, uy_exact, '*', label = 'Exact Y Displacement')
+    plt.plot(x[:, 0],
+             u_soln[:, 0], '8',
+             linewidth = 2, label = 'Estimated X displacement')
+    plt.plot(x[:, 0],
+             u_soln[:, 1], '8',
+             linewidth = 2, label = 'Estimated Y displacement')
+    plt.axis([-30, 30, -1, 1])
+    plt.xlabel(r'$x/d$', fontsize = 18)
+    plt.ylabel(r'$u/s$', fontsize = 18)
+    plt.legend()
+    plt.show()
+
+def error_plot():
+    x_error = np.abs(ux_exact - u_soln[:, 0]) / np.abs(ux_exact)
+    y_error = np.abs(uy_exact - u_soln[:, 1]) / np.abs(uy_exact)
+    plt.figure(1)
+    plt.xlim(-30, 30)
+    plt.ylim(0, 0.0001)
+    plt.plot(x_e, x_error, '*', label = '% X displacement Error')
+    plt.plot(x_e, y_error, '*', label = '% Y displacement Error')
+    plt.xlabel(r'$x/d$', fontsize = 18)
+    plt.ylabel(r'$100\left(\frac{|u_{exact} - u_{est}|}{s}\right)$', fontsize = 18)
+    plt.legend()
+    plt.show()
+error_plot()
+
 import ipdb;ipdb.set_trace()

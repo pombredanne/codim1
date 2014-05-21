@@ -49,3 +49,26 @@ def test_ray_mesh2():
     assert(m.vertices[1].loc[1] == 0.0)
     assert(m.vertices[2].loc[0] == 3.0)
     assert(m.vertices[2].loc[1] == 0.0)
+
+def test_ray_mesh_flip():
+    m = ray_mesh((0.0, 0.0), (1.0, 0.0), [1.0, 2.0], flip = True)
+    assert(m.elements[0].vertex1.loc[0] == 3.0)
+    assert(m.elements[0].vertex1.loc[1] == 0.0)
+    assert(m.elements[0].vertex2.loc[0] == 1.0)
+    assert(m.elements[0].vertex2.loc[1] == 0.0)
+    assert(m.elements[1].vertex2.loc[0] == 0.0)
+    assert(m.elements[1].vertex2.loc[1] == 0.0)
+
+def test_complicated_mesh_problem():
+    main_surface_left = (-1.0, 0.0)
+    main_surface_right = (1.0, 0.0)
+    mesh1 = simple_line_mesh(1, main_surface_left, main_surface_right)
+    ray_lengths = [1.0]
+    ray_left_dir = (-1.0, 0.0)
+    mesh2 = ray_mesh(main_surface_left, ray_left_dir, ray_lengths, flip = True)
+    ray_right_dir = (1.0, 0.0)
+    mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths, flip = True)
+    mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
+                          ensure_continuity = True)
+    for e in mesh:
+        assert(e.length >= 0.0001)
