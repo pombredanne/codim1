@@ -124,7 +124,7 @@ def rect_mesh(n_elements_per_side, upper_left, lower_right, bc_gen):
     return whole
 
 
-def ray_mesh(start_point, direction, length):
+def ray_mesh(start_point, direction, length, flip = False):
     """
     Create a mesh starting at start_point and going in the
     direction specified with elements with a specified length.
@@ -145,12 +145,20 @@ def ray_mesh(start_point, direction, length):
         sum_l += l
         new_point = start_point + sum_l * direction
         vertices.append(Vertex(new_point))
+    if flip:
+        vertices.reverse()
 
     elements = []
     for i in range(0, len(length)):
         v0 = vertices[i]
         v1 = vertices[i + 1]
+        # if flip:
+        #     v1_temp = v0
+        #     v0 = v1
+        #     v1 = v1_temp
         elements.append(Element(v0, v1))
+    # if flip:
+    #     elements.reverse()
 
     m = Mesh(vertices, elements)
     apply_mapping(m, PolynomialMapping)
