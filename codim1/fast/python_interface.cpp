@@ -19,9 +19,9 @@ void expose_kernel(const char* type_string)
         .def("call", &T::call_all)
         .def("set_interior_data", &T::set_interior_data)
         .def("_call", &T::call)
-        .def_readonly("singularity_type", &T::singularity_type)
-        .def_readonly("test_gradient", &T::test_gradient)
-        .def_readonly("soln_gradient", &T::soln_gradient);
+        .def_readonly("test_gradient", &Kernel::test_gradient)
+        .def_readonly("soln_gradient", &Kernel::soln_gradient)
+        .def_readonly("singularity_type", &Kernel::singularity_type);
 }
 
 // In order to subclass Kernel in the python layer, this wrapper struct

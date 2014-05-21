@@ -9,7 +9,7 @@ mpl.rcParams['lines.linewidth'] = 2
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements_surface = 50
+n_elements_surface = 100
 degree = 2
 quad_min = degree + 1
 quad_mult = 3
@@ -20,8 +20,8 @@ interior_quad_pts = 13
 
 ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
-di = 0.2
-df = 1.4
+di = 0.5
+df = 1.5
 x_di = 0.0
 x_df = 1.0
 # fault angle
@@ -32,31 +32,17 @@ fault_vector = left_end - right_end
 fault_tangential = fault_vector / np.linalg.norm(fault_vector)
 fault_normal = np.array((fault_tangential[1], -fault_tangential[0]))
 
-# left_surface = np.array((-10.0, 0.0))
-# right_surface = np.array((10.0, 0.0))
-# mesh = simple_line_mesh(n_elements_surface, left_surface, right_surface)
-
-left_surface = np.array((-30.0, 0.0))
-rise_begin = np.array((0.0, 0.0))
-rise_end = np.array((3.0, 0.3))
-right_surface = np.array((30.0, 0.3))
-mesh1 = simple_line_mesh(n_elements_surface, left_surface, rise_begin)
-mesh2 = simple_line_mesh(n_elements_surface, rise_begin, rise_end)
-mesh3 = simple_line_mesh(n_elements_surface / 3, rise_end, right_surface)
-mesh = combine_meshes(mesh1, combine_meshes(mesh2, mesh3),
+main_surface_left = (-10.0, 0.0)
+main_surface_right = (10.0, 0.0)
+mesh1 = simple_line_mesh(n_elements_surface,
+                        main_surface_left,
+                        main_surface_right)
+ray_left_dir = (-1.0, 0.0)
+mesh2 = ray_mesh(main_surface_left, ray_left_dir, [1.0] * 20)
+ray_right_dir = (1.0, 0.0)
+mesh3 = ray_mesh(main_surface_right, ray_right_dir, [1.0] * 20)
+mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                       ensure_continuity = True)
-tools.plot_mesh(mesh)
-plt.plot([x_di, x_df], [-di, -df], 'r-')
-plt.axis([-1.0, 4.0, -2.5, 2.5])
-plt.xlabel(r'$x/d$', fontsize = 18)
-plt.ylabel(r'$y/d$', fontsize = 18)
-plt.text(0.50, 0.25, r'slope $\approx$ 6 degrees', rotation = 5.0)
-plt.text(-0.5, 0.05, 'flat')
-plt.text(3.3, 0.35, 'flat')
-plt.text(0.0, -0.4, 'Thrust fault (dip = 45 degrees)', rotation=-38)
-plt.suptitle('Geometry for topographic rise problem', fontsize = 18)
-plt.title('Total rise = 0.3 fault lengths.', fontsize = 16)
-plt.show()
 
 bf = basis_from_degree(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
@@ -105,10 +91,10 @@ uy_exact = uy_exact1 + uy_exact2
 plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
 plt.plot(x_e, uy_exact, '*', label = 'Exact Y Displacement')
 plt.plot(x[:, 0],
-         u_soln[:, 0],
+         u_soln[:, 0], '8',
          linewidth = 2, label = 'Estimated X displacement')
 plt.plot(x[:, 0],
-         u_soln[:, 1],
+         u_soln[:, 1], '8',
          linewidth = 2, label = 'Estimated Y displacement')
 plt.xlabel(r'$x/d$', fontsize = 18)
 plt.ylabel(r'$u/s$', fontsize = 18)

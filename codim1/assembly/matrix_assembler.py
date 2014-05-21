@@ -59,7 +59,14 @@ def _compute_element_pair(matrix, e_k, e_l, qs, kernel):
                     matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] += \
                         integral[idx1][idx2]
 
+def _choose_basis(element, is_gradient):
+    if is_gradient:
+        return element.basis.get_gradient_basis()
+    return element.basis
+
 def _compute_one_interaction(qs, kernel, e_k, i, e_l, j):
+    matrix_k_basis = _choose_basis(e_k, kernel.test_gradient)
+    matrix_l_basis = _choose_basis(e_l, kernel.soln_gradient)
     (quad_outer, quad_inner) = qs.get_quadrature(
                             kernel.singularity_type, e_k, e_l)
     quad_outer_info = quad_outer.quad_info
@@ -68,8 +75,8 @@ def _compute_one_interaction(qs, kernel, e_k, i, e_l, j):
                     e_k.mapping.eval,
                     e_l.mapping.eval,
                     kernel,
-                    e_k.basis,
-                    e_l.basis,
+                    matrix_k_basis,
+                    matrix_l_basis,
                     quad_outer_info, quad_inner_info,
                     i, j)
     return integral

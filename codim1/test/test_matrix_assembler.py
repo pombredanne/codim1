@@ -16,6 +16,8 @@ class TDispKernel(Kernel):
     """
     def __init__(self):
         self.singularity_type = 'logr'
+        self.test_gradient = False
+        self.soln_gradient = False
         super(TDispKernel, self).__init__()
 
     def _call(self, data, p, q):
@@ -26,6 +28,8 @@ class TDispKernel(Kernel):
 class TTracKernel(Kernel):
     def __init__(self):
         self.singularity_type = 'oneoverr'
+        self.test_gradient = False
+        self.soln_gradient = False
         super(TTracKernel, self).__init__()
 
     def _call(self, data, p, q):

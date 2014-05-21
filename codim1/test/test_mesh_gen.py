@@ -32,10 +32,20 @@ def test_angular_simple_line_mesh():
     assert(m.vertices[2].loc[1] == -1.0)
 
 def test_ray_mesh():
+    a = np.sqrt(1.25)
     m = ray_mesh((0.0, 0.0), (1.0, 0.5), [1.0, 2.0])
     assert(m.vertices[0].loc[0] == 0.0)
     assert(m.vertices[0].loc[1] == 0.0)
+    assert(m.vertices[1].loc[0] == 1.0 / a)
+    assert(m.vertices[1].loc[1] == 0.5 / a)
+    assert(m.vertices[2].loc[0] == 3.0 / a)
+    assert(m.vertices[2].loc[1] == 1.5 / a)
+
+def test_ray_mesh2():
+    m = ray_mesh((0.0, 0.0), (1.0, 0.0), [1.0, 2.0])
+    assert(m.vertices[0].loc[0] == 0.0)
+    assert(m.vertices[0].loc[1] == 0.0)
     assert(m.vertices[1].loc[0] == 1.0)
-    assert(m.vertices[1].loc[1] == 0.5)
+    assert(m.vertices[1].loc[1] == 0.0)
     assert(m.vertices[2].loc[0] == 3.0)
-    assert(m.vertices[2].loc[1] == 1.5)
+    assert(m.vertices[2].loc[1] == 0.0)
