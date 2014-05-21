@@ -17,7 +17,7 @@ def test_interpolate():
     n_elements = 2
     element_deg = 0
     msh = simple_line_mesh(n_elements)
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -34,7 +34,7 @@ def test_evaluate_boundary_solution_easy():
     n_elements = 2
     element_deg = 0
     msh = simple_line_mesh(n_elements)
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -51,7 +51,7 @@ def test_evaluate_solution_on_element():
     n_elements = 2
     element_deg = 1
     msh = simple_line_mesh(n_elements)
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -68,7 +68,7 @@ def test_interpolate_evaluate_hard():
     # Sixth order elements should exactly interpolate a sixth order polynomial.
     element_deg = 6
     msh = simple_line_mesh(n_elements)
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -83,7 +83,7 @@ def test_interpolate_normal():
     n_elements = 2
     element_deg = 0
     msh = simple_line_mesh(n_elements)
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)

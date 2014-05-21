@@ -1,15 +1,15 @@
 #include "integrator.h"
-#include "mesh_eval.h"
+#include "mapping.h"
 #include "elastic_kernel.h"
-#include "basis_eval.h"
+#include "basis.h"
 
 //TODO: Play with some strategy pattern ideas for making this flexible
 std::vector<std::vector<double> >
 double_integral(MappingEval& test_mapping_eval, 
                 MappingEval& soln_mapping_eval,  
                 Kernel& kernel, 
-                BasisEval& test_basis_eval,
-                BasisEval& soln_basis_eval,
+                Basis& test_basis_eval,
+                Basis& soln_basis_eval,
                 QuadratureInfo& test_quadrature,
                 std::vector<QuadratureInfo> soln_quadrature,
                 int test_basis_idx,
@@ -131,8 +131,8 @@ double_integral(MappingEval& test_mapping_eval,
 std::vector<std::vector<double> >
 single_integral(MappingEval& test_mapping_eval, 
                 Kernel& kernel, 
-                BasisEval& test_basis_eval,
-                BasisEval& soln_basis_eval,
+                Basis& test_basis_eval,
+                Basis& soln_basis_eval,
                 QuadratureInfo& quadrature,
                 int test_basis_idx,
                 int soln_basis_idx)

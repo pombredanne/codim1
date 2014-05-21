@@ -35,12 +35,12 @@ def sgbem_assemble(mesh, qs, kernel_set):
 def _compute_element_mass_rhs(rhs, qs, e_k):
     # Because the term is identical (just replace u by t) for both
     # integral equations, this function does not care about the BC type
-    bc_basis = e_k.bc._basis_eval
+    bc_basis = e_k.bc
     for i in range(e_k.basis.n_fncs):
         for j in range(rhs_basis.n_fncs):
             M_local = single_integral(e_k.mapping.eval,
                               kernel,
-                              e_k.basis._basis_eval,
+                              e_k.basis,
                               bc_basis,
                               q_info,
                               i, j)
@@ -80,7 +80,7 @@ def _compute_element_pair_rhs(rhs, e_k, e_l, qs, which_kernels):
                                 e_l.mapping.eval,
                                 kernel,
                                 rhs_k_basis,
-                                fnc._basis_eval,
+                                fnc,
                                 quad_outer_info, quad_inner_info,
                                 i, 0)
             for idx1 in range(2):
@@ -107,8 +107,8 @@ def _compute_element_pair_matrix(matrix, e_k, e_l, qs, which_kernels):
                                 e_k.mapping.eval,
                                 e_l.mapping.eval,
                                 kernel,
-                                matrix_k_basis._basis_eval,
-                                matrix_l_basis._basis_eval,
+                                matrix_k_basis,
+                                matrix_l_basis,
                                 quad_outer_info, quad_inner_info,
                                 i, j)
 

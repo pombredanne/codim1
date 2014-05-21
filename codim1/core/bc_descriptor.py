@@ -30,24 +30,9 @@ pop out precomputed values.
 
 Important:
 These seem very closely related to basis functions. An integration of the
-two modules seems to be in order.
+two modules seems to be in order. This is done!
 """
-from basis_funcs import Function
-class FunctionBC(Function):
-    def __init__(self, type, f, element):
-        super(FunctionBC, self).__init__(f)
+class BC(object):
+    def __init__(self, type, basis):
         self.type = type
-        self.element = element
-
-class ConstantBC(object):
-    def __init__(self, type, value, element):
-        self.type = type
-        self.value = value
-        self.element = element
-
-    def get_value(self, x_hat):
-        return self.value
-
-class ZeroBC(ConstantBC):
-    def __init__(self, type, element):
-        super(ZeroBC, self).__init__(type, 0, element)
+        self.basis = basis

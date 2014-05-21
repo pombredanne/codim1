@@ -23,8 +23,8 @@ def assemble_mass_matrix(mesh, quadrature,
             for j in range(rhs_basis.n_fncs):
                 M_local = single_integral(e_k.mapping.eval,
                                   kernel,
-                                  e_k.basis._basis_eval,
-                                  rhs_basis._basis_eval,
+                                  e_k.basis,
+                                  rhs_basis,
                                   q_info,
                                   i, j)
                 # Don't take the off diagonal components because we don't

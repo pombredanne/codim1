@@ -68,8 +68,8 @@ def _compute_one_interaction(qs, kernel, e_k, i, e_l, j):
                     e_k.mapping.eval,
                     e_l.mapping.eval,
                     kernel,
-                    e_k.basis._basis_eval,
-                    e_l.basis._basis_eval,
+                    e_k.basis,
+                    e_l.basis,
                     quad_outer_info, quad_inner_info,
                     i, j)
     return integral

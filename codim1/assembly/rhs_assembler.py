@@ -23,8 +23,8 @@ def simple_rhs_assemble(mesh, qs, fnc, kernel):
                                 e_k.mapping.eval,
                                 e_l.mapping.eval,
                                 kernel,
-                                e_k.basis._basis_eval,
-                                fnc._basis_eval,
+                                e_k.basis,
+                                fnc,
                                 quad_outer_info, quad_inner_info,
                                 i, 0)
                 rhs[e_k.dofs[0, i]] += value[0][0]

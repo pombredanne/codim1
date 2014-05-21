@@ -5,8 +5,8 @@
 #include <boost/python.hpp>
 #include <boost/python/suite/indexing/vector_indexing_suite.hpp>
 #include "iterable_converter.h"
-#include "basis_eval.h"
-#include "mesh_eval.h"
+#include "basis.h"
+#include "mapping.h"
 #include "elastic_kernel.h"
 #include "integrator.h"
 
@@ -19,8 +19,8 @@ void expose_kernel(const char* type_string)
         .def("call", &T::call_all)
         .def("set_interior_data", &T::set_interior_data)
         .def("_call", &T::call)
-        .def_readonly("singularity_type", &T::singularity_type);
-        .def_readonly("test_gradient", &T::test_gradient);
+        .def_readonly("singularity_type", &T::singularity_type)
+        .def_readonly("test_gradient", &T::test_gradient)
         .def_readonly("soln_gradient", &T::soln_gradient);
 }
 
@@ -37,6 +37,8 @@ struct KernelWrap: Kernel, wrapper<Kernel>
 
 BOOST_PYTHON_MODULE(fast_lib)
 {
+    // //Expose shared_ptr<Basis>
+    register_ptr_to_python<boost::shared_ptr<Basis> >(); 
 
     //Expose the std::vector interface so it acts like a list/vector/array
     class_<std::vector<double> >("PyVec")
@@ -45,36 +47,45 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def(vector_indexing_suite<std::vector<std::vector<double> > >());
 
     // Expose the basis evaluation classes.
-    class_<BasisEval, boost::noncopyable>("BasisEval", no_init)
-        .def("chain_rule", &BasisEval::chain_rule)
-        .def("evaluate", pure_virtual(&BasisEval::evaluate));
-    class_<PolyBasisEval, bases<BasisEval> >("PolyBasisEval", 
-            init<std::vector<std::vector<double> > >())
-        .def("chain_rule", &PolyBasisEval::chain_rule)
-        .def("evaluate", &PolyBasisEval::evaluate);
-    class_<GradientBasisEval, bases<BasisEval> >("GradientBasisEval", 
-            init<std::vector<std::vector<double> > >())
-        .def("chain_rule", &GradientBasisEval::chain_rule)
-        .def("evaluate", &GradientBasisEval::evaluate);
-    class_<FuncEval, bases<BasisEval> >("FuncEval", init<object>())
-        .def("chain_rule", &FuncEval::chain_rule)
-        .def("evaluate", &FuncEval::evaluate);
-    class_<ConstantEval, bases<BasisEval> >("ConstantEval",
+    // This could be generalized...
+    class_<Basis, boost::noncopyable>("Basis", no_init)
+        .def("chain_rule", &Basis::chain_rule)
+        .def("evaluate", pure_virtual(&Basis::evaluate_vector))
+        .def("get_gradient_basis", &Basis::get_gradient_basis)
+        .def_readonly("n_fncs", &Basis::n_fncs);
+    class_<PolyBasis, bases<Basis> >("PolyBasis", 
+            init<std::vector<std::vector<double> >,
+                 std::vector<std::vector<double> >,
+                 std::vector<double> >())
+        .def("chain_rule", &PolyBasis::chain_rule)
+        .def("evaluate", &PolyBasis::evaluate_vector)
+        .def_readonly("basis_coeffs", &PolyBasis::basis_coeffs)
+        .def_readonly("nodes", &PolyBasis::nodes);
+    class_<GradientBasis, bases<PolyBasis> >("GradientBasis", 
+            init<std::vector<std::vector<double> >,
+                 std::vector<double> >())
+        .def("chain_rule", &GradientBasis::chain_rule)
+        .def("evaluate", &GradientBasis::evaluate_vector);
+    class_<SingleFunctionBasis, bases<Basis> >
+        ("SingleFunctionBasis", init<object>())
+        .def("chain_rule", &SingleFunctionBasis::chain_rule)
+        .def("evaluate", &SingleFunctionBasis::evaluate_vector);
+    class_<ConstantBasis, bases<Basis> >("ConstantBasis",
             init<std::vector<double> >())
-        .def("chain_rule", &ConstantEval::chain_rule)
-        .def("evaluate", &ConstantEval::evaluate);
+        .def("chain_rule", &ConstantBasis::chain_rule)
+        .def("evaluate", &ConstantBasis::evaluate_vector);
+    class_<ZeroBasis, bases<ConstantBasis> >("ZeroBasis", init<>());
+        // .def("chain_rule", &ZeroBasis::chain_rule)
+        // .def("evaluate", &ZeroBasis::evaluate);
 
     // Expose mesh calculation functions
     class_<MappingEval>("MappingEval",
-            init<std::vector<std::vector<double> >,
-            std::vector<std::vector<double> >,
-            std::vector<std::vector<double> > >())
+            init<PolyBasis&, std::vector<std::vector<double> > >())
         .def("eval_function", &MappingEval::eval_function)
         .def("get_physical_point", &MappingEval::get_physical_point)
         .def("get_jacobian", &MappingEval::get_jacobian)
         .def("get_normal", &MappingEval::get_normal)
-        .def_readonly("basis_eval", &MappingEval::basis_eval)
-        .def_readonly("deriv_eval", &MappingEval::deriv_eval);
+        .def_readonly("map_basis", &MappingEval::map_basis);
 
     // Expose the elastic kernels.
     class_<KernelWrap, boost::noncopyable>("Kernel")

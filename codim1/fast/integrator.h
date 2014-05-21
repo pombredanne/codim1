@@ -4,7 +4,7 @@
 
 class MappingEval;
 class Kernel;
-class BasisEval;
+class Basis;
 
 struct QuadratureInfo
 {
@@ -21,8 +21,8 @@ std::vector<std::vector<double> >
 double_integral(MappingEval& k_mesh_eval, 
                 MappingEval& l_mesh_eval,  
                 Kernel& kernel, 
-                BasisEval& k_basis_eval,
-                BasisEval& l_basis_eval,
+                Basis& k_basis_eval,
+                Basis& l_basis_eval,
                 QuadratureInfo& k_quadrature,
                 std::vector<QuadratureInfo> l_quadrature,
                 int test_basis_idx, int soln_basis_idx);
@@ -41,8 +41,8 @@ double_integral(MappingEval& k_mesh_eval,
 std::vector<std::vector<double> >
 single_integral(MappingEval& k_mesh_eval, 
                 Kernel& kernel, 
-                BasisEval& i_basis_eval,
-                BasisEval& j_basis_eval,
+                Basis& i_basis_eval,
+                Basis& j_basis_eval,
                 QuadratureInfo& quadrature,
                 int test_basis_idx, int soln_basis_idx);
 #endif

@@ -1,12 +1,13 @@
 import numpy as np
 from codim1.core import *
-from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel
+from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel,\
+        SingleFunctionBasis
 from codim1.assembly.interior_point import interior_pt_rhs,\
                                            interior_pt_soln
 
 def int_pt_test_setup(n):
     msh = circular_mesh(n, 1.0)
-    bf = basis_funcs.BasisFunctions.from_degree(0)
+    bf = basis_funcs.basis_from_degree(0)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)
@@ -38,8 +39,7 @@ def test_interior_point_traction_adjoint():
             x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
             return -x[d] / x_length
         return 0.0
-    traction_function = basis_funcs.BasisFunctions.\
-            from_function(section_traction)
+    traction_function = SingleFunctionBasis(section_traction)
     kernel = AdjointTractionKernel(1.0, 0.25)
     pts_normals = (np.array([0.5, 0.0]), np.array([1.0, 0.0]))
     result = interior_pt_rhs(msh, qs,

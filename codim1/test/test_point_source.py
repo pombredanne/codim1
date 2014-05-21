@@ -1,11 +1,12 @@
 import numpy as np
+
 from codim1.core import *
 from codim1.assembly import *
 from codim1.fast_lib import RegularizedHypersingularKernel,\
-        ConstantEval, single_integral
+        ConstantBasis, single_integral
 
 def test_displacement_discontinuity_derivative():
-    bf = BasisFunctions.from_degree(1)
+    bf = basis_from_degree(1)
     msh = simple_line_mesh(2)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", True, non_gen = True)
@@ -18,9 +19,9 @@ def test_displacement_discontinuity_derivative():
     k = 1
     i = 1
     qi = qs.get_simple().quad_info
-    strength = ConstantEval([1.0, 1.0])
+    strength = ConstantBasis([1.0, 1.0])
     k_rh.set_interior_data(np.array([-2.0, 0.0]), np.array([0.0, 1.0]))
-    basis = bf.get_gradient_basis()._basis_eval
+    basis = bf.get_gradient_basis()
     result = single_integral(msh.elements[k].mapping.eval, k_rh, strength,
                     basis, qi, 0, i)
     np.testing.assert_almost_equal(result[1][1], 0.193011, 4)
