@@ -132,6 +132,12 @@ def ray_mesh(start_point, direction, length):
     necessary data to allow higher order mappings. This means that
     higher order mappings will fail.
     """
+    # Convert to numpy arrays so that users don't have to.
+    start_point = np.array(start_point)
+    direction = np.array(direction)
+    # Normalize direction so the lengths stay true.
+    direction /= np.linalg.norm(direction)
+
     vertices = []
     vertices.append(Vertex(np.array(start_point)))
     sum_l = 0
@@ -141,7 +147,7 @@ def ray_mesh(start_point, direction, length):
         vertices.append(Vertex(new_point))
 
     elements = []
-    for i in range(0, n_elements):
+    for i in range(0, len(length)):
         v0 = vertices[i]
         v1 = vertices[i + 1]
         elements.append(Element(v0, v1))

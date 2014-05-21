@@ -12,6 +12,9 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
     """
     total_dofs = mesh.total_dofs
     rhs = np.zeros(total_dofs)
+    basis_grabber = lambda e: e.basis
+    if kernel.test_gradient:
+        basis_grabber = lambda e: e.basis.get_gradient_basis()
     for (str, loc, normal) in str_loc_norm:
         strength = ConstantBasis(np.array(str))
         kernel.set_interior_data(np.array(loc), np.array(normal))
@@ -21,7 +24,7 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
             for i in range(e_k.basis.n_fncs):
                 integral = single_integral(e_k.mapping.eval,
                                        kernel,
-                                       e_k.basis,
+                                       basis_grabber(e_k),
                                        strength,
                                        quad_info,
                                        i, 0)

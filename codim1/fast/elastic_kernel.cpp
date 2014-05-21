@@ -85,6 +85,8 @@ DisplacementKernel::DisplacementKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "logr";
+    test_gradient = false;
+    soln_gradient = false;
     const3 = 1.0 / (8.0 * PI * shear_modulus * (1 - poisson_ratio));
     const4 = (3.0 - 4.0 * poisson_ratio);
 }
@@ -100,6 +102,8 @@ TractionKernel::TractionKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "oneoverr";
+    test_gradient = false;
+    soln_gradient = false;
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
 }
@@ -118,6 +122,8 @@ AdjointTractionKernel::AdjointTractionKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "oneoverr";
+    test_gradient = false;
+    soln_gradient = false;
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
 }
@@ -151,6 +157,7 @@ SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
     Kernel(shear_modulus, poisson_ratio),
     e{{0, 1},{-1, 0}}
 {
+    test_gradient = false;
     soln_gradient = true;
     singularity_type = "oneoverr";
     const double lambda =
@@ -190,6 +197,8 @@ HypersingularKernel::HypersingularKernel(double shear_modulus,
                                    double poisson_ratio)
     :Kernel(shear_modulus, poisson_ratio)
 {
+    test_gradient = false;
+    soln_gradient = false;
     singularity_type = "oneoverr";
     const1 = 1 - 2 * poisson_ratio;
     const5 = shear_modulus / (2 * PI * (1 - poisson_ratio));
