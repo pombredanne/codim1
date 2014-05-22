@@ -1,4 +1,4 @@
-from codim1.core.quadrature import QuadGauss
+from codim1.core.quadrature import gauss
 from codim1.fast_lib import ConstantBasis, MassMatrixKernel, single_integral
 
 def apply_average_constraint(matrix, rhs, mesh):
@@ -19,7 +19,7 @@ def apply_average_constraint(matrix, rhs, mesh):
         for i in range(e_k.basis.n_fncs):
             # TODO: Either pass in a quad_strategy object or make sure this
             # behaves like a flyweight
-            quad_info = QuadGauss(e_k.basis.n_fncs).quad_info
+            quad_info = gauss(e_k.basis.n_fncs)
             dof_x = e_k.dofs[0,i]
             dof_y = e_k.dofs[1, i]
             integral = single_integral(e_k.mapping.eval,

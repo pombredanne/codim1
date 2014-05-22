@@ -1,4 +1,4 @@
-import quadrature
+from quadrature import gauss, telles_singular, piessens
 from mapping import distance_between_mappings
 import numpy as np
 
@@ -49,15 +49,12 @@ class QuadStrategy(object):
         """
         self.quad_nonsingular = dict()
         for n_q in range(self.min_points - 1, self.max_points):
-            self.quad_nonsingular[n_q + 1] = quadrature.QuadGauss(n_q + 1)
+            self.quad_nonsingular[n_q + 1] = gauss(n_q + 1)
 
-        self.highest_nonsingular = \
-            self.quad_nonsingular[self.max_points]
+        self.highest_nonsingular =  self.quad_nonsingular[self.max_points]
 
-        self.quad_shared_edge_left = \
-            quadrature.QuadSingularTelles(self.quad_points_logr, 0.0)
-        self.quad_shared_edge_right = \
-            quadrature.QuadSingularTelles(self.quad_points_logr, 1.0)
+        self.quad_shared_edge_left=telles_singular(self.quad_points_logr, 0.0)
+        self.quad_shared_edge_right=telles_singular(self.quad_points_logr, 1.0)
 
         self.quad_logr = []
         self.quad_oneoverr = []
@@ -67,9 +64,8 @@ class QuadStrategy(object):
         # The highest order nonsingular quadrature is used for the outer
         # quadrature in the case of a singular kernel.
         for singular_pt in self.highest_nonsingular.x:
-            logr = quadrature.QuadSingularTelles(self.quad_points_logr,
-                                                 singular_pt)
-            oneoverr = quadrature.QuadOneOverR(self.quad_points_oneoverr,
+            logr = telles_singular(self.quad_points_logr, singular_pt)
+            oneoverr = piessens(self.quad_points_oneoverr,
                                                singular_pt,
                                                self.max_points)
             self.quad_logr.append(logr)

@@ -30,13 +30,13 @@ def test_build_quadrature_list():
     msh = simple_line_mesh(2)
     qs = QuadStrategy(msh, 2, 2, 2, 2)
 
-    assert(qs.quad_nonsingular[2].N == 2)
+    assert(len(qs.quad_nonsingular[2].x) == 2)
 
     assert(len(qs.quad_logr) == 2)
     assert(len(qs.quad_oneoverr) == 2)
 
-    assert(qs.quad_logr[0].N == 2)
-    assert(qs.quad_oneoverr[0].N == 2)
+    assert(len(qs.quad_logr[0].x) == 2)
+    assert(len(qs.quad_oneoverr[0].x) == 6)
 
     assert(qs.quad_logr[0].x0 == qs.quad_nonsingular[2].x[0])
     assert(qs.quad_logr[1].x0 == qs.quad_nonsingular[2].x[1])

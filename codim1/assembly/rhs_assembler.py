@@ -17,15 +17,13 @@ def simple_rhs_assemble(mesh, fnc, kernel):
             for e_l in mesh:
                 (quad_outer, quad_inner) = e_k.qs.get_quadrature(
                                             kernel.singularity_type, e_k, e_l)
-                quad_outer_info = quad_outer.quad_info
-                quad_inner_info = [q.quad_info for q in quad_inner]
                 value = fl.double_integral(
                                 e_k.mapping.eval,
                                 e_l.mapping.eval,
                                 kernel,
                                 e_k.basis,
                                 fnc,
-                                quad_outer_info, quad_inner_info,
+                                quad_outer, quad_inner,
                                 i, 0)
                 rhs[e_k.dofs[0, i]] += value[0][0]
                 rhs[e_k.dofs[0, i]] += value[0][1]

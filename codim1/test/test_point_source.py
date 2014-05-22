@@ -19,7 +19,7 @@ def test_displacement_discontinuity_derivative():
     # basis function should be equal to x_hat
     k = 1
     i = 1
-    qi = qs.get_simple().quad_info
+    qi = qs.get_simple()
     strength = ConstantBasis([1.0, 1.0])
     k_rh.set_interior_data(np.array([-2.0, 0.0]), np.array([0.0, 1.0]))
     basis = bf.get_gradient_basis()

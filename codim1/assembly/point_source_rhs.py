@@ -1,6 +1,5 @@
 import numpy as np
 from codim1.fast_lib import single_integral, ConstantBasis
-from codim1.core.quadrature import QuadSingularTelles
 
 def point_source_rhs(mesh, str_loc_norm, kernel):
     """
@@ -20,7 +19,7 @@ def point_source_rhs(mesh, str_loc_norm, kernel):
         kernel.set_interior_data(np.array(loc), np.array(normal))
         for e_k in mesh:
             quad_info = e_k.qs.get_point_source_quadrature(
-                    kernel.singularity_type, loc, e_k).quad_info
+                    kernel.singularity_type, loc, e_k)
             for i in range(e_k.basis.n_fncs):
                 integral = single_integral(e_k.mapping.eval,
                                        kernel,

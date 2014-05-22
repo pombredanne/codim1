@@ -9,7 +9,7 @@ from codim1.fast_lib import SingleFunctionBasis
 def simple_mass_matrix(n_elements = 2, continuous = False):
     bf = basis_funcs.basis_from_degree(1)
     msh = simple_line_mesh(n_elements)
-    q = quadrature.QuadGauss(2)
+    q = quadrature.gauss(2)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", continuous, non_gen = True)
     init_dofs(msh)
@@ -44,7 +44,7 @@ def test_mass_matrix_functional():
     basis_grabber = lambda e: fnc
     bf = basis_funcs.basis_from_degree(1)
     msh = simple_line_mesh(2)
-    q = quadrature.QuadGauss(2)
+    q = quadrature.gauss(2)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", False, non_gen = True)
     init_dofs(msh)

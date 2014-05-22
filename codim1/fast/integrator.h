@@ -8,11 +8,15 @@ class Basis;
 
 struct QuadratureInfo
 {
-    QuadratureInfo(std::vector<double> x, std::vector<double> w)
+    QuadratureInfo(double x0,
+                   std::vector<double> x,
+                   std::vector<double> w)
     {
+        this->x0 = x0;
         this->x = x;
         this->w = w;
     }
+    double x0;
     std::vector<double> x;
     std::vector<double> w;
 };

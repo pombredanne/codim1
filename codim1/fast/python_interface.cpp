@@ -104,9 +104,10 @@ BOOST_PYTHON_MODULE(fast_lib)
 
     //Expose the integration functions.
     class_<QuadratureInfo, boost::noncopyable>("QuadratureInfo", 
-            init<std::vector<double>, std::vector<double> >())
+            init<double, std::vector<double>, std::vector<double> >())
+        .def_readonly("x0", &QuadratureInfo::x0)
         .def_readonly("x", &QuadratureInfo::x)
-        .def_readonly("w", &QuadratureInfo::x);
+        .def_readonly("w", &QuadratureInfo::w);
     def("double_integral", double_integral);
     def("single_integral", single_integral);
 
