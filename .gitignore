@@ -1,6 +1,6 @@
 data
 build
-codim1.egg-info
+*.egg-info
 *.pyc
 *.swp
 *.swo

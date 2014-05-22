@@ -16,7 +16,6 @@ def assemble_mass_matrix(mesh, quadrature,
     total_dofs = mesh.total_dofs
     M = np.zeros((total_dofs, total_dofs))
     kernel = MassMatrixKernel(0, 0)
-    q_info = quadrature.quad_info
     for e_k in mesh:
         rhs_basis = basis_grabber(e_k)
         for i in range(e_k.basis.n_fncs):
@@ -25,7 +24,7 @@ def assemble_mass_matrix(mesh, quadrature,
                                   kernel,
                                   e_k.basis,
                                   rhs_basis,
-                                  q_info,
+                                  quadrature,
                                   i, j)
                 # Don't take the off diagonal components because we don't
                 # want to couple the x and y dimensions in the mass matrix

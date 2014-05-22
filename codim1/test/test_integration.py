@@ -10,8 +10,8 @@ from codim1.fast_lib import TractionKernel, DisplacementKernel,\
 def test_exact_dbl_integrals_H_same_element():
     msh = simple_line_mesh(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    qo = qs.get_simple().quad_info
-    qi = [q.quad_info for q in qs.quad_oneoverr]
+    qo = qs.get_simple()
+    qi = qs.quad_oneoverr
     bf = basis_funcs.basis_from_degree(1)
 
     kernel = TractionKernel(1.0, 0.25)
@@ -52,8 +52,8 @@ def test_exact_dbl_integrals_G_same_element():
     msh = simple_line_mesh(1)
     bf = basis_funcs.basis_from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    qo = qs.get_simple().quad_info
-    qi = [q.quad_info for q in qs.quad_logr]
+    qo = qs.get_simple()
+    qi = qs.quad_logr
     kernel = DisplacementKernel(1.0, 0.25)
     G_00 = double_integral(msh.elements[0].mapping.eval,
             msh.elements[0].mapping.eval, kernel, bf,
@@ -77,8 +77,8 @@ def test_exact_dbl_integrals_G_different_element():
     msh = simple_line_mesh(2)
     bf = basis_funcs.basis_from_degree(1)
     qs = quad_strategy.QuadStrategy(msh, 10, 10, 10, 10)
-    qo = qs.get_simple().quad_info
-    qi = [q.quad_info for q in qs.quad_logr]
+    qo = qs.get_simple()
+    qi = qs.quad_logr
     kernel = DisplacementKernel(1.0, 0.25)
 
     G_00 = double_integral(msh.elements[0].mapping.eval, msh.elements[1].mapping.eval, kernel, bf,
@@ -106,12 +106,12 @@ def test_realistic_double_integral_symmetry():
 
     # fnc = lambda r, n: 1 / r[0]
     one = double_integral(msh.elements[1].mapping.eval, msh.elements[1].mapping.eval, kernel, bf,
-                          bf, qs.get_simple().quad_info,
-                          [q.quad_info for q in qs.quad_logr], 0, 1)
+                          bf, qs.get_simple(),
+                          qs.quad_logr, 0, 1)
 
     two = double_integral(msh.elements[1].mapping.eval, msh.elements[1].mapping.eval, kernel, bf,
-                          bf, qs.get_simple().quad_info,
-                          [q.quad_info for q in qs.quad_logr], 1, 0)
+                          bf, qs.get_simple(),
+                          qs.quad_logr, 1, 0)
     one = np.array(one)
     two = np.array(two)
     np.testing.assert_almost_equal(one, two)
@@ -119,30 +119,30 @@ def test_realistic_double_integral_symmetry():
 
 def test_M_integral_same_dof():
     msh = simple_line_mesh(2)
-    q = quadrature.QuadGauss(2)
+    q = quadrature.gauss(2)
     bf = basis_funcs.basis_from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf,
-                              bf, q.quad_info, 0, 0)
+                              bf, q, 0, 0)
     # integral of (1-x)^2 from 0 to 1
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 3.0)
 
 def test_M_integral_same_dof_with_jacobian():
     msh = simple_line_mesh(4)
-    q = quadrature.QuadGauss(2)
+    q = quadrature.gauss(2)
     bf = basis_funcs.basis_from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf,
-                              bf, q.quad_info, 0, 0)
+                              bf, q, 0, 0)
     # Element size divided by two so the M value should be divided by two
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)
 
 def test_M_integral_diff_dof():
     msh = simple_line_mesh(2)
-    q = quadrature.QuadGauss(2)
+    q = quadrature.gauss(2)
     bf = basis_funcs.basis_from_degree(1)
     kernel = MassMatrixKernel(0, 0)
     M_local = single_integral(msh.elements[0].mapping.eval, kernel, bf,
-          bf, q.quad_info, 0, 1)
+          bf, q, 0, 1)
     # integral of (1-x)*x from 0 to 1
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)

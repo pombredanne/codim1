@@ -69,14 +69,12 @@ def _compute_one_interaction(kernel, e_k, i, e_l, j):
     matrix_l_basis = _choose_basis(e_l, kernel.soln_gradient)
     (quad_outer, quad_inner) = e_k.qs.get_quadrature(
                             kernel.singularity_type, e_k, e_l)
-    quad_outer_info = quad_outer.quad_info
-    quad_inner_info = [q.quad_info for q in quad_inner]
     integral = double_integral(
                     e_k.mapping.eval,
                     e_l.mapping.eval,
                     kernel,
                     matrix_k_basis,
                     matrix_l_basis,
-                    quad_outer_info, quad_inner_info,
+                    quad_outer, quad_inner,
                     i, j)
     return integral

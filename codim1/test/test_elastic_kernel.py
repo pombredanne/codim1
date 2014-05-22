@@ -160,8 +160,7 @@ def test_hypersingular_vs_regularized():
         i = 1
         j = 1
         o_q, i_q = qs.get_quadrature('logr', mesh.elements[el1], mesh.elements[el2])
-        o_q = o_q.quad_info
-        i_q = [q.quad_info for q in i_q]
+        o_q = o_q
         a[el2, :, :] = double_integral(mesh.elements[el1].mapping.eval, mesh.elements[el2].mapping.eval, k_rh,
                                              grad_bf,
                                              grad_bf,
@@ -249,8 +248,7 @@ def test_hypersingular_vs_regularized_across_elements():
     el2a = 25
     el2b = 26
     o_q, i_q = qs.get_quadrature('logr', mesh.elements[el1a], mesh.elements[el2a])
-    o_q = o_q.quad_info
-    i_q = [q.quad_info for q in i_q]
+    o_q = o_q
 
     # Four integrals for this matrix term. Two choices of source element
     # and two choices of solution element.
