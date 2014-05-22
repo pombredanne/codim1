@@ -53,6 +53,10 @@ class Mesh(object):
         # Determine which elements touch.
         for e in self.elements:
             e.update_neighbors()
+        # Don't check for misorientation until all neighbors have been
+        # calculated
+        for e in self.elements:
+            e._check_for_misorientation()
 
     def condense_duplicate_vertices(self, epsilon = 1e-6):
         """

@@ -20,8 +20,8 @@ quad_oneoverr = quad_mult * degree + (degree % 2)
 interior_quad_pts = 13
 
 
-di = 0.5
-df = 1.5
+di = 1.0
+df = 1.0
 x_di = 0.0
 x_df = 1.0
 
@@ -70,7 +70,7 @@ init_dofs(fault_mesh)
 
 ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
-load = True
+load = False
 if load:
     file = np.load("data/long_ray_fsf/data.npz")
     soln_coeffs = file["soln_coeffs"]
@@ -173,16 +173,22 @@ def interior_plot():
             int_uy[j, i] = dislocation_effect[1]
             int_uy[j, i] += surf_disp_effect[1]
     X, Y = np.meshgrid(x, y)
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-    tools.plot_mesh(fault_mesh, show = False, fig_ax = (fig, ax))
-    im = ax.contourf(X, Y, int_ux)
-    ax.set_ylabel(r'$x/d$', fontsize = 18)
-    ax.set_xlabel(r'$y/d$', fontsize = 18)
-    ax.set_title('Horizontal displacement contours.')
-    ax.set_xlim(-5, 5)
-    ax.set_ylim(-5, 0)
-    fig.colorbar(im)
+    def contf_plot(type, data):
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        levels = np.linspace(-0.5, 0.5, 21)
+        tools.plot_mesh(fault_mesh, show = False, fig_ax = (fig, ax))
+        im = ax.contourf(X, Y, data, levels)
+        ax.contour(X, Y, data, levels, colors = ('k',), linestyles=['solid'])
+        ax.set_ylabel(r'$x/d$', fontsize = 18)
+        ax.set_xlabel(r'$y/d$', fontsize = 18)
+        ax.set_title(type + ' displacement contours.')
+        ax.set_xlim(min_x, max_x)
+        ax.set_ylim(min_y, max_y)
+        fig.colorbar(im)
+    contf_plot('Vertical', int_uy)
+    contf_plot('Horizontal', int_ux)
+    plt.show()
     import ipdb;ipdb.set_trace()
 
 # error_plot()
