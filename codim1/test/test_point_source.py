@@ -8,11 +8,12 @@ from codim1.fast_lib import RegularizedHypersingularKernel,\
 def test_displacement_discontinuity_derivative():
     bf = basis_from_degree(1)
     msh = simple_line_mesh(2)
+    qs = QuadStrategy(msh, 10, 10, 10, 10)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", True, non_gen = True)
+    apply_to_elements(msh, "qs", qs, non_gen = True)
     init_dofs(msh)
 
-    qs = QuadStrategy(msh, 10, 10, 10, 10)
     k_rh = RegularizedHypersingularKernel(1.0, 0.25)
 
     # basis function should be equal to x_hat
@@ -34,7 +35,7 @@ def test_displacement_discontinuity_derivative():
     np.testing.assert_almost_equal(result[0][0], 0.0191957, 4)
 
     strlocnorm = [((1.0, 0.0), np.array([-2.0, 0.0]), np.zeros(2))]
-    rhs = point_source_rhs(msh, qs, strlocnorm, k_rh)
+    rhs = point_source_rhs(msh, strlocnorm, k_rh)
 
 if __name__ == "__main__":
     test_displacement_discontinuity_derivative()

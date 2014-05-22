@@ -2,7 +2,7 @@ import numpy as np
 from codim1.fast_lib import single_integral, ConstantBasis
 from codim1.core.quadrature import QuadSingularTelles
 
-def point_source_rhs(mesh, qs, str_loc_norm, kernel):
+def point_source_rhs(mesh, str_loc_norm, kernel):
     """
     Creates RHS terms that consist of a point source. Depending on the
     kernel chosen, these point sources could be:
@@ -19,7 +19,7 @@ def point_source_rhs(mesh, qs, str_loc_norm, kernel):
         strength = ConstantBasis(np.array(str))
         kernel.set_interior_data(np.array(loc), np.array(normal))
         for e_k in mesh:
-            quad_info = qs.get_point_source_quadrature(
+            quad_info = e_k.qs.get_point_source_quadrature(
                     kernel.singularity_type, loc, e_k).quad_info
             for i in range(e_k.basis.n_fncs):
                 integral = single_integral(e_k.mapping.eval,

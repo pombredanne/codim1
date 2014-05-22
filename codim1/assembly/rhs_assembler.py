@@ -10,12 +10,12 @@ integrate it!
 Assemble the rhs vector corresponding to:
 \int_{\Gamma_x}\int_{\Gamma_y}\phi_i(x)*K(y,x)dy f(x) dx
 """
-def simple_rhs_assemble(mesh, qs, fnc, kernel):
+def simple_rhs_assemble(mesh, fnc, kernel):
     rhs = np.zeros(mesh.total_dofs)
     for e_k in mesh:
         for i in range(e_k.basis.n_fncs):
             for e_l in mesh:
-                (quad_outer, quad_inner) = qs.get_quadrature(
+                (quad_outer, quad_inner) = e_k.qs.get_quadrature(
                                             kernel.singularity_type, e_k, e_l)
                 quad_outer_info = quad_outer.quad_info
                 quad_inner_info = [q.quad_info for q in quad_inner]

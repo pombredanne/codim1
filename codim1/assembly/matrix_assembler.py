@@ -42,18 +42,18 @@ reduce the singularity to be improperly integrable -- a much easier
 solution.
 """
 
-def simple_matrix_assemble(mesh, qs, kernel):
+def simple_matrix_assemble(mesh, kernel):
     total_dofs = mesh.total_dofs
     matrix = np.zeros((total_dofs, total_dofs))
     for e_k in mesh:
         for e_l in mesh:
-            _compute_element_pair(matrix, e_k, e_l, qs, kernel)
+            _compute_element_pair(matrix, e_k, e_l, kernel)
     return matrix
 
-def _compute_element_pair(matrix, e_k, e_l, qs, kernel):
+def _compute_element_pair(matrix, e_k, e_l, kernel):
     for i in range(e_k.basis.n_fncs):
         for j in range(e_k.basis.n_fncs):
-            integral = _compute_one_interaction(qs, kernel, e_k, i, e_l, j)
+            integral = _compute_one_interaction(kernel, e_k, i, e_l, j)
             for idx1 in range(2):
                 for idx2 in range(2):
                     matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] += \
@@ -64,10 +64,10 @@ def _choose_basis(element, is_gradient):
         return element.basis.get_gradient_basis()
     return element.basis
 
-def _compute_one_interaction(qs, kernel, e_k, i, e_l, j):
+def _compute_one_interaction(kernel, e_k, i, e_l, j):
     matrix_k_basis = _choose_basis(e_k, kernel.test_gradient)
     matrix_l_basis = _choose_basis(e_l, kernel.soln_gradient)
-    (quad_outer, quad_inner) = qs.get_quadrature(
+    (quad_outer, quad_inner) = e_k.qs.get_quadrature(
                             kernel.singularity_type, e_k, e_l)
     quad_outer_info = quad_outer.quad_info
     quad_inner_info = [q.quad_info for q in quad_inner]

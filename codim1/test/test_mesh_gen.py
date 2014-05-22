@@ -1,6 +1,8 @@
 import numpy as np
 from codim1.core.mesh_gen import circular_mesh, simple_line_mesh,\
                                  ray_mesh, combine_meshes
+from codim1.core.element import MisorientationException
+from pytest import raises
 
 def test_circular_mesh():
     a = circular_mesh(4, 1.0)
@@ -65,10 +67,13 @@ def test_complicated_mesh_problem():
     mesh1 = simple_line_mesh(1, main_surface_left, main_surface_right)
     ray_lengths = [1.0]
     ray_left_dir = (-1.0, 0.0)
-    mesh2 = ray_mesh(main_surface_left, ray_left_dir, ray_lengths, flip = True)
+    mesh2 = ray_mesh(main_surface_left, ray_left_dir,
+                     ray_lengths, flip = True)
     ray_right_dir = (1.0, 0.0)
-    mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths, flip = True)
-    mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
-                          ensure_continuity = True)
-    for e in mesh:
-        assert(e.length >= 0.0001)
+    mesh3 = ray_mesh(main_surface_right, ray_right_dir,
+                     ray_lengths, flip = True)
+    # It was a problem with the mesh orientation flipping at the joint between
+    # the sections
+    with raises(MisorientationException):
+        mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
+                              ensure_continuity = True)

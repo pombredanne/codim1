@@ -21,14 +21,15 @@ correct_matrix = \
 def rhs_assembler():
     bf = basis_from_degree(1)
     msh = simple_line_mesh(2, (-1.0, 0.0), (1.0, 0.0))
+    qs = QuadStrategy(msh, 10, 10, 10, 10)
     apply_to_elements(msh, "basis", bf, non_gen = True)
     apply_to_elements(msh, "continuous", True, non_gen = True)
+    apply_to_elements(msh, "qs", qs, non_gen = True)
     init_dofs(msh)
-    qs = QuadStrategy(msh, 10, 10, 10, 10)
-    return msh, qs
+    return msh
 
 def test_rhs():
-    msh, qs = rhs_assembler()
+    msh = rhs_assembler()
     kernel = TractionKernel(1.0, 0.25)
     # If we sum across rows, we should get the RHS value for
     # a function that is 1 everywhere
@@ -37,7 +38,7 @@ def test_rhs():
     f = lambda x, d: 1.0
     # Make the function look like a basis function. It is one! The only one!
     fnc = SingleFunctionBasis(f)
-    rhs = simple_rhs_assemble(msh, qs, fnc, kernel)
+    rhs = simple_rhs_assemble(msh, fnc, kernel)
     np.testing.assert_almost_equal(rhs_correct, rhs)
 
 
