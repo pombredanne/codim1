@@ -2,13 +2,13 @@ import numpy as np
 from codim1.core import QuadGauss
 from codim1.fast_lib import single_integral, ConstantBasis
 
-def interior_pt_rhs(mesh, qs, pts_normals, kernel, rhs_fnc):
+def interior_pt_rhs(mesh, qs, pt_normal, kernel, rhs_fnc):
     result = np.zeros(2)
-    kernel.set_interior_data(pts_normals[0], pts_normals[1])
+    kernel.set_interior_data(pt_normal[0], pt_normal[1])
     one = ConstantBasis(np.ones(2))
     for e_k in mesh:
         quad_info =\
-            qs.get_interior_quadrature(e_k, pts_normals[0]).quad_info
+            qs.get_interior_quadrature(e_k, pt_normal[0]).quad_info
 
         integral = single_integral(e_k.mapping.eval,
                                    kernel,
@@ -21,13 +21,13 @@ def interior_pt_rhs(mesh, qs, pts_normals, kernel, rhs_fnc):
                 result[idx1] += integral[idx1][idx2]
     return result
 
-def interior_pt_soln(mesh, qs, pts_normals, kernel, coeffs):
+def interior_pt_soln(mesh, qs, pt_normal, kernel, coeffs):
     result = np.zeros(2)
-    kernel.set_interior_data(pts_normals[0], pts_normals[1])
+    kernel.set_interior_data(pt_normal[0], pt_normal[1])
     one = ConstantBasis(np.ones(2))
     for e_k in mesh:
         quad_info =\
-            qs.get_interior_quadrature(e_k, pts_normals[0]).quad_info
+            qs.get_interior_quadrature(e_k, pt_normal[0]).quad_info
 
         for i in range(e_k.basis.n_fncs):
             dof = e_k.dofs[:, i]

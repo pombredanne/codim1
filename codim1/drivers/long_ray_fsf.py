@@ -10,6 +10,7 @@ mpl.rcParams['lines.linewidth'] = 2
 shear_modulus = 1.0
 poisson_ratio = 0.25
 n_elements_surface = 200
+# n_elements_surface = 25
 degree = 4
 quad_min = degree + 1
 quad_mult = 3
@@ -18,20 +19,23 @@ quad_logr = quad_mult * degree + (degree % 2)
 quad_oneoverr = quad_mult * degree + (degree % 2)
 interior_quad_pts = 13
 
-ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
 di = 0.5
 df = 1.5
 x_di = 0.0
 x_df = 1.0
+
+# Determine fault parameters
 # fault angle
 delta = np.arctan((df - di) / (x_df - x_di))
 left_end = np.array((x_di, -di))
 right_end = np.array((x_df, -df))
 fault_vector = left_end - right_end
+# fault tangent and normal vectors
 fault_tangential = fault_vector / np.linalg.norm(fault_vector)
 fault_normal = np.array((fault_tangential[1], -fault_tangential[0]))
 
+# Mesh the surface
 main_surface_left = (-10.0, 0.0)
 main_surface_right = (10.0, 0.0)
 mesh1 = simple_line_mesh(n_elements_surface,
@@ -57,18 +61,35 @@ apply_to_elements(mesh, "basis", bf, non_gen = True)
 apply_to_elements(mesh, "continuous", True, non_gen = True)
 init_dofs(mesh)
 
-str_loc_norm = [(-fault_tangential, left_end, fault_normal),
-               (fault_tangential, right_end, fault_normal)]
-rhs = -point_source_rhs(mesh, qs, str_loc_norm, ek.k_rh)
+# Mesh the fault
+fault_elements = 100
+fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
+apply_to_elements(fault_mesh, "basis", bf, non_gen = True)
+apply_to_elements(fault_mesh, "continuous", True, non_gen = True)
+init_dofs(fault_mesh)
 
-matrix = simple_matrix_assemble(mesh, qs, ek.k_rh)
+ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
-# The matrix produced by the hypersingular kernel is singular, so I need
-# to provide some further constraint in order to remove rigid body motions.
-# I impose a constraint that forces the average displacement to be zero.
-apply_average_constraint(matrix, rhs, mesh)
+load = True
+if load:
+    file = np.load("data/long_ray_fsf/data.npz")
+    soln_coeffs = file["soln_coeffs"]
+else:
+    print "Assembling RHS"
+    str_loc_norm = [(-fault_tangential, left_end, fault_normal),
+                   (fault_tangential, right_end, fault_normal)]
+    rhs = -point_source_rhs(mesh, qs, str_loc_norm, ek.k_rh)
 
-soln_coeffs = np.linalg.solve(matrix, rhs)
+    print "Assembling Matrix"
+    matrix = simple_matrix_assemble(mesh, qs, ek.k_rh)
+
+    # The matrix produced by the hypersingular kernel is singular, so I need
+    # to provide some further constraint in order to remove rigid body motions.
+    # I impose a constraint that forces the average displacement to be zero.
+    apply_average_constraint(matrix, rhs, mesh)
+
+    print "Solving system"
+    soln_coeffs = np.linalg.solve(matrix, rhs)
 x, u_soln = tools.evaluate_boundary_solution(4, soln_coeffs, mesh)
 
 
@@ -123,6 +144,48 @@ def error_plot():
     plt.ylabel(r'$100\left(\frac{|u_{exact} - u_{est}|}{s}\right)$', fontsize = 18)
     plt.legend()
     plt.show()
-error_plot()
 
-import ipdb;ipdb.set_trace()
+def interior_plot():
+    disp_disc_fnc = \
+        SingleFunctionBasis(lambda x,d: fault_tangential[d])
+    x_pts = 100
+    y_pts = 100
+    min_x = -3
+    max_x = 3
+    min_y = -3
+    max_y = 0
+    x = np.linspace(min_x, max_x, x_pts)
+    y = np.linspace(min_y, max_y, y_pts)
+    int_ux = np.zeros((y_pts, x_pts))
+    int_uy = np.zeros((y_pts, x_pts))
+    for i in range(x_pts):
+        print i
+        for j in range(y_pts):
+            pt_normal = ((x[i], y[j]), np.zeros(2))
+            dislocation_effect = -interior_pt_rhs(fault_mesh,
+                                                  qs, pt_normal,
+                                                  ek.k_t,
+                                                  disp_disc_fnc)
+            surf_disp_effect = -interior_pt_soln(mesh, qs, pt_normal,
+                                                 ek.k_t, soln_coeffs)
+            int_ux[j, i] = dislocation_effect[0]
+            int_ux[j, i] += surf_disp_effect[0]
+            int_uy[j, i] = dislocation_effect[1]
+            int_uy[j, i] += surf_disp_effect[1]
+    X, Y = np.meshgrid(x, y)
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+    tools.plot_mesh(fault_mesh, show = False, fig_ax = (fig, ax))
+    im = ax.contourf(X, Y, int_ux)
+    ax.set_ylabel(r'$x/d$', fontsize = 18)
+    ax.set_xlabel(r'$y/d$', fontsize = 18)
+    ax.set_title('Horizontal displacement contours.')
+    ax.set_xlim(-5, 5)
+    ax.set_ylim(-5, 0)
+    fig.colorbar(im)
+    import ipdb;ipdb.set_trace()
+
+# error_plot()
+# Forming interior plot
+interior_plot()
+
