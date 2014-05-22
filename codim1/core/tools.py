@@ -26,10 +26,14 @@ def L2_error(f1, f2):
     L2_f1_minus_f2 = np.sqrt(np.sum(((f1 - f2) ** 2)))
     return L2_f1_minus_f2 / L2_f2
 
-def plot_mesh(msh, show = True, points_per_element = 5):
+def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None):
     points = []
     x_hat = np.linspace(0, 1, points_per_element)
-    fig, ax = plt.subplots()
+    if fig_ax is None:
+        fig, ax = plt.subplots()
+    else:
+        fig = fig_ax[0]
+        ax = fig_ax[1]
     for k in range(msh.n_elements):
         points = []
         e = msh.elements[k]
