@@ -110,6 +110,7 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def_readonly("w", &QuadratureInfo::w);
     def("double_integral", double_integral);
     def("single_integral", single_integral);
+    def("rl_single_integral", rl_single_integral);
 
     //Misc
     def("basis_speed_test", basis_speed_test);

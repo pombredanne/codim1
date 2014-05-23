@@ -40,3 +40,6 @@ def interior_pt_soln(mesh, pt_normal, kernel, coeffs):
                 for idx2 in range(2):
                     result[idx1] += integral[idx1][idx2] * coeffs[dof[idx2]]
     return result
+
+def interior_pt_new_rhs(mesh, pt_normal, kernel, rhs_fnc):
+    pass

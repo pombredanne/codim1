@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.interpolate as spi
+import scipy.special
 from codim1.fast_lib import PolyBasis
+from quadracheer import gaussxw, lobatto_quad, map_nonsing
 
 def get_equispaced_nodes(element_deg):
     """
@@ -12,7 +14,6 @@ def get_equispaced_nodes(element_deg):
     else:
         nodes = np.linspace(0.0, 1.0, element_deg + 1)
     return nodes
-
 
 def basis_from_degree(element_deg):
     """
@@ -38,3 +39,8 @@ def basis_from_nodes(nodes):
         derivs[i, 0] = 0.0
         derivs[i, 1:] = poly.deriv().c
     return PolyBasis(fncs, derivs, nodes)
+
+def gll_basis(degree):
+    """ A basis from the Gauss-Lobatto-Lagrange nodes """
+    nodes, w = map_nonsing(lobatto_quad, degree, 0, 1)
+    return basis_from_nodes(nodes)

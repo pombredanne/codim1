@@ -49,4 +49,12 @@ single_integral(MappingEval& k_mesh_eval,
                 Basis& j_basis_eval,
                 QuadratureInfo& quadrature,
                 int test_basis_idx, int soln_basis_idx);
+
+/*Fast version assuming recursive legendre quadrature*/
+std::vector<std::vector<double> >
+rl_single_integral(MappingEval& k_mesh_eval,
+                   Kernel& kernel, 
+                   Basis& i_basis_eval,
+                   QuadratureInfo& quadrature,
+                   int soln_basis_idx);
 #endif

@@ -129,7 +129,7 @@ double_integral(MappingEval& test_mapping_eval,
  * a call method taking a separation input. K(x) vs. K(x - y)
  */
 std::vector<std::vector<double> >
-single_integral(MappingEval& test_mapping_eval, 
+single_integral(MappingEval& soln_mapping_eval, 
                 Kernel& kernel, 
                 Basis& test_basis_eval,
                 Basis& soln_basis_eval,
@@ -146,14 +146,13 @@ single_integral(MappingEval& test_mapping_eval,
 
     double jacobian;
     std::vector<double> test_normal;
-    jacobian = test_mapping_eval.get_jacobian(0.0);
-    test_normal = test_mapping_eval.get_normal(0.0);
+    jacobian = soln_mapping_eval.get_jacobian(0.0);
+    test_normal = soln_mapping_eval.get_normal(0.0);
     jacobian *= test_basis_eval.chain_rule(jacobian);
     jacobian *= soln_basis_eval.chain_rule(jacobian);
 
     std::vector<double> phys_pt;
     std::vector<double> test_basis_val, soln_basis_val;
-    std::vector<double> r(2);
     double kernel_val;
 
     const int num_pts = quadrature.x.size();
@@ -162,7 +161,7 @@ single_integral(MappingEval& test_mapping_eval,
         const double q_pt = quadrature.x[q_idx];
         const double q_w = quadrature.w[q_idx];
 
-        phys_pt = test_mapping_eval.get_physical_point(q_pt);
+        phys_pt = soln_mapping_eval.get_physical_point(q_pt);
 
         test_basis_val = test_basis_eval.\
             evaluate_vector(test_basis_idx, q_pt, phys_pt);
@@ -186,6 +185,48 @@ single_integral(MappingEval& test_mapping_eval,
                     test_basis_val[idx_x] * soln_basis_val[idx_y] *
                     jacobian * q_w;
             }
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::vector<double> >
+rl_single_integral(MappingEval& soln_mapping_eval, 
+                Kernel& kernel, 
+                Basis& soln_basis_eval,
+                QuadratureInfo& quadrature,
+                int soln_basis_idx)
+{
+    std::vector<std::vector<double> > result(2, std::vector<double>(2));
+
+    double jacobian = soln_mapping_eval.get_jacobian(0.0);
+    std::vector<double> normal = soln_mapping_eval.get_normal(0.0);
+    jacobian *= soln_basis_eval.chain_rule(jacobian);
+
+
+    const double q_pt = quadrature.x[soln_basis_idx];
+    const double q_w = quadrature.w[soln_basis_idx];
+
+    std::vector<double> phys_pt = soln_mapping_eval.get_physical_point(q_pt);
+
+    std::vector<double> soln_basis_val =
+        soln_basis_eval.evaluate_vector(soln_basis_idx, q_pt, phys_pt);
+
+    // Determine the various location parameters that the kernels
+    // need -- dr, drdn, drdm, dist
+    KernelData kernel_data =
+        kernel.get_interior_integral_data(phys_pt, normal);
+
+    // Account for the vector form of the problem.
+    // and weight by the quadrature values and the jacobian
+    for (int idx_x = 0; idx_x < 2; idx_x++)
+    {
+        for (int idx_y = 0; idx_y < 2; idx_y++)
+        {
+            // Actually perform the integration.
+            result[idx_x][idx_y] += kernel.call(kernel_data, idx_x, idx_y) * 
+                                    soln_basis_val[idx_y] * jacobian * q_w;
         }
     }
 

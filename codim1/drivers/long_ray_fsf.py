@@ -9,9 +9,9 @@ mpl.rcParams['lines.linewidth'] = 2
 
 shear_modulus = 1.0
 poisson_ratio = 0.25
-n_elements_surface = 200
+n_elements_surface = 40
 # n_elements_surface = 25
-degree = 4
+degree = 6
 quad_min = degree + 1
 quad_mult = 3
 quad_max = quad_mult * degree
@@ -43,7 +43,7 @@ mesh1 = simple_line_mesh(n_elements_surface,
                         main_surface_right)
 
 per_step = 5
-steps = 10
+steps = 5
 ray_lengths = [1.0] * per_step
 for i in range(1, steps):
     ray_lengths.extend([2.0 ** float(i)] * per_step)
@@ -55,8 +55,9 @@ mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths)
 mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                       ensure_continuity = True)
 
-bf = basis_from_degree(degree)
+bf = basis_from_degree(degree, gll_nodes)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
+apply_to_elements(mesh, "qs", qs, non_gen = True)
 apply_to_elements(mesh, "basis", bf, non_gen = True)
 apply_to_elements(mesh, "continuous", True, non_gen = True)
 init_dofs(mesh)
@@ -64,6 +65,7 @@ init_dofs(mesh)
 # Mesh the fault
 fault_elements = 100
 fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
+apply_to_elements(fault_mesh, "qs", qs, non_gen = True)
 apply_to_elements(fault_mesh, "basis", bf, non_gen = True)
 apply_to_elements(fault_mesh, "continuous", True, non_gen = True)
 init_dofs(fault_mesh)
@@ -78,10 +80,10 @@ else:
     print "Assembling RHS"
     str_loc_norm = [(-fault_tangential, left_end, fault_normal),
                    (fault_tangential, right_end, fault_normal)]
-    rhs = -point_source_rhs(mesh, qs, str_loc_norm, ek.k_rh)
+    rhs = -point_source_rhs(mesh, str_loc_norm, ek.k_rh)
 
     print "Assembling Matrix"
-    matrix = simple_matrix_assemble(mesh, qs, ek.k_rh)
+    matrix = simple_matrix_assemble(mesh, ek.k_rh)
 
     # The matrix produced by the hypersingular kernel is singular, so I need
     # to provide some further constraint in order to remove rigid body motions.
@@ -148,8 +150,8 @@ def error_plot():
 def interior_plot():
     disp_disc_fnc = \
         SingleFunctionBasis(lambda x,d: fault_tangential[d])
-    x_pts = 100
-    y_pts = 100
+    x_pts = 30
+    y_pts = 30
     min_x = -3
     max_x = 3
     min_y = -3
@@ -163,10 +165,10 @@ def interior_plot():
         for j in range(y_pts):
             pt_normal = ((x[i], y[j]), np.zeros(2))
             dislocation_effect = -interior_pt_rhs(fault_mesh,
-                                                  qs, pt_normal,
+                                                  pt_normal,
                                                   ek.k_t,
                                                   disp_disc_fnc)
-            surf_disp_effect = -interior_pt_soln(mesh, qs, pt_normal,
+            surf_disp_effect = -interior_pt_soln(mesh, pt_normal,
                                                  ek.k_t, soln_coeffs)
             int_ux[j, i] = dislocation_effect[0]
             int_ux[j, i] += surf_disp_effect[0]
@@ -191,7 +193,7 @@ def interior_plot():
     plt.show()
     import ipdb;ipdb.set_trace()
 
-# error_plot()
+error_plot()
 # Forming interior plot
 interior_plot()
 

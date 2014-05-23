@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.core.basis_funcs import basis_from_nodes, basis_from_degree,\
-                                    get_equispaced_nodes
+                                    get_equispaced_nodes, gll_basis
 from codim1.fast_lib import SingleFunctionBasis
 from codim1.core.mesh_gen import circular_mesh
 
@@ -83,6 +83,13 @@ def test_gradient():
     value = np.array(gradient.evaluate(0, 0.5, [0.0,0.0]))
     np.testing.assert_almost_equal(chain_rule * value,
                                    -31.83229765 * np.ones(2))
+
+def test_gll_basis():
+    bf = gll_basis(10)
+    x_val = 0.9195339081664588138289 * 0.5 + 0.5
+    x = [x_val, x_val]
+    val = bf.evaluate(8, x_val, x)
+    np.testing.assert_almost_equal(val, [1.0, 1.0])
 
 if __name__ == "__main__":
     test_basis_nodes()
