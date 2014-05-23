@@ -1,7 +1,8 @@
 from math import sqrt
 import numpy as np
 from codim1.core.quadrature import gauss, piessens, telles_singular,\
-        telles_quasi_singular
+        telles_quasi_singular, rl1_quad
+from codim1.core.basis_funcs import gll_basis
 
 def test_gauss():
     qi = gauss(3)
@@ -37,6 +38,24 @@ def test_quasi_singular():
     qw = np.array(qi.w)
     est = np.sum(g(qx) * qw)
     np.testing.assert_almost_equal(exact, est)
+
+def test_rl1_quad():
+    N = 5
+    values = [(0.2, 0.3, 0.2949533988361775),
+              (1.2, 4.0, 0.04976184140700821),
+              (1.5, 1.5, 0.1216505480495554)]
+    for (ay, by, exact) in values:
+        qi = rl1_quad(N, ay, by)
+        qx = np.array(qi.x)
+        qw = np.array(qi.w)
+
+        gll_nodes = gll_basis(N).nodes
+        np.testing.assert_almost_equal(gll_nodes, qx)
+
+        f = lambda x: x ** 4
+        est = np.sum(f(qx) * qw)
+        # DUDE 13 digits!
+        np.testing.assert_almost_equal(est, exact, 13)
 
 if __name__ == "__main__":
     test_gauss()
