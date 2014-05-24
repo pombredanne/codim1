@@ -42,5 +42,5 @@ def basis_from_nodes(nodes):
 
 def gll_basis(degree):
     """ A basis from the Gauss-Lobatto-Lagrange nodes """
-    nodes, w = map_nonsing(lobatto_quad, degree, 0, 1)
+    nodes, w = map_nonsing(lobatto_quad, degree + 1, 0, 1)
     return basis_from_nodes(nodes)

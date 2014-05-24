@@ -85,7 +85,7 @@ def test_gradient():
                                    -31.83229765 * np.ones(2))
 
 def test_gll_basis():
-    bf = gll_basis(10)
+    bf = gll_basis(9)
     x_val = 0.9195339081664588138289 * 0.5 + 0.5
     x = [x_val, x_val]
     val = bf.evaluate(8, x_val, x)

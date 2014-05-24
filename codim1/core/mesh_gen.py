@@ -153,9 +153,7 @@ def ray_mesh(start_point, direction, length, flip = False):
         v0 = vertices[i]
         v1 = vertices[i + 1]
         # if flip:
-        #     v1_temp = v0
-        #     v0 = v1
-        #     v1 = v1_temp
+        #     v0, v1 = v1, v0
         elements.append(Element(v0, v1))
     # if flip:
     #     elements.reverse()

@@ -9,6 +9,10 @@ def gauss(N):
     x, w = qc.map_nonsing(qc.gaussxw, N, 0.0, 1.0)
     return QuadratureInfo(0.0, x, w)
 
+def lobatto(N):
+    x, w = qc.map_nonsing(qc.lobatto_quad, N, 0.0, 1.0)
+    return QuadratureInfo(0.0, x, w)
+
 def piessens(N, x0, nonsingular_N):
     x, w = qc.map_singular(qc.piessens, N, x0, 0.0, 1.0,
                            nonsingular_N = nonsingular_N)
