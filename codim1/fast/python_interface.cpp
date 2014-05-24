@@ -18,6 +18,7 @@ void expose_kernel(const char* type_string)
     class_<T, bases<Kernel> >(type_string, init<double, double>())
         .def("call", &T::call_all)
         .def("set_interior_data", &T::set_interior_data)
+        .def("get_interior_integral_data", &T::get_interior_integral_data)
         .def("_call", &T::call)
         .def_readonly("test_gradient", &Kernel::test_gradient)
         .def_readonly("soln_gradient", &Kernel::soln_gradient)
@@ -110,7 +111,7 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def_readonly("w", &QuadratureInfo::w);
     def("double_integral", double_integral);
     def("single_integral", single_integral);
-    def("rl_single_integral", rl_single_integral);
+    def("aligned_single_integral", aligned_single_integral);
 
     //Misc
     def("basis_speed_test", basis_speed_test);

@@ -91,13 +91,29 @@ def test_traction_adjoint():
     np.testing.assert_almost_equal(HT[1][1], 0.0)
     np.testing.assert_almost_equal(HT[1][0], -HT[0][1])
 
+def test_hypersingular_regularized_set_interior():
+    kernel = RegularizedHypersingularKernel(1.0, 0.25)
+    kernel.set_interior_data([2.0, 0.0], [0.0, 1.0])
+    data = kernel.get_interior_integral_data([0.0, 0.0], [0.0, 0.0])
+    W = kernel._call(data, 0, 0)
+    W_exact = 2 * (np.log(2) - 1) / (3 * np.pi)
+    np.testing.assert_almost_equal(W, W_exact)
+
+def test_hypersingular_regularized_set_interior_defaults():
+    kernel = RegularizedHypersingularKernel(1.0, 0.25)
+    data = kernel.get_interior_integral_data([-2.0, 0.0], [0.0, 0.0])
+    W = kernel._call(data, 0, 0)
+    W_exact = 2 * (np.log(2) - 1) / (3 * np.pi)
+    np.testing.assert_almost_equal(W, W_exact)
+
 def test_hypersingular_regularized():
     kernel = RegularizedHypersingularKernel(1.0, 0.25)
     W = kernel.call(np.array([2.0, 0.0]),
                     np.array([0, 1.0]),
                     np.array([0, 0.0]))
-    W_exact = np.array([[2 * (np.log(2) + 1) / (3 * np.pi), 0],
+    W_exact = np.array([[2 * (np.log(2) - 1) / (3 * np.pi), 0],
                         [0, 2 * np.log(2) / (3 * np.pi)]])
+    np.testing.assert_almost_equal(W, W_exact)
 
 def test_hypersingular_nonregularized():
     kernel = HypersingularKernel(1.0, 0.25)
@@ -309,4 +325,5 @@ def test_hypersingular_vs_regularized_across_elements():
 
 
 if __name__ == "__main__":
-    test_traction()
+    # test_traction()
+    test_hypersingular_regularized_set_interior_defaults()

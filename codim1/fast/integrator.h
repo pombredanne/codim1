@@ -52,7 +52,7 @@ single_integral(MappingEval& k_mesh_eval,
 
 /*Fast version assuming recursive legendre quadrature*/
 std::vector<std::vector<double> >
-rl_single_integral(MappingEval& k_mesh_eval,
+aligned_single_integral(MappingEval& k_mesh_eval,
                    Kernel& kernel, 
                    Basis& i_basis_eval,
                    QuadratureInfo& quadrature,

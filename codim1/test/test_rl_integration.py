@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.core import *
-from codim1.fast_lib import rl_single_integral, TractionKernel,\
+from codim1.fast_lib import aligned_single_integral, TractionKernel,\
                             single_integral, ConstantBasis
 
 def test_basis_quad_aligned_ordering():
@@ -23,7 +23,7 @@ def test_fast_lobatto():
     kernel.set_interior_data(pt, normal)
     est_slow = single_integral(mapping.eval,
                               kernel, one, bf, quad_info_old, 0, 0)
-    est_fast = rl_single_integral(mapping.eval, kernel, bf,
+    est_fast = aligned_single_integral(mapping.eval, kernel, bf,
                                      quad_info_old, 0)
     np.testing.assert_almost_equal(np.array(est_slow), np.array(est_fast))
 
@@ -52,7 +52,7 @@ def test_fast_lobatto():
 #                               kernel, one, bf, quad_info_old, 0, 0)
 #     np.testing.assert_almost_equal(est_gauss[0][0], exact)
 #
-#     est_gauss_fast = rl_single_integral(mapping.eval, kernel, bf,
+#     est_gauss_fast = aligned_single_integral(mapping.eval, kernel, bf,
 #                                      quad_info_old, 0)
 #     np.testing.assert_almost_equal(est_gauss_fast[0][0], exact)
 #     # This stuff doesn't work yet
@@ -60,6 +60,6 @@ def test_fast_lobatto():
 #     #                           kernel, one, bf, quad_info_new, 0, 0)
 #     # np.testing.assert_almost_equal(est_new[0][0], exact)
 #
-#     # est_new_fast = rl_single_integral(mapping.eval, kernel, bf,
+#     # est_new_fast = aligned_single_integral(mapping.eval, kernel, bf,
 #     #                                  quad_info_new, 0)
 #     # np.testing.assert_almost_equal(est_new_fast[0][0], exact)

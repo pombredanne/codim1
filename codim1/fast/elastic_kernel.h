@@ -20,7 +20,9 @@ struct KernelData
 class Kernel
 {
     public:
-        Kernel() 
+        Kernel():
+            soln_point(2, 0.0),
+            soln_normal(2, 0.0)
         {
             shear_modulus = 1.0;
             poisson_ratio = 0.25;
