@@ -192,11 +192,11 @@ single_integral(MappingEval& soln_mapping_eval,
 }
 
 std::vector<std::vector<double> >
-rl_single_integral(MappingEval& soln_mapping_eval, 
-                Kernel& kernel, 
-                Basis& soln_basis_eval,
-                QuadratureInfo& quadrature,
-                int soln_basis_idx)
+aligned_single_integral(MappingEval& soln_mapping_eval, 
+                        Kernel& kernel, 
+                        Basis& soln_basis_eval,
+                        QuadratureInfo& quadrature,
+                        int soln_basis_idx)
 {
     std::vector<std::vector<double> > result(2, std::vector<double>(2));
 

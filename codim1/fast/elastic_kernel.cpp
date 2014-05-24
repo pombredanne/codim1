@@ -1,5 +1,15 @@
 #include "elastic_kernel.h"
 
+Kernel::Kernel(double shear_modulus, double poisson_ratio):
+    soln_point(2, 0.0),
+    soln_normal(2, 0.0)
+{
+    test_gradient = false;
+    soln_gradient = false;
+    this->shear_modulus = shear_modulus;
+    this->poisson_ratio = poisson_ratio;
+}
+
 KernelData Kernel::get_double_integral_data(std::vector<double> r,
                                     std::vector<double> m, 
                                     std::vector<double> n)
@@ -37,12 +47,6 @@ void Kernel::set_interior_data(std::vector<double> soln_point,
 {
     this->soln_point = soln_point;
     this->soln_normal = soln_normal;
-}
-
-Kernel::Kernel(double shear_modulus, double poisson_ratio)
-{
-    this->shear_modulus = shear_modulus;
-    this->poisson_ratio = poisson_ratio;
 }
 
 std::vector<std::vector<double> >
@@ -85,8 +89,6 @@ DisplacementKernel::DisplacementKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "logr";
-    test_gradient = false;
-    soln_gradient = false;
     const3 = 1.0 / (8.0 * PI * shear_modulus * (1 - poisson_ratio));
     const4 = (3.0 - 4.0 * poisson_ratio);
 }
@@ -102,8 +104,6 @@ TractionKernel::TractionKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "oneoverr";
-    test_gradient = false;
-    soln_gradient = false;
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
 }
@@ -122,8 +122,6 @@ AdjointTractionKernel::AdjointTractionKernel(double shear_modulus,
     :Kernel(shear_modulus, poisson_ratio)
 {
     singularity_type = "oneoverr";
-    test_gradient = false;
-    soln_gradient = false;
     const1 = (1 - 2 * poisson_ratio);
     const2 = 1.0 / (4 * PI * (1 - poisson_ratio));
 }
@@ -157,7 +155,6 @@ SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
     Kernel(shear_modulus, poisson_ratio),
     e{{0, 1},{-1, 0}}
 {
-    test_gradient = false;
     soln_gradient = true;
     singularity_type = "oneoverr";
     const double lambda =
@@ -169,11 +166,11 @@ SemiRegularizedHypersingularKernel::SemiRegularizedHypersingularKernel(
 
 double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
 {
-    const double dalphadenom = 
-                        (d.dist2 * d.dist * 
-                         sqrt(1 - pow(d.r[0] / d.dist2, 2))); 
-    const double dalphax = (d.r[0] - d.r[1]) * (d.r[0] + d.r[1]) / dalphadenom;
-    const double dalphay = 2 * d.r[0] * d.r[1] / dalphadenom;
+    // const double dalphadenom = 
+    //                     (d.dist2 * d.dist * 
+    //                      sqrt(1 - pow(d.r[0] / d.dist2, 2))); 
+    // const double dalphax = (d.r[0] - d.r[1]) * (d.r[0] + d.r[1]) / dalphadenom;
+    // const double dalphay = 2 * d.r[0] * d.r[1] / dalphadenom;
     double e_dr[]{e[0][0] * d.dr[0] + e[0][1] * d.dr[1],
          e[1][0] * d.dr[0] + e[1][1] * d.dr[1]};
     double e_n[]{e[0][0] * d.n[0] + e[0][1] * d.n[1],
