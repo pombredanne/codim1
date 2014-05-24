@@ -45,17 +45,31 @@ def test_rl1_quad():
               (1.2, 4.0, 0.04976184140700821),
               (1.5, 1.5, 0.1216505480495554)]
     for (ay, by, exact) in values:
-        qi = rl1_quad(N, ay, by)
+        qi = rl1_quad(N+1, ay, by)
         qx = np.array(qi.x)
         qw = np.array(qi.w)
 
         gll_nodes = gll_basis(N).nodes
         np.testing.assert_almost_equal(gll_nodes, qx)
 
-        f = lambda x: x ** 4
+        f = lambda x: x ** 4 / np.sqrt((x - ay) ** 2 + by ** 2)
         est = np.sum(f(qx) * qw)
         # DUDE 13 digits!
         np.testing.assert_almost_equal(est, exact, 13)
+
+def test_rl1_quad_more_difficult():
+    N = 7
+    values = [(0.2, 0.3, 0.7565395005),
+              (1.2, 4.0, 0.003080702117),
+              (1.5, 1.5, 0.04518013019)]
+    for (ay, by, exact) in values:
+        qi = rl1_quad(N, ay, by)
+        qx = np.array(qi.x)
+        qw = np.array(qi.w)
+        f = lambda x: x ** 4 / (np.sqrt((x - ay) ** 2 + by ** 2) ** 3)
+        est = np.sum(f(qx) * qw)
+        # DUDE 13 digits!
+        np.testing.assert_almost_equal(est, exact, 3)
 
 if __name__ == "__main__":
     test_gauss()

@@ -4,31 +4,62 @@ from codim1.fast_lib import rl_single_integral, TractionKernel,\
                             single_integral, ConstantBasis
 
 def test_basis_quad_aligned_ordering():
-    bf = gll_basis(10)
+    bf = gll_basis(9)
     quad_info = rl1_quad(10, 0, -5)
     np.testing.assert_almost_equal(np.array(bf.nodes), np.array(quad_info.x))
 
-def test_rl_integral():
-    N = 1
+def test_fast_lobatto():
+    N = 15
     mesh = simple_line_mesh(1, (0, 0), (1, 0))
     mapping = PolynomialMapping(mesh.elements[0])
     kernel = TractionKernel(1.0, 0.25)
-    bf = basis_from_degree(0)
+    bf = gll_basis(N)
     one = ConstantBasis(np.ones(2))
-
-    quad_info_old = gauss(1)
-    quad_info_new = rl1_quad(1, 0.0, 5.0)
-
+    quad_info_old = lobatto(N + 1)
     pt = [0.0, -5.0]
     normal = [0.0, 1.0]
+    # TODO: Apparently, kernel seg faults if I don't set the interior data!
+    # This should be changed to a gentle failure
     kernel.set_interior_data(pt, normal)
-
-    correct = single_integral(mapping.eval,
+    est_slow = single_integral(mapping.eval,
                               kernel, one, bf, quad_info_old, 0, 0)
-    new_quadrature = single_integral(mapping.eval,
-                              kernel, one, bf, quad_info_new, 0, 0)
-    correct = np.array(correct)
-    new_quadrature = np.array(new_quadrature)
-    np.testing.assert_almost_equal(correct, new_quadrature)
-    # new_version = rl_single_integral(mapping.eval, kernel, bf,
-    #                                  quad_info_new, 0)
+    est_fast = rl_single_integral(mapping.eval, kernel, bf,
+                                     quad_info_old, 0)
+    np.testing.assert_almost_equal(np.array(est_slow), np.array(est_fast))
+
+# def test_rl_integral():
+#     mesh = simple_line_mesh(1, (0, 0), (1, 0))
+#     mapping = PolynomialMapping(mesh.elements[0])
+#     kernel = TractionKernel(1.0, 0.25)
+#     bf = gll_basis(4)
+#     one = ConstantBasis(np.ones(2))
+#
+#     quad_info_old = lobatto(5)
+#     x_bf = np.array(bf.nodes)
+#     x_q = np.array(quad_info_old.x)
+#     quad_info_new = rl1_quad(2, 0.0, 5.0)
+#
+#     pt = [0.0, -5.0]
+#     normal = [0.0, 1.0]
+#
+#     # exact = 0.2473475767
+#     exact = 0.00053055607635
+#
+#     # TODO: Apparently, kernel seg faults if I don't set the interior data!
+#     # This should be changed to a gentle failure
+#     kernel.set_interior_data(pt, normal)
+#     est_gauss = single_integral(mapping.eval,
+#                               kernel, one, bf, quad_info_old, 0, 0)
+#     np.testing.assert_almost_equal(est_gauss[0][0], exact)
+#
+#     est_gauss_fast = rl_single_integral(mapping.eval, kernel, bf,
+#                                      quad_info_old, 0)
+#     np.testing.assert_almost_equal(est_gauss_fast[0][0], exact)
+#     # This stuff doesn't work yet
+#     # est_new = single_integral(mapping.eval,
+#     #                           kernel, one, bf, quad_info_new, 0, 0)
+#     # np.testing.assert_almost_equal(est_new[0][0], exact)
+#
+#     # est_new_fast = rl_single_integral(mapping.eval, kernel, bf,
+#     #                                  quad_info_new, 0)
+#     # np.testing.assert_almost_equal(est_new_fast[0][0], exact)
