@@ -22,7 +22,8 @@ void expose_kernel(const char* type_string)
         .def("_call", &T::call)
         .def_readonly("test_gradient", &Kernel::test_gradient)
         .def_readonly("soln_gradient", &Kernel::soln_gradient)
-        .def_readonly("singularity_type", &Kernel::singularity_type);
+        .def_readonly("singularity_type", &Kernel::singularity_type)
+        .enable_pickling();
 }
 
 // In order to subclass Kernel in the python layer, this wrapper struct
@@ -67,16 +68,20 @@ BOOST_PYTHON_MODULE(fast_ext)
             init<std::vector<std::vector<double> >,
                  std::vector<double> >())
         .def("chain_rule", &GradientBasis::chain_rule)
-        .def("evaluate", &GradientBasis::evaluate_vector);
+        .def("evaluate", &GradientBasis::evaluate_vector)
+        .enable_pickling();
     class_<SingleFunctionBasis, bases<Basis> >
         ("SingleFunctionBasis", init<object>())
         .def("chain_rule", &SingleFunctionBasis::chain_rule)
-        .def("evaluate", &SingleFunctionBasis::evaluate_vector);
+        .def("evaluate", &SingleFunctionBasis::evaluate_vector)
+        .enable_pickling();
     class_<ConstantBasis, bases<Basis> >("ConstantBasis",
             init<std::vector<double> >())
         .def("chain_rule", &ConstantBasis::chain_rule)
-        .def("evaluate", &ConstantBasis::evaluate_vector);
-    class_<ZeroBasis, bases<ConstantBasis> >("ZeroBasis", init<>());
+        .def("evaluate", &ConstantBasis::evaluate_vector)
+        .enable_pickling();
+    class_<ZeroBasis, bases<ConstantBasis> >("ZeroBasis", init<>())
+        .enable_pickling();
         // .def("chain_rule", &ZeroBasis::chain_rule)
         // .def("evaluate", &ZeroBasis::evaluate);
 
@@ -94,7 +99,8 @@ BOOST_PYTHON_MODULE(fast_ext)
     class_<KernelWrap, boost::noncopyable>("Kernel")
         .def("_call", pure_virtual(&Kernel::call));
     class_<KernelData>("KernelData", no_init)
-        .def_readonly("dist", &KernelData::dist);
+        .def_readonly("dist", &KernelData::dist)
+        .enable_pickling();
     expose_kernel<MassMatrixKernel>("MassMatrixKernel");
     expose_kernel<DisplacementKernel>("DisplacementKernel");
     expose_kernel<TractionKernel>("TractionKernel");
@@ -110,7 +116,8 @@ BOOST_PYTHON_MODULE(fast_ext)
             init<double, std::vector<double>, std::vector<double> >())
         .def_readonly("x0", &QuadratureInfo::x0)
         .def_readonly("x", &QuadratureInfo::x)
-        .def_readonly("w", &QuadratureInfo::w);
+        .def_readonly("w", &QuadratureInfo::w)
+        .enable_pickling();
     def("double_integral", double_integral);
     def("single_integral", single_integral);
     def("aligned_single_integral", aligned_single_integral);

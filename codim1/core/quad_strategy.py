@@ -1,4 +1,4 @@
-from quadrature import gauss, telles_singular, piessens
+from quadrature import gauss, telles_singular, piessens, lobatto
 from mapping import distance_between_mappings
 import numpy as np
 
@@ -42,6 +42,9 @@ class QuadStrategy(object):
                 dist = distance_between_mappings(e_k.mapping, e_l.mapping)
                 self.element_distances[k, l] = dist
 
+    def get_nonsingular_ptswts(self, n_pts):
+        return gauss(n_pts)
+
     def setup_quadrature(self):
         """
         The quadrature rules can be defined once on the reference element
@@ -49,7 +52,7 @@ class QuadStrategy(object):
         """
         self.quad_nonsingular = dict()
         for n_q in range(self.min_points - 1, self.max_points):
-            self.quad_nonsingular[n_q + 1] = gauss(n_q + 1)
+            self.quad_nonsingular[n_q + 1] = self.get_nonsingular_ptswts(n_q + 1)
 
         self.highest_nonsingular =  self.quad_nonsingular[self.max_points]
 
@@ -168,3 +171,6 @@ class QuadStrategy(object):
         return quad
 
 
+class GLLQuadStrategy(QuadStrategy):
+    def get_nonsingular_ptswts(self, n_pts):
+        return lobatto(n_pts)
