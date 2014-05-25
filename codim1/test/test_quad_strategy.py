@@ -92,3 +92,8 @@ def test_quad_strat_min():
     qs = QuadStrategy(msh, 8, 10, 2, 2)
     assert(qs.choose_nonsingular(0, 15) == 8)
 
+def test_gll_quad_strategy():
+    msh = simple_line_mesh(2)
+    qs = GLLQuadStrategy(msh, 8, 10, 2, 2)
+    np.testing.assert_almost_equal(qs.get_simple().x[0], 0.0)
+    np.testing.assert_almost_equal(qs.get_simple().x[-1], 1.0)

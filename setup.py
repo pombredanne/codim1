@@ -19,7 +19,7 @@ ext.append(Extension(fast_package + '_ext',
 
 setuptools.setup(
    name = "codim1",
-   version = '0.0.0',
+   version = '0.1.0',
    author = 'Ben Thompson',
    packages = ['codim1'],
    include_dirs = [np.get_include()],
