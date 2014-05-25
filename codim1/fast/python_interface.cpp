@@ -36,7 +36,7 @@ struct KernelWrap: Kernel, wrapper<Kernel>
     }
 };
 
-BOOST_PYTHON_MODULE(fast_lib)
+BOOST_PYTHON_MODULE(fast_ext)
 {
     // //Expose shared_ptr<Basis>
     register_ptr_to_python<boost::shared_ptr<Basis> >(); 
@@ -61,7 +61,8 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def("chain_rule", &PolyBasis::chain_rule)
         .def("evaluate", &PolyBasis::evaluate_vector)
         .def_readonly("basis_coeffs", &PolyBasis::basis_coeffs)
-        .def_readonly("nodes", &PolyBasis::nodes);
+        .def_readonly("nodes", &PolyBasis::nodes)
+        .enable_pickling();
     class_<GradientBasis, bases<PolyBasis> >("GradientBasis", 
             init<std::vector<std::vector<double> >,
                  std::vector<double> >())
@@ -86,7 +87,8 @@ BOOST_PYTHON_MODULE(fast_lib)
         .def("get_physical_point", &MappingEval::get_physical_point)
         .def("get_jacobian", &MappingEval::get_jacobian)
         .def("get_normal", &MappingEval::get_normal)
-        .def_readonly("map_basis", &MappingEval::map_basis);
+        .def_readonly("map_basis", &MappingEval::map_basis)
+        .enable_pickling();
 
     // Expose the elastic kernels.
     class_<KernelWrap, boost::noncopyable>("Kernel")

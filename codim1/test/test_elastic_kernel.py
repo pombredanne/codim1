@@ -268,53 +268,55 @@ def test_hypersingular_vs_regularized_across_elements():
 
     # Four integrals for this matrix term. Two choices of source element
     # and two choices of solution element.
-    a1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_rh,
+    a1 = double_integral(mesh.elements[el1a].mapping.eval,
+            mesh.elements[el2a].mapping.eval, k_rh,
             grad_bf, grad_bf,
                         o_q, i_q, 0, 2)
 
-    a2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_rh,
+    a2 = double_integral(mesh.elements[el1a].mapping.eval,
+            mesh.elements[el2b].mapping.eval, k_rh,
             grad_bf, grad_bf,
                         o_q, i_q, 0, 0)
 
-    a3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_rh,
-            grad_bf, grad_bf,
-                        o_q, i_q, 2, 2)
+    a3 = double_integral(mesh.elements[el1b].mapping.eval,
+            mesh.elements[el2a].mapping.eval, k_rh,
+            grad_bf, grad_bf, o_q, i_q, 2, 2)
 
-    a4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_rh,
-            grad_bf, grad_bf,
-                        o_q, i_q, 2, 0)
+    a4 = double_integral(mesh.elements[el1b].mapping.eval
+            , mesh.elements[el2b].mapping.eval, k_rh,
+            grad_bf, grad_bf, o_q, i_q, 2, 0)
 
-    b1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_h,
-            bf, bf,
-                        o_q, i_q, 0, 2)
+    b1 = double_integral(mesh.elements[el1a].mapping.eval
+            , mesh.elements[el2a].mapping.eval, k_h,
+            bf, bf, o_q, i_q, 0, 2)
 
-    b2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_h,
-            bf, bf,
-                        o_q, i_q, 0, 0)
+    b2 = double_integral(mesh.elements[el1a].mapping.eval
+            , mesh.elements[el2b].mapping.eval, k_h,
+            bf, bf, o_q, i_q, 0, 0)
 
-    b3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_h,
-            bf, bf,
-                        o_q, i_q, 2, 2)
+    b3 = double_integral(mesh.elements[el1b].mapping.eval
+            , mesh.elements[el2a].mapping.eval, k_h,
+            bf, bf, o_q, i_q, 2, 2)
 
-    b4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_h,
-            bf, bf,
-                        o_q, i_q, 2, 0)
+    b4 = double_integral(mesh.elements[el1b].mapping.eval
+            , mesh.elements[el2b].mapping.eval, k_h,
+            bf, bf, o_q, i_q, 2, 0)
 
-    c1 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2a].mapping.eval, k_sh,
-            grad_bf, bf,
-                        o_q, i_q, 0, 2)
+    c1 = double_integral(mesh.elements[el1a].mapping.eval
+            , mesh.elements[el2a].mapping.eval, k_sh,
+            grad_bf, bf, o_q, i_q, 0, 2)
 
-    c2 = double_integral(mesh.elements[el1a].mapping.eval, mesh.elements[el2b].mapping.eval, k_sh,
-            grad_bf, bf,
-                        o_q, i_q, 0, 0)
+    c2 = double_integral(mesh.elements[el1a].mapping.eval
+            , mesh.elements[el2b].mapping.eval, k_sh,
+            grad_bf, bf, o_q, i_q, 0, 0)
 
-    c3 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2a].mapping.eval, k_sh,
-            grad_bf, bf,
-                        o_q, i_q, 2, 2)
+    c3 = double_integral(mesh.elements[el1b].mapping.eval
+            , mesh.elements[el2a].mapping.eval, k_sh,
+            grad_bf, bf, o_q, i_q, 2, 2)
 
-    c4 = double_integral(mesh.elements[el1b].mapping.eval, mesh.elements[el2b].mapping.eval, k_sh,
-            grad_bf, bf,
-                        o_q, i_q, 2, 0)
+    c4 = double_integral(mesh.elements[el1b].mapping.eval
+            , mesh.elements[el2b].mapping.eval, k_sh,
+            grad_bf, bf, o_q, i_q, 2, 0)
 
     a = np.array(a1) + np.array(a2) + np.array(a3) + np.array(a4)
     b = np.array(b1) + np.array(b2) + np.array(b3) + np.array(b4)

@@ -10,7 +10,7 @@ import numpy as np
 compile_args = ['-g', '-O3', '-std=c++0x']
 fast_package = 'codim1.fast'
 ext = []
-ext.append(Extension(fast_package + '_lib',
+ext.append(Extension(fast_package + '_ext',
                   glob.glob('codim1/fast/*.cpp'),
                   include_dirs=['codim1/fast'],
                   library_dirs=['/'],
