@@ -1,6 +1,23 @@
 from quadrature import gauss, telles_singular, piessens, lobatto
+from codim1.fast_lib import ConstantBasis,\
+                            single_integral,\
+                            aligned_single_integral
 from mapping import distance_between_mappings
 import numpy as np
+
+"""
+This whole QuadStrategy stuff is a bit of a mess.
+Organize! Maybe wait until after the SGBEM stuff is implemented properly.
+"""
+
+one = ConstantBasis(np.ones(2))
+def single_integral_wrapper(map_eval, kernel, basis, quad_info, which_fnc):
+    """
+    A wrapper so that single integral has the interface expected by the
+    interior point computation functions.
+    """
+    return single_integral(map_eval, kernel, one,
+                           basis, quad_info, 0, which_fnc)
 
 class QuadStrategy(object):
     """
@@ -116,7 +133,8 @@ class QuadStrategy(object):
 
     def get_interior_quadrature(self, e_k, pt):
         which_nonsingular = self.choose_nonsingular_interior(e_k, pt)
-        return self.quad_nonsingular[which_nonsingular]
+        interior_integrator = single_integral_wrapper
+        return self.quad_nonsingular[which_nonsingular], interior_integrator
 
     def choose_nonsingular(self, k, l):
         dist = self.element_distances[k, l]
@@ -148,9 +166,7 @@ class QuadStrategy(object):
         source_width = e_k.length
         ratio = dist / source_width
         how_far = np.floor(ratio)
-        points = self.max_points - how_far
-        if points < self.min_points:
-            points = self.min_points
+        points = max(self.min_points, self.max_points - how_far)
         return points
 
     def get_point_source_quadrature(self,
@@ -167,10 +183,38 @@ class QuadStrategy(object):
                                                reference_loc,
                                                self.max_points)
         else:
-            quad = self.get_interior_quadrature(e_k, singular_pt)
+            which = self.choose_nonsingular_interior(e_k, singular_pt)
+            quad = self.quad_nonsingular[which]
         return quad
 
 
 class GLLQuadStrategy(QuadStrategy):
+    """
+    This QuadStrategy simply changes the Gaussian quadrature method to a
+    Gauss-Lobatto quadrature method. The points for this quadrature method
+    are aligned with the interpolation nodes of a Gauss-Lobatto-Lagrange
+    interpolating basis. By using an aligned set of quadrature point and
+    interpolation nodes, the integration can be sped up substantially.
+    """
+    def __init__(self,
+                 mesh,
+                 n_basis_nodes,
+                 quad_points_max,
+                 quad_points_logr,
+                 quad_points_oneoverr):
+        self.n_basis_nodes = n_basis_nodes
+        super(GLLQuadStrategy, self).__init__(mesh,
+                                              n_basis_nodes,
+                                              quad_points_max,
+                                              quad_points_logr,
+                                              quad_points_oneoverr)
+
+    def get_interior_quadrature(self, e_k, pt):
+        which_nonsingular = self.choose_nonsingular_interior(e_k, pt)
+        interior_integrator = single_integral_wrapper
+        if which_nonsingular == self.n_basis_nodes:
+            interior_integrator = aligned_single_integral
+        return self.quad_nonsingular[which_nonsingular], interior_integrator
+
     def get_nonsingular_ptswts(self, n_pts):
         return lobatto(n_pts)

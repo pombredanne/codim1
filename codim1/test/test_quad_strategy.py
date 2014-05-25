@@ -1,6 +1,7 @@
 import numpy as np
 from codim1.core import *
 from codim1.core.segment_distance import segments_distance
+from codim1.fast_lib import aligned_single_integral
 
 def test_segment_distance():
     v1 = (0, 0)
@@ -97,3 +98,10 @@ def test_gll_quad_strategy():
     qs = GLLQuadStrategy(msh, 8, 10, 2, 2)
     np.testing.assert_almost_equal(qs.get_simple().x[0], 0.0)
     np.testing.assert_almost_equal(qs.get_simple().x[-1], 1.0)
+
+def test_gll_quad_strategy_interior():
+    msh = simple_line_mesh(2)
+    qs = GLLQuadStrategy(msh, 4, 10, 2, 2)
+    q, integrator = qs.get_interior_quadrature(msh.elements[0], (-50.0, 0.0))
+    assert(np.array(q.x).size == 4)
+    assert(integrator == aligned_single_integral)
