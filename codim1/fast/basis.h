@@ -162,6 +162,28 @@ class GradientBasis: public PolyBasis
         }
 };
 
+/* A basis that stores solution coefficients alongside the basis functions
+ * so that post-processing can be performed on the polynomial solution.
+ */
+class SolutionBasis: public Basis
+{
+    public:
+        SolutionBasis(PolyBasis& basis,
+                      std::vector<std::vector<double> > coeffs);
+
+        virtual double evaluate_internal(int i, 
+                                double x_hat,
+                                std::vector<double> x,
+                                int d);
+        std::vector<double> evaluate_vector(int i, double x_hat,
+                                            std::vector<double> x);
+
+        PolyBasis* basis;
+        // 2d array. First axis is x or y. Second axis 
+        std::vector<std::vector<double> > coeffs;
+};
+
+
 
 //A simple test to determine how much overhead the python function calling
 //costs

@@ -9,6 +9,7 @@
 #include "mapping.h"
 #include "elastic_kernel.h"
 #include "integrator.h"
+#include "assembly.h"
 
 using namespace boost::python;
 
@@ -63,6 +64,13 @@ BOOST_PYTHON_MODULE(fast_ext)
         .def("evaluate", &PolyBasis::evaluate_vector)
         .def_readonly("basis_coeffs", &PolyBasis::basis_coeffs)
         .def_readonly("nodes", &PolyBasis::nodes)
+        .enable_pickling();
+    class_<SolutionBasis, bases<Basis> >("SolutionBasis", 
+            init<PolyBasis&, std::vector<std::vector<double> > >())
+        .def("chain_rule", &SolutionBasis::chain_rule)
+        .def("evaluate", &SolutionBasis::evaluate_vector)
+        .def_readonly("coeffs", &SolutionBasis::coeffs)
+        .def_readonly("basis", &SolutionBasis::basis)
         .enable_pickling();
     class_<GradientBasis, bases<PolyBasis> >("GradientBasis", 
             init<std::vector<std::vector<double> >,
@@ -121,6 +129,12 @@ BOOST_PYTHON_MODULE(fast_ext)
     def("double_integral", double_integral);
     def("single_integral", single_integral);
     def("aligned_single_integral", aligned_single_integral);
+
+    class_<InteriorPoint, boost::noncopyable>("InteriorPoint", init<>())
+        .def("process_element", &InteriorPoint::process_element)
+        .def_readonly("result", &InteriorPoint::result);
+    class_<AlignedInteriorPoint, bases<InteriorPoint>, boost::noncopyable>
+        ("AlignedInteriorPoint", init<>());
 
     //Misc
     def("basis_speed_test", basis_speed_test);

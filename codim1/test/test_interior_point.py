@@ -2,8 +2,7 @@ import numpy as np
 from codim1.core import *
 from codim1.fast_lib import HypersingularKernel, AdjointTractionKernel,\
         SingleFunctionBasis
-from codim1.assembly.interior_point import interior_pt_rhs,\
-                                           interior_pt_soln
+from codim1.assembly.interior_point import interior_pt
 
 def int_pt_test_setup(n):
     msh = circular_mesh(n, 1.0)
@@ -27,9 +26,11 @@ def test_interior_point_hypersingular():
          4.68710442e-02,   1.41159450e-02,   3.29088618e-03,
         -3.29088619e-03,  -1.41159451e-02,  -4.68710442e-02,
         -1.41159451e-02,  -3.29088619e-03])
+    apply_solution(msh, coeffs)
+
     kernel = HypersingularKernel(1.0, 0.25)
     pts_normals = (np.array([0.5, 0.0]), np.array([1.0, 0.0]))
-    result = interior_pt_soln(msh, pts_normals, kernel, coeffs)
+    result = interior_pt(msh, pts_normals, kernel)
     np.testing.assert_almost_equal(result[0], -0.01064342343)
     np.testing.assert_almost_equal(result[1], 0.0)
 
@@ -43,7 +44,8 @@ def test_interior_point_traction_adjoint():
     traction_function = SingleFunctionBasis(section_traction)
     kernel = AdjointTractionKernel(1.0, 0.25)
     pts_normals = (np.array([0.5, 0.0]), np.array([1.0, 0.0]))
-    result = interior_pt_rhs(msh, pts_normals, kernel, traction_function)
+    result = interior_pt(msh, pts_normals, kernel,
+                             lambda e: traction_function)
     np.testing.assert_almost_equal(result[0], -0.002094,4)
     np.testing.assert_almost_equal(result[1], 0.0)
 

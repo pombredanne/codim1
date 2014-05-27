@@ -8,7 +8,7 @@ def init_dofs(mesh):
     next_dof = 0
     for e in mesh:
         n_bfs = e.basis.n_fncs
-        e.dofs = np.zeros((2, n_bfs))
+        e.dofs = np.zeros((2, n_bfs), dtype = np.int64)
         if e.continuous:
             next_dof = _process_continuous_element(e, next_dof)
         else:

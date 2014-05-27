@@ -1,6 +1,16 @@
 import numpy as np
 from codim1.core import *
 
+def test_dof_dtype():
+    msh = simple_line_mesh(3)
+    bf = basis_from_degree(2)
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", True, non_gen = True)
+    msh.elements[2].continuous = False
+    init_dofs(msh)
+    assert(msh.elements[1].dofs.dtype == np.int64)
+
+
 def test_mixed_dof_handler():
     msh = simple_line_mesh(3)
     bf = basis_from_degree(2)

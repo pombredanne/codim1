@@ -4,7 +4,8 @@ import codim1.core.quadrature as quadrature
 import codim1.core.basis_funcs as basis_funcs
 from codim1.core import *
 from codim1.fast_lib import TractionKernel, DisplacementKernel,\
-    double_integral, single_integral, MassMatrixKernel
+    double_integral, single_integral, MassMatrixKernel, ConstantBasis,\
+    HypersingularKernel
 
 
 def test_exact_dbl_integrals_H_same_element():
@@ -146,3 +147,24 @@ def test_M_integral_diff_dof():
           bf, q, 0, 1)
     # integral of (1-x)*x from 0 to 1
     np.testing.assert_almost_equal(M_local[0][0], 1.0 / 6.0)
+
+def test_plot_single_integral_kernel():
+    msh = simple_line_mesh(2)
+    x = np.linspace(0.0, 1, 1000)
+    kernel = TractionKernel(1.0, 0.25)
+    bf = basis_funcs.basis_from_degree(8)
+    bf1 = ConstantBasis((1.0, 1.0))
+    k = np.zeros_like(x)
+    k_int = np.zeros_like(x)
+    for (i, x_val) in enumerate(x):
+        q = quadrature.piessens(16, x_val, 16)
+        kernel.set_interior_data([x_val, 0.0], [0.0,1.0])
+        kd = kernel.get_interior_integral_data([1.0, 0.0], [0.0, 1.0])
+        k[i] = kernel._call(kd, 0, 1)
+        k_int[i] = single_integral(msh.elements[1].mapping.eval, kernel, bf1,
+                                bf, q, 0, 4)[0][1]
+    # from matplotlib import pyplot as plt
+    # plt.plot(x, k)
+    # plt.plot(x, k_int)
+    # plt.axis([0, 1, -1, 1])
+    # plt.show()

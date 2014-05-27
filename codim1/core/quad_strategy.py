@@ -133,8 +133,7 @@ class QuadStrategy(object):
 
     def get_interior_quadrature(self, e_k, pt):
         which_nonsingular = self.choose_nonsingular_interior(e_k, pt)
-        interior_integrator = single_integral_wrapper
-        return self.quad_nonsingular[which_nonsingular], interior_integrator
+        return self.quad_nonsingular[which_nonsingular]
 
     def choose_nonsingular(self, k, l):
         dist = self.element_distances[k, l]
@@ -195,6 +194,12 @@ class GLLQuadStrategy(QuadStrategy):
     are aligned with the interpolation nodes of a Gauss-Lobatto-Lagrange
     interpolating basis. By using an aligned set of quadrature point and
     interpolation nodes, the integration can be sped up substantially.
+
+    WARNING:
+    This QuadStrategy also assumes that the integration for an interior
+    point is non-singular and can be well approximated by a Gauss-Lobatto
+    quadrature rule with a number of points equal to the number of nodes
+    of the basis. This may not be true for interior points near the boundary.
     """
     def __init__(self,
                  mesh,
@@ -210,11 +215,7 @@ class GLLQuadStrategy(QuadStrategy):
                                               quad_points_oneoverr)
 
     def get_interior_quadrature(self, e_k, pt):
-        which_nonsingular = self.choose_nonsingular_interior(e_k, pt)
-        interior_integrator = single_integral_wrapper
-        if which_nonsingular == self.n_basis_nodes:
-            interior_integrator = aligned_single_integral
-        return self.quad_nonsingular[which_nonsingular], interior_integrator
+        return self.quad_nonsingular[self.n_basis_nodes]
 
     def get_nonsingular_ptswts(self, n_pts):
         return lobatto(n_pts)
