@@ -39,6 +39,19 @@ def test_quasi_singular():
     est = np.sum(g(qx) * qw)
     np.testing.assert_almost_equal(exact, est)
 
+def test_quasi_singular2():
+    sing_pt = 1.4
+    g = lambda x: (sing_pt - x) ** -2
+    exact = 1.78571
+    x_nearest = 1.0
+    D = sing_pt - 1.0
+    N = 6
+    qi = telles_quasi_singular(N, x_nearest, D)
+    qx = np.array(qi.x)
+    qw = np.array(qi.w)
+    est = np.sum(g(qx) * qw)
+    np.testing.assert_almost_equal(exact, est, 5)
+
 def test_rl1_quad():
     N = 5
     values = [(0.2, 0.3, 0.2949533988361775),

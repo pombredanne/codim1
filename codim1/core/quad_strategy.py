@@ -1,4 +1,5 @@
-from quadrature import gauss, telles_singular, piessens, lobatto
+from quadrature import gauss, telles_singular, piessens, lobatto,\
+                       telles_quasi_singular
 from codim1.fast_lib import ConstantBasis,\
                             single_integral,\
                             aligned_single_integral
@@ -219,3 +220,58 @@ class GLLQuadStrategy(QuadStrategy):
 
     def get_nonsingular_ptswts(self, n_pts):
         return lobatto(n_pts)
+
+class TellesQuadStrategy(object):
+    """
+    Use a Telles quadrature method to compute interior point integrals.
+    Just a warning.
+    This quadrature strategy can only be used for interior points.
+    """
+    #TODO: I should refactor out a difference between "interior point"
+    # quad strategies and boundary quad strategies
+    def __init__(self,
+                 n_points):
+        self.n_points = n_points
+
+    def get_interior_quadrature(self, e_k, pt):
+        D, x0 = telles_distance(pt[0], pt[1],
+                        e_k.vertex1.loc[0],
+                        e_k.vertex1.loc[1],
+                        e_k.vertex2.loc[0],
+                        e_k.vertex2.loc[1])
+        try:
+            return telles_quasi_singular(self.n_points, x0, D)
+        except:
+            return telles_quasi_singular(self.n_points + 1, x0, D)
+
+
+import math
+def telles_distance(px, py, x1, y1, x2, y2):
+    """
+    This is just a copy of segment_distance.point_segment_distance
+    that also returns the nearest point
+    """
+    dx = x2 - x1
+    dy = y2 - y1
+    # Calculate the t that minimizes the distance.
+    t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
+
+    # See if this represents one of the segment's
+    # end points or a point in the middle.
+    if t < 0:
+        dx = px - x1
+        dy = py - y1
+        x0 = 0.0
+    elif t > 1:
+        dx = px - x2
+        dy = py - y2
+        x0 = 1.0
+    else:
+        x0 = t
+        near_x = x1 + t * dx
+        near_y = y1 + t * dy
+        dx = px - near_x
+        dy = py - near_y
+
+    return math.hypot(dx, dy), x0
+

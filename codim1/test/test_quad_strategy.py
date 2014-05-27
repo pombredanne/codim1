@@ -1,7 +1,8 @@
 import numpy as np
 from codim1.core import *
 from codim1.core.segment_distance import segments_distance
-from codim1.fast_lib import aligned_single_integral
+from codim1.fast_lib import aligned_single_integral, single_integral,\
+                    TractionKernel, ConstantBasis
 
 def test_segment_distance():
     v1 = (0, 0)
@@ -104,3 +105,15 @@ def test_gll_quad_strategy_interior():
     qs = GLLQuadStrategy(msh, 4, 10, 2, 2)
     q = qs.get_interior_quadrature(msh.elements[0], (-50.0, 0.0))
     assert(np.array(q.x).size == 4)
+
+def test_telles_quad_strategy():
+    msh = simple_line_mesh(4)
+    tqs = TellesQuadStrategy(4)
+    qi = tqs.get_interior_quadrature(msh.elements[3], [0.0, 0.0])
+
+    kernel = TractionKernel(1.0, 0.25)
+    one = ConstantBasis((1.0, 1.0))
+    est = single_integral(msh.elements[3].mapping.eval,
+                          kernel, one, one, qi, 0, 0)
+    exact = -0.0367726
+    np.testing.assert_almost_equal(exact, est[0][1])
