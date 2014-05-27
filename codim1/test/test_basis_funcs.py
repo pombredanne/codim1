@@ -1,8 +1,10 @@
 import numpy as np
 from codim1.core.basis_funcs import basis_from_nodes, basis_from_degree,\
-                                    get_equispaced_nodes, gll_basis
-from codim1.fast_lib import SingleFunctionBasis
-from codim1.core.mesh_gen import circular_mesh
+                                    get_equispaced_nodes, gll_basis, \
+                                    apply_solution
+from codim1.fast_lib import SingleFunctionBasis, SolutionBasis
+from codim1.core.mesh_gen import circular_mesh, simple_line_mesh
+from codim1.core import apply_to_elements, init_dofs
 
 def my_assert(a, b):
     np.testing.assert_almost_equal(np.array(a), np.array(b))
@@ -91,6 +93,28 @@ def test_gll_basis():
     val = bf.evaluate(8, x_val, x)
     np.testing.assert_almost_equal(val, [1.0, 1.0])
 
+def test_solution():
+    msh = simple_line_mesh(1)
+    bf = basis_from_degree(1)
+    soln = SolutionBasis(bf, np.array([[0.0, 1.0], [1.0, 0.0]]))
+
+    value = soln.evaluate(0, 0.0, [-1.0, 0.0])
+    np.testing.assert_almost_equal(value, [0.0, 1.0])
+
+    value = soln.evaluate(1, 1.0, [-1.0, 0.0])
+    np.testing.assert_almost_equal(value, [1.0, 0.0])
+
+def test_apply_solution():
+    msh = simple_line_mesh(2)
+    solution_coeffs = np.array([0.0, 1.0, 2.0, 3.0])
+    bf = basis_from_degree(0)
+    apply_to_elements(msh, "basis", bf, non_gen = True)
+    apply_to_elements(msh, "continuous", False, non_gen = True)
+    init_dofs(msh)
+    apply_solution(msh, solution_coeffs)
+
+    np.testing.assert_almost_equal(
+            msh.elements[1].soln.evaluate(0, 1.0, [1.0, 0.0]), [1.0, 3.0])
+
 if __name__ == "__main__":
-    test_basis_nodes()
-    test_gradient()
+    test_apply_solution()

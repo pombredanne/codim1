@@ -102,6 +102,5 @@ def test_gll_quad_strategy():
 def test_gll_quad_strategy_interior():
     msh = simple_line_mesh(2)
     qs = GLLQuadStrategy(msh, 4, 10, 2, 2)
-    q, integrator = qs.get_interior_quadrature(msh.elements[0], (-50.0, 0.0))
+    q = qs.get_interior_quadrature(msh.elements[0], (-50.0, 0.0))
     assert(np.array(q.x).size == 4)
-    assert(integrator == aligned_single_integral)

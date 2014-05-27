@@ -1,6 +1,5 @@
 #include "basis.h"
-
-
+#include <assert.h>
 
 std::vector<double> SingleFunctionBasis::evaluate_vector(int i, 
                         double x_hat,
@@ -68,6 +67,7 @@ double PolyBasis::evaluate_internal(int i,
                                 std::vector<double> x,
                                 int d)
 {
+    assert(i < n_fncs);
     double running_mult = 1.0;
     double retval = basis_coeffs[i][n_fncs - 1];
     for(int coeff_idx = n_fncs - 2; coeff_idx >= 0; coeff_idx--)
@@ -75,6 +75,34 @@ double PolyBasis::evaluate_internal(int i,
         running_mult *= x_hat;
         retval += basis_coeffs[i][coeff_idx] * running_mult;
     }
+    return retval;
+}
+
+SolutionBasis::SolutionBasis(PolyBasis& basis, 
+                             std::vector<std::vector<double> > coeffs)
+{
+    this->n_fncs = basis.n_fncs;
+    this->coeffs = coeffs;
+    this->basis = &basis;
+}
+
+double SolutionBasis::evaluate_internal(int i, 
+                                double x_hat,
+                                std::vector<double> x,
+                                int d)
+{
+
+    double basis_val = this->basis->evaluate_internal(i, x_hat, x, d);
+    return basis_val * this->coeffs[d][i];
+}
+
+std::vector<double> SolutionBasis::evaluate_vector(int i, 
+                                                   double x_hat,
+                                                   std::vector<double> x)
+{
+    std::vector<double> retval(2);
+    retval[0] = evaluate_internal(i, x_hat, x, 0);
+    retval[1] = evaluate_internal(i, x_hat, x, 1);
     return retval;
 }
 

@@ -18,8 +18,7 @@ def test_fast_lobatto():
     quad_info_old = lobatto(N + 1)
     pt = [0.0, -5.0]
     normal = [0.0, 1.0]
-    # TODO: Apparently, kernel seg faults if I don't set the interior data!
-    # This should be changed to a gentle failure
+
     kernel.set_interior_data(pt, normal)
     est_slow = single_integral(mapping.eval,
                               kernel, one, bf, quad_info_old, 0, 0)
@@ -45,8 +44,6 @@ def test_fast_lobatto():
 #     # exact = 0.2473475767
 #     exact = 0.00053055607635
 #
-#     # TODO: Apparently, kernel seg faults if I don't set the interior data!
-#     # This should be changed to a gentle failure
 #     kernel.set_interior_data(pt, normal)
 #     est_gauss = single_integral(mapping.eval,
 #                               kernel, one, bf, quad_info_old, 0, 0)

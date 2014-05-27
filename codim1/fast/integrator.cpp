@@ -210,8 +210,8 @@ aligned_single_integral(MappingEval& soln_mapping_eval,
 
     std::vector<double> phys_pt = soln_mapping_eval.get_physical_point(q_pt);
 
-    std::vector<double> soln_basis_val =
-        soln_basis_eval.evaluate_vector(soln_basis_idx, q_pt, phys_pt);
+    std::vector<double> soln_basis_val = soln_basis_eval.\
+            evaluate_vector(soln_basis_idx, q_pt, phys_pt);
 
     // Determine the various location parameters that the kernels
     // need -- dr, drdn, drdm, dist
