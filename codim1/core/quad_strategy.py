@@ -70,7 +70,8 @@ class QuadStrategy(object):
         """
         self.quad_nonsingular = dict()
         for n_q in range(self.min_points - 1, self.max_points):
-            self.quad_nonsingular[n_q + 1] = self.get_nonsingular_ptswts(n_q + 1)
+            self.quad_nonsingular[n_q + 1] = \
+                self.get_nonsingular_ptswts(n_q + 1)
 
         self.highest_nonsingular =  self.quad_nonsingular[self.max_points]
 
@@ -95,6 +96,9 @@ class QuadStrategy(object):
     def get_simple(self):
         """Get whatever quadrature rule is used for a non singular case."""
         return self.highest_nonsingular
+
+    def get_nonsingular_minpts(self):
+        return self.quad_nonsingular[self.min_points]
 
     def get_quadrature(self, singularity_type, e_k, e_l):
         """
@@ -143,7 +147,6 @@ class QuadStrategy(object):
         # The choice of which element to use in computing the width is
         # irrelevant until elements get highly variable in width.
         return self._choose_nonsingular(self.mesh.elements[k], dist)
-
 
     def choose_nonsingular_interior(self, e_k, pt):
         v1 = e_k.vertex1

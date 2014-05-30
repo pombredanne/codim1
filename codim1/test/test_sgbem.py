@@ -1,5 +1,7 @@
+import numpy as np
 from functools import partial
-from codim1.assembly.sgbem import _make_which_kernels, sgbem_assemble
+from codim1.assembly.sgbem import _make_which_kernels, sgbem_assemble,\
+    _compute_element_mass_rhs
 from codim1.core import *
 from codim1.fast_lib import ConstantBasis
 
@@ -9,19 +11,29 @@ def test_which_kernels():
     # Just a cursory test to make sure everything was assembled properly.
     assert(wk["displacement"]["traction"]["rhs"][0] == ek.k_d)
 
-
-def test_sgbem_assemble():
+def make_mesh():
     mesh = simple_line_mesh(2)
     bf = basis_funcs.basis_from_degree(1)
+    qs = QuadStrategy(mesh, 6, 6, 6, 6)
     apply_to_elements(mesh, "basis", bf, non_gen = True)
     apply_to_elements(mesh, "continuous", True, non_gen = True)
-    init_dofs(mesh)
-
-    bc_left = BC("disp", ConstantBasis([1.0, 1.0]))
-    bc_right = BC("trac", ConstantBasis([1.0, 1.0]))
+    apply_to_elements(mesh, "qs", qs, non_gen = True)
+    bc_left = BC("displacement", ConstantBasis([1.0, 1.0]))
+    bc_right = BC("traction", ConstantBasis([1.0, 1.0]))
     mesh.elements[0].bc = bc_left
     mesh.elements[1].bc = bc_right
+    init_dofs(mesh)
+    return mesh
 
-    qs = QuadStrategy(mesh, 6, 6, 6, 6)
-    ek = ElasticKernelSet(1.0, 0.25)
-    matrix, rhs = sgbem_assemble(mesh, qs, ek)
+def test_sgbem_mass_rhs():
+    mesh = make_mesh()
+    rhs = np.zeros(mesh.total_dofs)
+    _compute_element_mass_rhs(rhs, mesh.elements[0])
+    _compute_element_mass_rhs(rhs, mesh.elements[1])
+    np.testing.assert_almost_equal(rhs, [0.25,0.5,0.25,0.25,0.5,0.25])
+
+def test_sgbem_assemble():
+    mesh = make_mesh()
+    elastic_k = ElasticKernelSet(1.0, 0.25)
+    matrix, rhs = sgbem_assemble(mesh, elastic_k)
+    print rhs

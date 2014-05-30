@@ -4,7 +4,7 @@ from mapping import PolynomialMapping, apply_mapping
 from mapping import distance_between_mappings
 from dof_handler import init_dofs
 from quadrature import gauss, piessens, telles_singular
-from quadrature import rl1_quad, telles_quasi_singular, lobatto
+from quadrature import rl_quad, telles_quasi_singular, lobatto
 from basis_funcs import basis_from_degree, basis_from_nodes, gll_basis
 from basis_funcs import apply_solution
 from quad_strategy import QuadStrategy, GLLQuadStrategy, TellesQuadStrategy
