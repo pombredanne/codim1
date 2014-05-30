@@ -1,7 +1,7 @@
 from math import sqrt
 import numpy as np
 from codim1.core.quadrature import gauss, piessens, telles_singular,\
-        telles_quasi_singular, rl1_quad
+        telles_quasi_singular, rl_quad
 from codim1.core.basis_funcs import gll_basis
 
 def test_gauss():
@@ -52,13 +52,13 @@ def test_quasi_singular2():
     est = np.sum(g(qx) * qw)
     np.testing.assert_almost_equal(exact, est, 5)
 
-def test_rl1_quad():
+def test_rl_quad():
     N = 5
     values = [(0.2, 0.3, 0.2949533988361775),
               (1.2, 4.0, 0.04976184140700821),
               (1.5, 1.5, 0.1216505480495554)]
     for (ay, by, exact) in values:
-        qi = rl1_quad(N+1, ay, by)
+        qi = rl_quad(N+1, ay, by, 1)
         qx = np.array(qi.x)
         qw = np.array(qi.w)
 
@@ -70,13 +70,13 @@ def test_rl1_quad():
         # DUDE 13 digits!
         np.testing.assert_almost_equal(est, exact, 13)
 
-def test_rl1_quad_more_difficult():
+def test_rl_quad_more_difficult():
     N = 7
     values = [(0.2, 0.3, 0.7565395005),
               (1.2, 4.0, 0.003080702117),
               (1.5, 1.5, 0.04518013019)]
     for (ay, by, exact) in values:
-        qi = rl1_quad(N, ay, by)
+        qi = rl_quad(N, ay, by, 1)
         qx = np.array(qi.x)
         qw = np.array(qi.w)
         f = lambda x: x ** 4 / (np.sqrt((x - ay) ** 2 + by ** 2) ** 3)
