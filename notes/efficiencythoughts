@@ -1,3 +1,6 @@
 the cost of a kernel evaluation is concentrated in the sqrt
-does the fast inverse sqrt method help at all?
 intel mkl and intel vml allow vectorization of certain operations.
+floats are faster than doubles by a decent margin.
+how much do i need the extra digits of precision?
+gpu computing should be straightforward and very fast
+python mpi4py
