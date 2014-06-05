@@ -25,8 +25,7 @@ class Vertex(object):
             self.connected_to.append(elem)
 
 
-class MisorientationException(Exception):
-    pass
+class MisorientationException(Exception): pass
 
 class Element(object):
     def __init__(self, vertex1, vertex2):
@@ -63,18 +62,27 @@ class Element(object):
         self.neighbors_right.extend(self.vertex2.connected_to)
         self.neighbors_right.remove(self)
 
-    def _check_for_misorientation(self):
-        """
-        Make sure this element is the left neighbor of its right neighbors
-        """
+    def _update_left_neighbors(self):
+        for e in self.neighbors_left:
+            e.update_neighbors()
+
+    def _update_right_neighbors(self):
+        for e in self.neighbors_left:
+            e.update_neighbors()
+
+    def _check_for_misorientation_right(self):
         for nr in self.neighbors_right:
             if self not in nr.neighbors_left:
                 raise MisorientationException()
+
+    def _check_for_misorientation_left(self):
         for nr in self.neighbors_left:
             if self not in nr.neighbors_right:
                 raise MisorientationException()
 
-
+    def _check_for_misorientation(self):
+        self._check_for_misorientation_left()
+        self._check_for_misorientation_right()
 
     def set_id(self, id):
         # TODO: This id link the element back to its location in the

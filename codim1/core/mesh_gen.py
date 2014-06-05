@@ -2,10 +2,25 @@ from math import cos, sin
 from functools import partial
 import numpy as np
 from mesh import Mesh
-from element import Element, Vertex, apply_to_elements
+from element import Element, Vertex, apply_to_elements, MisorientationException
 from mapping import apply_mapping, PolynomialMapping
 
-def from_vertices_and_etov(vertices, etov):
+def correct_misorientation(element_objs):
+    done = False
+    while not done:
+        done = True
+        for e in element_objs:
+            try:
+                e._check_for_misorientation()
+            except MisorientationException:
+                e.vertex1, e.vertex2 = e.vertex2, e.vertex1
+                e._update_left_neighbors()
+                e.update_neighbors()
+                e._update_right_neighbors()
+                done = False
+    return element_objs
+
+def from_vertices_and_etov(vertices, etov, flip = False):
     vertex_objs = []
     for v_idx in range(vertices.shape[0]):
         vertex_objs.append(Vertex((vertices[v_idx, 0], vertices[v_idx, 1])))
@@ -15,6 +30,9 @@ def from_vertices_and_etov(vertices, etov):
         v0 = vertex_objs[etov[e_idx, 0]]
         v1 = vertex_objs[etov[e_idx, 1]]
         element_objs.append(Element(v0, v1))
+
+    if flip:
+        element_objs = correct_misorientation(element_objs)
 
     m = Mesh(vertex_objs, element_objs)
     apply_mapping(m, PolynomialMapping)
