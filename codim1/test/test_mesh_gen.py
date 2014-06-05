@@ -1,6 +1,7 @@
 import numpy as np
 from codim1.core.mesh_gen import circular_mesh, simple_line_mesh,\
-                                 ray_mesh, combine_meshes
+                                 ray_mesh, combine_meshes,\
+                                 from_vertices_and_etov
 from codim1.core.element import MisorientationException
 from pytest import raises
 
@@ -77,3 +78,13 @@ def test_complicated_mesh_problem():
     with raises(MisorientationException):
         mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                               ensure_continuity = True)
+
+def test_misorientation_correct_simple():
+    v = np.array([[0, 1], [0, 2], [0, 3]])
+    e = np.array([[0, 1],[2, 1]])
+    mesh = from_vertices_and_etov(v, e, flip = True)
+
+def test_misorientation_correct_harder():
+    v = np.array([[0, 1], [0, 2], [0, 3], [0, 4]])
+    e = np.array([[0, 1],[2, 1],[2, 3]])
+    mesh = from_vertices_and_etov(v, e, flip = True)
