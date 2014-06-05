@@ -3,8 +3,6 @@ Thin wrappers over the quadracheer package that convert from [-1, 1] to [0, 1]
 """
 import numpy as np
 import quadracheer as qc
-import quadracheer.rl1
-import quadracheer.rl5
 from codim1.fast_lib import QuadratureInfo
 
 def gauss(N):
@@ -29,7 +27,7 @@ def telles_quasi_singular(N, x0, D):
     return QuadratureInfo(x0, x, w)
 
 def rl_quad(N, ay, by, m):
-    x, w = qc.map_rl_quad(qc.rl_quad, N, ay, by, m, 0.0, 1.0)
+    x, w = qc.map_rl_quad(qc.recursive_quad, qc.rl1, N, ay, by, m, 0.0, 1.0)
     # Fix this
     new_w = w * ((x - ay) ** 2 + by ** 2) ** (m / 2.0)
     return QuadratureInfo(ay, x, new_w)

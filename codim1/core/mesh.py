@@ -78,7 +78,7 @@ class Mesh(object):
                 if v1 is element.vertex1:
                     element.reinit(v0, element.vertex2)
                 if v1 is element.vertex2:
-                    element.reinit(element.vertex2, v0)
+                    element.reinit(element.vertex1, v0)
         self.compute_connectivity()
 
     def _find_equivalent_pairs(self, epsilon):
