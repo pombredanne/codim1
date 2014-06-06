@@ -1,8 +1,29 @@
 #include "basis.h"
 #include <assert.h>
 
-double ConstantBasis::evaluate_internal(int i, double x_hat,
-                                int d)
+ConstantBasis::ConstantBasis(std::vector<double> values)
+{
+    std::vector<double> point_sources0(3);
+    point_sources0[0] = 0.0;
+    point_sources0[1] = values[0];
+    point_sources0[2] = values[1];
+    std::vector<double> point_sources1(3);
+    point_sources1[0] = 1.0;
+    point_sources1[1] = -values[0];
+    point_sources1[2] = -values[1];
+    point_sources.push_back(point_sources0);
+    point_sources.push_back(point_sources1);
+
+    gradient_basis.reset(new ZeroBasis());
+
+    this->n_fncs = 1;
+    this->values = values;
+
+    this->point_source_dependency.push_back(0);
+    this->point_source_dependency.push_back(0);
+}
+
+double ConstantBasis::evaluate_internal(int i, double x_hat, int d)
 {
     return values[d];
 }
@@ -26,11 +47,15 @@ PolyBasis::PolyBasis(std::vector<std::vector<double> > basis_coeffs,
 
 PolyBasis::PolyBasis(std::vector<std::vector<double> > basis_coeffs,
                      std::vector<std::vector<double> > basis_derivs,
+                     std::vector<std::vector<double> > point_sources,
+                     std::vector<int> point_source_dependency,
                      std::vector<double> nodes)
 {
     this->n_fncs = basis_coeffs.size();
     this->basis_coeffs = basis_coeffs;
     this->gradient_basis.reset(new GradientBasis(basis_derivs, nodes));
+    this->point_sources = point_sources;
+    this->point_source_dependency = point_source_dependency;
     this->nodes = nodes;
 }
 std::vector<double> PolyBasis::evaluate_vector(int i, 
@@ -68,6 +93,13 @@ CoeffBasis::CoeffBasis(Basis& basis,
         this->gradient_basis.reset(
             new CoeffBasis(*this->basis->gradient_basis, this->coeffs));
     }
+    this->point_sources = this->basis->point_sources;
+    for (unsigned int i = 0; i < this->point_source_dependency.size(); i++)
+    {
+        this->point_sources[i][1] *= coeffs[0][i];
+        this->point_sources[i][2] *= coeffs[1][i];
+    }
+    this->point_source_dependency = this->basis->point_source_dependency;
 }
 
 double CoeffBasis::evaluate_internal(int i, 
