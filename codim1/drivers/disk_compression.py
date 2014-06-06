@@ -11,12 +11,12 @@ from codim1.fast_lib import *
 alpha = (1 / 50.) * np.pi
 alpha = np.cos((np.pi / 2) - alpha)
 
-def section_traction(x, d):
+def section_traction(x, n):
     # Only apply tractions over the arcs near y=1, y=-1
     if np.abs(x[0]) < alpha:
         x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
-        return -x[d] / x_length
-    return 0.0
+        return (-x[0] / x_length, -x[1] / x_length)
+    return (0.0, 0.0)
 
 # Less accurate, because it doesn't scale the return value, but it's faster
 def less_accurate_section_traction(x, d):
@@ -40,7 +40,7 @@ def disk(n_elements, element_deg, plot):
     quad_oneoverr = 10
 
     # Define the solution basis functions
-    bf = BasisFunctions.from_degree(element_deg)
+    bf = basis_from_degree(element_deg)
 
     # A circle with radius one.
     mesh = circular_mesh(n_elements, 1.0)
@@ -71,75 +71,73 @@ def disk(n_elements, element_deg, plot):
     # If I am using the displacement BIE, I use a discontinuous basis
     # If I am using the traction BIE (hypersingular), I use a continuous
     # basis
-    dh = DOFHandler(mesh, bf, range(n_elements))
+
+    apply_to_elements(mesh, "basis", bf, non_gen = True)
+    apply_to_elements(mesh, "continuous", False, non_gen = True)
+    apply_to_elements(mesh, "qs", qs, non_gen = True)
+    init_dofs(mesh)
 
     # Assemble the matrix of displacements induced by displacements at
     # another location.
     # Gup multiplies displacements
     # Guu mutliplies tractions
     print('Assembling kernel matrix, Gup')
-    matrix_assembler = MatrixAssembler(mesh, bf, dh, qs)
-    Gup = matrix_assembler.assemble_matrix(k_t)
+    Gup = simple_matrix_assemble(mesh, k_t)
 
     # This mass matrix term arises from considering the cauchy singular form
     # of the Gup matrix.
-    mass_matrix = MassMatrix(mesh, bf, bf,
-                             dh, QuadGauss(element_deg + 1),
-                             compute_on_init = True)
-    Gup -= 0.5 * mass_matrix.M
+    Gup -= 0.5 * assemble_mass_matrix(mesh, gauss(element_deg + 1))
 
 
-    # Make the input function behave like a basis -- for internal reasons,
-    # this makes assembly easier.
-    # TODO: Could be moved inside assemble_rhs
-    traction_function = BasisFunctions.from_function( section_traction)
+    traction_function = tools.interpolate(section_traction, mesh)
+    apply_coeffs(mesh, traction_function, "trac_fnc")
 
     # Assemble the rhs, composed of the displacements induced by the
     # traction inputs.
     print("Assembling RHS")
-    rhs_assembler = RHSAssembler(mesh, bf, dh, qs_rhs)
-    rhs = rhs_assembler.assemble_rhs(traction_function, k_d)
+    rhs = simple_rhs_assemble(mesh, lambda e: e.trac_fnc, k_d)
 
     # Solve Ax = b, where x are the coefficients over the solution basis
     soln_coeffs = np.linalg.solve(Gup, rhs)
 
     # Create a solution object that pairs the coefficients with the basis
     print("Solving System")
-    soln = Solution(bf, dh, soln_coeffs)
+    apply_coeffs(mesh, soln_coeffs, "soln")
 
     # Evaluate that solution at 400 points around the circle
-    x, u = tools.evaluate_boundary_solution(400 / n_elements, soln, mesh)
+    x, u = tools.evaluate_boundary_solution(400 / n_elements,
+                                            soln_coeffs, mesh)
 
     # Now, compute some interior values of stress along the x axis
     print("Performing interior computations.")
     x_vals = np.linspace(0, 1.0, 11)[:-1]
 
-    # Use a slightly higher order quadrature for interior point
-    # computations just to avoid problems in testing. Could be reduced
-    # in the future.
-    ip = InteriorPoint(mesh, dh, qs)
     # Get the tractions on the y-z plane (\sigma_xx, \sigma_xy)
     # where the normal is n_x=1, n_y=0
     normal = np.array([1.0, 0.0])
     # Positive contribution of the AdjointTraction kernel
     int_strs_x = -np.array(
-            [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
+            [interior_pt(mesh, [(x_v, 0.0), normal], k_ta,
+                         basis_grabber = lambda e: e.trac_fnc)
              for x_v in x_vals])
     # Negative contribution of the hypersingular kernel
     int_strs_x -= np.array(
-            [ip.compute((x_v, 0.0), normal, k_h, soln)
+            [interior_pt(mesh, [(x_v, 0.0), normal], k_h,
+                         basis_grabber = lambda e: e.soln)
              for x_v in x_vals])
 
     # Get the tractions on the x-z plane (\sigma_xy, \sigma_yy)
     normal = np.array([0.0, 1.0])
     # Negative contribution of the AdjointTraction kernel
     int_strs_y = -np.array(
-            [ip.compute((x_v, 0.0), normal, k_ta, traction_function)
+            [interior_pt(mesh, [(x_v, 0.0), normal], k_ta,
+                         basis_grabber = lambda e: e.trac_fnc)
              for x_v in x_vals])
 
     # Positive contribution of the hypersingular kernel
     int_strs_y -= np.array(
-            [ip.compute((x_v, 0.0), normal, k_h, soln)
+            [interior_pt(mesh, [(x_v, 0.0), normal], k_h,
+                         basis_grabber = lambda e: e.soln)
              for x_v in x_vals])
 
     sigma_xx_exact = np.array([0.0398, 0.0382, 0.0339, 0.0278, 0.0209,
@@ -158,19 +156,19 @@ def disk(n_elements, element_deg, plot):
         plt.plot(x[:, 0], u[:, 1])
         plt.xlabel(r'X')
         plt.ylabel(r'$u_y$', fontsize = 18)
-
-        plt.figure(4)
-        # \sigma_xx
-        plt.plot(x_vals, int_strs_x[:, 0], linewidth = '2', label = r'$\sigma_{xx}$')
-        # \sigma_yy
-        plt.plot(x_vals, int_strs_y[:, 1], linewidth = '2', label = r'$\sigma_{yy}$')
-        plt.plot(x_vals, sigma_xx_exact, linewidth = '2', label = 'exact')
-        plt.xlabel('distance along x axis from origin')
-        plt.ylabel(r'$\sigma_{xx}$ and $\sigma_{yy}$')
-        plt.legend()
+#
+#         plt.figure(4)
+#         # \sigma_xx
+#         plt.plot(x_vals, int_strs_x[:, 0], linewidth = '2', label = r'$\sigma_{xx}$')
+#         # \sigma_yy
+#         plt.plot(x_vals, int_strs_y[:, 1], linewidth = '2', label = r'$\sigma_{yy}$')
+#         plt.plot(x_vals, sigma_xx_exact, linewidth = '2', label = 'exact')
+#         plt.xlabel('distance along x axis from origin')
+#         plt.ylabel(r'$\sigma_{xx}$ and $\sigma_{yy}$')
+#         plt.legend()
 
     # Collect the displacements at an array of interior points.
-    save_interior = True
+    save_interior = False
     if save_interior:
         x_pts = 20
         y_pts = 22
@@ -187,11 +185,13 @@ def disk(n_elements, element_deg, plot):
                     int_ux[j, i] = 0
                     int_uy[j, i] = 0
                     continue
-                traction_effect = ip.compute((x_val, y_val), np.zeros(2),
-                                             k_d, traction_function)
-                displacement_effect = -ip.compute((x_val, y_val),
-                                                  np.zeros(2),
-                                                  k_t, soln)
+                traction_effect = interior_pt(mesh,
+                                [(x_val, y_val), np.zeros(2)], k_d,
+                                basis_grabber = lambda e: e.trac_fnc)
+                displacement_effect = -interior_pt(mesh,
+                                [(x_val, y_val), np.zeros(2)], k_t,
+                                basis_grabber = lambda e: e.soln)
+
                 int_ux[j, i] = traction_effect[0] - displacement_effect[0]
                 int_uy[j, i] = traction_effect[1] - displacement_effect[1]
         int_u = np.array([int_ux, int_uy])

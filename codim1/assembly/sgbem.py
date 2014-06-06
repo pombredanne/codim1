@@ -65,8 +65,10 @@ def _compute_element_pair_rhs(rhs, e_k, e_l, which_kernels):
     # Determine which kernel and which bases to use
     rhs_kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type]["rhs"]
     e_k_basis = _choose_basis(e_k.basis, rhs_kernel.test_gradient)
-    # TODO: Need to decide what to do for the gradient of a BC
     e_l_basis = _choose_basis(e_l.bc.basis, rhs_kernel.soln_gradient)
+    if type(e_k_basis) is ZeroBasis or \
+       type(e_l_basis) is ZeroBasis:
+           return
 
     # Determine what quadrature formula to use
     quad_outer, quad_inner = e_k.qs.get_quadrature(
@@ -74,7 +76,7 @@ def _compute_element_pair_rhs(rhs, e_k, e_l, which_kernels):
 
     # Loop over basis function pairs and integrate!
     for i in range(e_k.basis.n_fncs):
-        for j in range(e_k.basis.n_fncs):
+        for j in range(e_l.basis.n_fncs):
             # Compute the RHS term
             # How to automate using the gradient of the boundary condition
             # when the hypersingular kernel is to be used?
@@ -95,7 +97,9 @@ def _compute_element_pair_matrix(matrix, e_k, e_l, which_kernels):
     matrix_kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type]["matrix"]
     e_k_basis = _choose_basis(e_k.basis, matrix_kernel.test_gradient)
     e_l_basis = _choose_basis(e_l.basis, matrix_kernel.soln_gradient)
-    # if type(e_k_basis) is ZeroBasis
+    if type(e_k_basis) is ZeroBasis or \
+       type(e_l_basis) is ZeroBasis:
+           return
 
 
     # Determine what quadrature formula to use
@@ -104,7 +108,7 @@ def _compute_element_pair_matrix(matrix, e_k, e_l, which_kernels):
 
     # Loop over basis function pairs and integrate!
     for i in range(e_k.basis.n_fncs):
-        for j in range(e_k.basis.n_fncs):
+        for j in range(e_l.basis.n_fncs):
             integral = double_integral(
                                 e_k.mapping.eval,
                                 e_l.mapping.eval,

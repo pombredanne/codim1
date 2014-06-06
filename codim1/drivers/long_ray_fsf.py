@@ -11,7 +11,7 @@ shear_modulus = 1.0
 poisson_ratio = 0.25
 n_elements_surface = 40
 # n_elements_surface = 25
-degree = 6
+degree = 3
 quad_min = degree + 1
 quad_mult = 3
 quad_max = quad_mult * degree
@@ -55,7 +55,7 @@ mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths)
 mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                       ensure_continuity = True)
 
-bf = basis_from_degree(degree, gll_nodes)
+bf = gll_basis(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
 apply_to_elements(mesh, "qs", qs, non_gen = True)
 apply_to_elements(mesh, "basis", bf, non_gen = True)
@@ -63,7 +63,7 @@ apply_to_elements(mesh, "continuous", True, non_gen = True)
 init_dofs(mesh)
 
 # Mesh the fault
-fault_elements = 100
+fault_elements = 20
 fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
 apply_to_elements(fault_mesh, "qs", qs, non_gen = True)
 apply_to_elements(fault_mesh, "basis", bf, non_gen = True)
@@ -92,6 +92,7 @@ else:
 
     print "Solving system"
     soln_coeffs = np.linalg.solve(matrix, rhs)
+
 x, u_soln = tools.evaluate_boundary_solution(4, soln_coeffs, mesh)
 
 
@@ -148,8 +149,10 @@ def error_plot():
     plt.show()
 
 def interior_plot():
-    disp_disc_fnc = \
-        SingleFunctionBasis(lambda x,d: fault_tangential[d])
+    disp_disc_fnc = lambda x, n: fault_tangential
+    apply_coeffs(fault_mesh,
+                 tools.interpolate(disp_disc_fnc, fault_mesh),
+                 "disp_disc_fnc")
     x_pts = 30
     y_pts = 30
     min_x = -3
@@ -164,12 +167,10 @@ def interior_plot():
         print i
         for j in range(y_pts):
             pt_normal = ((x[i], y[j]), np.zeros(2))
-            dislocation_effect = -interior_pt_rhs(fault_mesh,
-                                                  pt_normal,
-                                                  ek.k_t,
-                                                  disp_disc_fnc)
-            surf_disp_effect = -interior_pt_soln(mesh, pt_normal,
-                                                 ek.k_t, soln_coeffs)
+            dislocation_effect = -interior_pt(fault_mesh, pt_normal,
+                                            ek.k_t, lambda e: e.disp_disc_fnc)
+            surf_disp_effect = -interior_pt(mesh, pt_normal,
+                                            ek.k_t, lambda e: e.soln)
             int_ux[j, i] = dislocation_effect[0]
             int_ux[j, i] += surf_disp_effect[0]
             int_uy[j, i] = dislocation_effect[1]
@@ -191,7 +192,6 @@ def interior_plot():
     contf_plot('Vertical', int_uy)
     contf_plot('Horizontal', int_ux)
     plt.show()
-    import ipdb;ipdb.set_trace()
 
 error_plot()
 # Forming interior plot
