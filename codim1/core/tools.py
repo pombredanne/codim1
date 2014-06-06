@@ -46,6 +46,7 @@ def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None):
     ax.margins(0.1)
     if show:
         fig.show()
+    return fig, ax
 
 def plot_matrix(M, title, show = True):
     """

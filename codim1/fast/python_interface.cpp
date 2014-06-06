@@ -18,7 +18,6 @@ void expose_kernel(const char* type_string)
 {
     class_<T, bases<Kernel> >(type_string, init<double, double>())
         .def("call", &T::call_all)
-        .def("set_interior_data", &T::set_interior_data)
         .def("get_interior_integral_data", &T::get_interior_integral_data)
         .def("_call", &T::call)
         .def_readonly("test_gradient", &Kernel::test_gradient)
@@ -105,9 +104,15 @@ BOOST_PYTHON_MODULE(fast_ext)
 
     // Expose the elastic kernels.
     class_<KernelWrap, boost::noncopyable>("Kernel")
-        .def("_call", pure_virtual(&Kernel::call));
+        .def("_call", pure_virtual(&Kernel::call))
+        .def("set_interior_data", &Kernel::set_interior_data);
     class_<KernelData>("KernelData", no_init)
         .def_readonly("dist", &KernelData::dist)
+        .def_readonly("drdn", &KernelData::drdn)
+        .def_readonly("drdm", &KernelData::drdm)
+        .def_readonly("dr", &KernelData::dr)
+        .def_readonly("n", &KernelData::n)
+        .def_readonly("m", &KernelData::m)
         .enable_pickling();
     expose_kernel<MassMatrixKernel>("MassMatrixKernel");
     expose_kernel<DisplacementKernel>("DisplacementKernel");

@@ -15,17 +15,13 @@ KernelData Kernel::get_double_integral_data(std::vector<double> r,
                                     std::vector<double> n)
 {
     KernelData kd;
-    kd.r[0] = r[0];
-    kd.r[1] = r[1];
-    kd.m[0] = m[0];
-    kd.m[1] = m[1];
-    kd.n[0] = n[0];
-    kd.n[1] = n[1];
+    kd.r = {r[0], r[1]};
+    kd.m = {m[0], m[1]};
+    kd.n = {n[0], n[1]};
     kd.dist2 = pow(r[0], 2) + pow(r[1], 2);
     kd.dist = sqrt(kd.dist2);
     // grad(r)
-    kd.dr[0] = r[0] / kd.dist;
-    kd.dr[1] = r[1] / kd.dist;
+    kd.dr = {r[0] / kd.dist, r[1] / kd.dist};
     // grad(r) dot m
     kd.drdm = kd.dr[0] * m[0] + kd.dr[1] * m[1];
     // grad(r) dot n
