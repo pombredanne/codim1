@@ -1,8 +1,9 @@
 import numpy as np
 import scipy.interpolate as spi
 import scipy.special
-from codim1.fast_lib import PolyBasis, SolutionBasis
+from codim1.fast_lib import PolyBasis, CoeffBasis
 from quadracheer import gaussxw, lobatto_quad, map_pts_wts
+from codim1.core.tools import local_interpolate
 
 def get_equispaced_nodes(element_deg):
     """
@@ -46,11 +47,15 @@ def gll_basis(degree):
     nodes, w = map_pts_wts(x, w, 0, 1)
     return basis_from_nodes(nodes)
 
-def apply_solution(elements, solution_coeffs):
+def apply_coeffs(elements, solution_coeffs, name):
     """
     Applies a solution basis to each element. This assumes that a standard
     basis is already defined on the element.
     """
     for e in elements:
         values = solution_coeffs[e.dofs]
-        e.soln = SolutionBasis(e.basis, values)
+        e.__dict__[name] = CoeffBasis(e.basis, values)
+
+def basis_from_func(under_basis, f, element):
+    coeffs = local_interpolate(f, element.mapping, under_basis)
+    return CoeffBasis(under_basis, coeffs)

@@ -25,13 +25,13 @@ def create_pickleable_class(base_class):
     new_type.__init__ = create_init(base_class)
     return new_type
 
-ext_classes = ['PolyBasis', 'GradientBasis', 'SingleFunctionBasis',
+ext_classes = ['PolyBasis', 'GradientBasis',
                'ConstantBasis', 'ZeroBasis', 'MappingEval', 'KernelData',
                'MassMatrixKernel', 'Kernel', 'DisplacementKernel',
                'TractionKernel', 'AdjointTractionKernel',
                'HypersingularKernel', 'RegularizedHypersingularKernel',
                'SemiRegularizedHypersingularKernel', 'QuadratureInfo',
-               'SolutionBasis', 'InteriorPoint', 'AlignedInteriorPoint']
+               'CoeffBasis', 'InteriorPoint', 'AlignedInteriorPoint']
 # Loop over all the classes and make them pickleable.
 for cls in ext_classes:
     globals()[cls] = create_pickleable_class(fast_ext.__dict__[cls])

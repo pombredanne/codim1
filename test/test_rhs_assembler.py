@@ -1,9 +1,12 @@
 import numpy as np
 from codim1.assembly import simple_rhs_assemble
-from codim1.fast_lib import TractionKernel, SingleFunctionBasis
+from codim1.fast_lib import TractionKernel
 from codim1.core import *
+from codim1.core.tools import interpolate
 
 # A presumed-to-be correct matrix formed from the G_up kernel
+# This was computed using an old formulation where the RHS was not
+# interpolated first
 correct_matrix = \
     np.array([[  0.00000000e+00,   0.00000000e+00,   0.00000000e+00,
      -3.82120741e-04,   4.22000426e-02,   1.08527120e-02],
@@ -33,12 +36,12 @@ def test_rhs():
     kernel = TractionKernel(1.0, 0.25)
     # If we sum across rows, we should get the RHS value for
     # a function that is 1 everywhere
-    rhs_correct = np.sum(correct_matrix, axis = 1)
+    rhs_correct = np.sum(correct_matrix, axis = 0)
 
-    f = lambda x, d: 1.0
+    f = lambda x, n: [1.0, 1.0]
+    apply_coeffs(msh, interpolate(f, msh), "rhs_f")
     # Make the function look like a basis function. It is one! The only one!
-    fnc = SingleFunctionBasis(f)
-    rhs = simple_rhs_assemble(msh, fnc, kernel)
-    np.testing.assert_almost_equal(rhs_correct, rhs)
+    rhs = simple_rhs_assemble(msh, lambda e: e.rhs_f, kernel)
+    np.testing.assert_almost_equal(rhs_correct, rhs, 3)
 
 

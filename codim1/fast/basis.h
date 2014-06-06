@@ -9,14 +9,10 @@
 namespace bp = boost::python;
 
 /*
-This stuff should be reworked so that basis functions exist elementwise.
-
-Use another function like apply_mapping that applies a basis function to each member of an iterable.
-
-This is partially (mostly) done.
+Bases exists elementwise.
 */
 
-static const std::vector<double> empty_vec(2, 0.0);
+
 /* Abstract base class (interface) for the basis functions in an
  * integral. 
  */
@@ -29,7 +25,6 @@ class Basis
          */
         virtual double evaluate_internal(int i, 
                                 double x_hat,
-                                std::vector<double> x,
                                 int d) = 0;
 
         /* Simple evaluator for a case that doesn't depend on the physical
@@ -37,43 +32,21 @@ class Basis
          * Passes zeros for the physical point.
          */
         double evaluate_simple(int i, double x_hat, int d)
-        {return evaluate_internal(i, x_hat, empty_vec, d);}
+        {return evaluate_internal(i, x_hat, d);}
 
         virtual inline double chain_rule(double jacobian) {return 1.0;}
-        virtual std::vector<double> evaluate_vector(int i, 
-                                double x_hat,
-                                std::vector<double> x) = 0;
+        virtual std::vector<double> evaluate_vector(int i, double x_hat) = 0;
 
         boost::shared_ptr<Basis> get_gradient_basis()
         {
             return gradient_basis;
         }
 
+        std::vector<std::vector<double> > point_sources;
         boost::shared_ptr<Basis> gradient_basis;
         int n_fncs;
 };
 
-
-/* Evaluation class for a single function basis. This allows someone to
- * specify a rhs function or to use a special basis.
- */
-class SingleFunctionBasis: public Basis
-{
-    public:
-        SingleFunctionBasis(bp::object function)
-        {
-            this->n_fncs = 1;
-            this->function = function;
-        }
-        bp::object function;
-        virtual double evaluate_internal(int i, 
-                                double x_hat,
-                                std::vector<double> x,
-                                int d);
-        virtual std::vector<double> evaluate_vector(int i, 
-                                double x_hat,
-                                std::vector<double> x);
-};
 
 /* Always return a constant value...*/
 class ConstantBasis: public Basis
@@ -81,16 +54,25 @@ class ConstantBasis: public Basis
     public:
         ConstantBasis(std::vector<double> values)
         {
+            std::vector<double> point_sources0(3);
+            point_sources0[0] = 0.0;
+            point_sources0[1] = values[0];
+            point_sources0[2] = values[1];
+            std::vector<double> point_sources1(3);
+            point_sources1[0] = 1.0;
+            point_sources1[1] = -values[0];
+            point_sources1[2] = -values[1];
+            point_sources.push_back(point_sources0);
+            point_sources.push_back(point_sources1);
+
             this->n_fncs = 1;
             this->values = values;
         }
 
         virtual double evaluate_internal(int i, double x_hat,
-                                std::vector<double> x,
                                 int d);
         virtual std::vector<double> evaluate_vector(int i, 
-                                double x_hat,
-                                std::vector<double> x);
+                                double x_hat);
 
         std::vector<double> values;
 };
@@ -125,11 +107,9 @@ class PolyBasis: public Basis
                   std::vector<double> nodes);
         virtual double evaluate_internal(int i, 
                                 double x_hat,
-                                std::vector<double> x,
                                 int d);
         virtual std::vector<double> evaluate_vector(int i, 
-                                double x_hat,
-                                std::vector<double> x);
+                                double x_hat);
 
         std::vector<std::vector<double> > basis_coeffs;
         std::vector<double> nodes;
@@ -165,21 +145,23 @@ class GradientBasis: public PolyBasis
 /* A basis that stores solution coefficients alongside the basis functions
  * so that post-processing can be performed on the polynomial solution.
  */
-class SolutionBasis: public Basis
+class CoeffBasis: public Basis
 {
     public:
-        SolutionBasis(PolyBasis& basis,
+        CoeffBasis(Basis& basis,
                       std::vector<std::vector<double> > coeffs);
 
         virtual double evaluate_internal(int i, 
                                 double x_hat,
-                                std::vector<double> x,
                                 int d);
-        std::vector<double> evaluate_vector(int i, double x_hat,
-                                            std::vector<double> x);
+        std::vector<double> evaluate_vector(int i, double x_hat);
+        virtual inline double chain_rule(double jacobian)
+        {
+            return basis->chain_rule(jacobian);
+        }
 
-        PolyBasis* basis;
-        // 2d array. First axis is x or y. Second axis 
+        Basis* basis;
+        // 2d array. First axis is x or y. Second axis is the dof idx
         std::vector<std::vector<double> > coeffs;
 };
 
