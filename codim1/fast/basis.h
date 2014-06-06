@@ -49,6 +49,11 @@ class Basis
             return gradient_basis;
         }
 
+        boost::shared_ptr<Basis> get_point_sources()
+        {
+            
+        }
+
         boost::shared_ptr<Basis> gradient_basis;
         int n_fncs;
 };
@@ -56,6 +61,7 @@ class Basis
 
 /* Evaluation class for a single function basis. This allows someone to
  * specify a rhs function or to use a special basis.
+ * TODO: Get rid of this. Only allow polynomial bases.
  */
 class SingleFunctionBasis: public Basis
 {
