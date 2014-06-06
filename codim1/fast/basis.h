@@ -43,31 +43,17 @@ class Basis
         }
 
         std::vector<std::vector<double> > point_sources;
+        std::vector<int> point_source_dependency;
         boost::shared_ptr<Basis> gradient_basis;
         int n_fncs;
 };
-
 
 /* Always return a constant value...*/
 class ConstantBasis: public Basis
 {
     public:
-        ConstantBasis(std::vector<double> values)
-        {
-            std::vector<double> point_sources0(3);
-            point_sources0[0] = 0.0;
-            point_sources0[1] = values[0];
-            point_sources0[2] = values[1];
-            std::vector<double> point_sources1(3);
-            point_sources1[0] = 1.0;
-            point_sources1[1] = -values[0];
-            point_sources1[2] = -values[1];
-            point_sources.push_back(point_sources0);
-            point_sources.push_back(point_sources1);
-
-            this->n_fncs = 1;
-            this->values = values;
-        }
+        ConstantBasis() {}
+        ConstantBasis(std::vector<double> values);
 
         virtual double evaluate_internal(int i, double x_hat,
                                 int d);
@@ -78,14 +64,18 @@ class ConstantBasis: public Basis
 };
 
 /* Always return zero. Distinguished from ConstantBasis so that
- * function can check type and not perform any computation at all in the 
+ * functions can check type and not perform any computation at all in the 
  * special case of zero.  */
 class ZeroBasis: public ConstantBasis
 {
     public:
-        ZeroBasis():
-            ConstantBasis(std::vector<double>(2, 0.0))
-        { }
+        ZeroBasis()
+        {
+            this->n_fncs = 1;
+            this->values.reserve(2);
+            this->values[0] = 0.0;
+            this->values[1] = 0.0;
+        }
 };
 
 /*
@@ -104,6 +94,8 @@ class PolyBasis: public Basis
                   std::vector<double> nodes);
         PolyBasis(std::vector<std::vector<double> > basis_coeffs,
                   std::vector<std::vector<double> > basis_derivs,
+                  std::vector<std::vector<double> > point_sources,
+                  std::vector<int> point_source_dependency,
                   std::vector<double> nodes);
         virtual double evaluate_internal(int i, 
                                 double x_hat,

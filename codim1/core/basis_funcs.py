@@ -39,7 +39,12 @@ def basis_from_nodes(nodes):
         fncs[i, :] = poly.c
         derivs[i, 0] = 0.0
         derivs[i, 1:] = poly.deriv().c
-    return PolyBasis(fncs, derivs, nodes)
+    point_sources = []
+    point_sources.append([0.0, 1.0, 1.0])
+    point_sources.append([1.0, 1.0, 1.0])
+    point_source_dependency = [0, n_fncs - 1]
+    return PolyBasis(fncs, derivs, point_sources,
+                     point_source_dependency, nodes)
 
 def gll_basis(degree):
     """ A basis from the Gauss-Lobatto-Lagrange nodes """

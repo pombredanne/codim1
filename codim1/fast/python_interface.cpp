@@ -43,7 +43,9 @@ BOOST_PYTHON_MODULE(fast_ext)
     register_ptr_to_python<boost::shared_ptr<Basis> >(); 
 
     //Expose the std::vector interface so it acts like a list/vector/array
-    class_<std::vector<double> >("PyVec")
+    class_<std::vector<int> >("PyVecInt")
+        .def(vector_indexing_suite<std::vector<int> >());
+    class_<std::vector<double> >("PyVecDouble")
         .def(vector_indexing_suite<std::vector<double> >());
     class_<std::vector<std::vector<double> > >("PyArray")
         .def(vector_indexing_suite<std::vector<std::vector<double> > >());
@@ -55,10 +57,14 @@ BOOST_PYTHON_MODULE(fast_ext)
         .def("evaluate", pure_virtual(&Basis::evaluate_vector))
         .def("get_gradient_basis", &Basis::get_gradient_basis)
         .def_readonly("point_sources", &Basis::point_sources)
+        .def_readonly("point_source_dependency",
+                      &Basis::point_source_dependency)
         .def_readonly("n_fncs", &Basis::n_fncs);
     class_<PolyBasis, bases<Basis> >("PolyBasis", 
             init<std::vector<std::vector<double> >,
                  std::vector<std::vector<double> >,
+                 std::vector<std::vector<double> >,
+                 std::vector<int>,
                  std::vector<double> >())
         .def("chain_rule", &PolyBasis::chain_rule)
         .def("evaluate", &PolyBasis::evaluate_vector)
@@ -144,6 +150,7 @@ BOOST_PYTHON_MODULE(fast_ext)
     // std:vector
     iterable_converter()
         .from_python<std::vector<double> >()
+        .from_python<std::vector<int> >()
         .from_python<std::vector<std::vector<double> > >()
         .from_python<std::vector<std::vector<std::vector<double> > > >()
         .from_python<std::vector<QuadratureInfo> >();

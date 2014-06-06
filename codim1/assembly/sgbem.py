@@ -1,6 +1,6 @@
 import numpy as np
 from codim1.fast_lib import double_integral, single_integral,\
-    MassMatrixKernel
+    MassMatrixKernel, ZeroBasis
 
 """
 These functions traverse the mesh and form the symmetric galerkin
@@ -95,6 +95,7 @@ def _compute_element_pair_matrix(matrix, e_k, e_l, which_kernels):
     matrix_kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type]["matrix"]
     e_k_basis = _choose_basis(e_k.basis, matrix_kernel.test_gradient)
     e_l_basis = _choose_basis(e_l.basis, matrix_kernel.soln_gradient)
+    # if type(e_k_basis) is ZeroBasis
 
 
     # Determine what quadrature formula to use

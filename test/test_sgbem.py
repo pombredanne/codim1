@@ -36,4 +36,5 @@ def test_sgbem_assemble():
     mesh = make_mesh()
     elastic_k = ElasticKernelSet(1.0, 0.25)
     matrix, rhs = sgbem_assemble(mesh, elastic_k)
+    print matrix
     print rhs

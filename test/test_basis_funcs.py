@@ -9,9 +9,24 @@ from codim1.core import apply_to_elements, init_dofs
 def my_assert(a, b):
     np.testing.assert_almost_equal(np.array(a), np.array(b))
 
-def test_constant_basis_point_sources():
-    abc = ConstantBasis([1.0, 0.0])
-    my_assert(abc.point_sources, [[0.0, 1.0, 0.0], [1.0, -1.0, 0.0]])
+def test_constant_basis_derivs():
+    bf = ConstantBasis([1.0, 0.0])
+    my_assert(bf.point_sources, [[0.0, 1.0, 0.0], [1.0, -1.0, 0.0]])
+    my_assert(bf.point_source_dependency, [0, 0])
+
+def test_poly_basis_derivs():
+    bf = basis_from_degree(1)
+    my_assert(bf.point_sources, [[0.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+    my_assert(bf.point_source_dependency, [0, 1])
+
+def test_grad_basis_derivs():
+    bf = basis_from_degree(1).get_gradient_basis()
+    my_assert(bf.point_sources, [])
+
+def test_coeff_basis_derivs():
+    bf = CoeffBasis(basis_from_degree(1), [[0.0, 1.0], [1.0, 0.0]])
+    my_assert(bf.point_sources, [[0.0, 1.0, 1.0], [1.0, 1.0, 1.0]])
+    my_assert(bf.point_source_dependency, [0, 1])
 
 def test_degree_zero_nodes():
     nodes = get_equispaced_nodes(0)
@@ -121,4 +136,5 @@ def test_basis_from_func():
     np.testing.assert_almost_equal(value, [1.0, 0.0])
 
 if __name__ == "__main__":
-    test_apply_solution()
+    # test_apply_solution()
+    test_constant_basis_derivs()
