@@ -62,7 +62,7 @@ double_integral(MappingEval& test_mapping_eval,
         // The basis functions should be evaluated on reference
         // coordinates
         test_basis_val = test_basis_eval.\
-            evaluate_vector(test_basis_idx, q_pt_test, test_phys_pt);
+            evaluate_vector(test_basis_idx, q_pt_test);
 
         // If the integrand is singular, we need to use the appropriate
         // inner quadrature method. Which points the inner quadrature
@@ -84,7 +84,7 @@ double_integral(MappingEval& test_mapping_eval,
             // The basis functions should be evaluated on reference
             // coordinates
             soln_basis_val = soln_basis_eval.\
-                evaluate_vector(soln_basis_idx, q_pt_soln, soln_phys_pt);
+                evaluate_vector(soln_basis_idx, q_pt_soln);
 
             // Separation of the two quadrature points, use real,
             // physical coordinates!
@@ -164,9 +164,9 @@ single_integral(MappingEval& soln_mapping_eval,
         phys_pt = soln_mapping_eval.get_physical_point(q_pt);
 
         test_basis_val = test_basis_eval.\
-            evaluate_vector(test_basis_idx, q_pt, phys_pt);
+            evaluate_vector(test_basis_idx, q_pt);
         soln_basis_val = soln_basis_eval.\
-            evaluate_vector(soln_basis_idx, q_pt, phys_pt);
+            evaluate_vector(soln_basis_idx, q_pt);
 
         // Determine the various location parameters that the kernels
         // need -- dr, drdn, drdm, dist
@@ -211,7 +211,7 @@ aligned_single_integral(MappingEval& soln_mapping_eval,
     std::vector<double> phys_pt = soln_mapping_eval.get_physical_point(q_pt);
 
     std::vector<double> soln_basis_val = soln_basis_eval.\
-            evaluate_vector(soln_basis_idx, q_pt, phys_pt);
+            evaluate_vector(soln_basis_idx, q_pt);
 
     // Determine the various location parameters that the kernels
     // need -- dr, drdn, drdm, dist

@@ -13,9 +13,7 @@ def test_L2error():
     exact = np.sqrt(0.25 + 2.25) / (np.sqrt(0.5))
     np.testing.assert_almost_equal(exact, L2_error(x1, x2), 5)
 
-def test_interpolate():
-    n_elements = 2
-    element_deg = 0
+def int_with_deg(n_elements, element_deg):
     msh = simple_line_mesh(n_elements)
     bf = basis_from_degree(element_deg)
     apply_to_elements(msh, "basis", bf, non_gen = True)
@@ -23,12 +21,23 @@ def test_interpolate():
     init_dofs(msh)
     fnc = lambda x, n: (x[0], x[1])
     val = interpolate(fnc, msh)
+    return val
+
+def test_interpolate():
+    val = int_with_deg(2, 0)
+    # The second half should be zero, because simple_line_mesh is
+    # completely on the x axis.
+    assert((val[2 * (1 + 1):] == 0).all())
+    assert(val[0] == -0.5)
+    assert(val[1] == 0.5)
+
+def test_linear_interpolate():
+    val = int_with_deg(2, 1)
 
     # The second half should be zero, because simple_line_mesh is
     # completely on the x axis.
-    assert((val[n_elements * (element_deg + 1):] == 0).all())
-    assert(val[0] == -0.5)
-    assert(val[1] == 0.5)
+    assert((val[2 * (1 + 1):] == 0).all())
+    np.testing.assert_almost_equal(val[0:4], [-1.0, 0.0, 0.0, 1.0])
 
 def test_evaluate_boundary_solution_easy():
     n_elements = 2

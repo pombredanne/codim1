@@ -1,33 +1,14 @@
 #include "basis.h"
 #include <assert.h>
 
-std::vector<double> SingleFunctionBasis::evaluate_vector(int i, 
-                        double x_hat,
-                        std::vector<double> x)
-{
-    std::vector<double> retval(2);
-    retval[0] = evaluate_internal(i, x_hat, x, 0);
-    retval[1] = evaluate_internal(i, x_hat, x, 1);
-    return retval;
-}
-
-double SingleFunctionBasis::evaluate_internal(int i, double x_hat,
-            std::vector<double> x, int d) 
-{
-    return bp::extract<double>(function(x, d));
-}
-
-
 double ConstantBasis::evaluate_internal(int i, double x_hat,
-                                std::vector<double> x,
                                 int d)
 {
     return values[d];
 }
 
 std::vector<double> ConstantBasis::evaluate_vector(int i, 
-                        double x_hat,
-                        std::vector<double> x)
+                        double x_hat)
 {
     std::vector<double> retval(2);
     retval[0] = values[0];
@@ -53,18 +34,16 @@ PolyBasis::PolyBasis(std::vector<std::vector<double> > basis_coeffs,
     this->nodes = nodes;
 }
 std::vector<double> PolyBasis::evaluate_vector(int i, 
-                                double x_hat,
-                                std::vector<double> x)
+                                double x_hat)
 {
     std::vector<double> retval(2);
-    retval[0] = evaluate_internal(i, x_hat, x, 0);
+    retval[0] = evaluate_internal(i, x_hat, 0);
     retval[1] = retval[0];
     return retval;
 }
 
 double PolyBasis::evaluate_internal(int i, 
                                 double x_hat,
-                                std::vector<double> x,
                                 int d)
 {
     assert(i < n_fncs);
@@ -78,31 +57,34 @@ double PolyBasis::evaluate_internal(int i,
     return retval;
 }
 
-SolutionBasis::SolutionBasis(PolyBasis& basis, 
+CoeffBasis::CoeffBasis(Basis& basis, 
                              std::vector<std::vector<double> > coeffs)
 {
     this->n_fncs = basis.n_fncs;
     this->coeffs = coeffs;
     this->basis = &basis;
+    if (this->basis->gradient_basis)
+    {
+        this->gradient_basis.reset(
+            new CoeffBasis(*this->basis->gradient_basis, this->coeffs));
+    }
 }
 
-double SolutionBasis::evaluate_internal(int i, 
+double CoeffBasis::evaluate_internal(int i, 
                                 double x_hat,
-                                std::vector<double> x,
                                 int d)
 {
 
-    double basis_val = this->basis->evaluate_internal(i, x_hat, x, d);
+    double basis_val = this->basis->evaluate_internal(i, x_hat, d);
     return basis_val * this->coeffs[d][i];
 }
 
-std::vector<double> SolutionBasis::evaluate_vector(int i, 
-                                                   double x_hat,
-                                                   std::vector<double> x)
+std::vector<double> CoeffBasis::evaluate_vector(int i, 
+                                                   double x_hat)
 {
     std::vector<double> retval(2);
-    retval[0] = evaluate_internal(i, x_hat, x, 0);
-    retval[1] = evaluate_internal(i, x_hat, x, 1);
+    retval[0] = evaluate_internal(i, x_hat, 0);
+    retval[1] = evaluate_internal(i, x_hat, 1);
     return retval;
 }
 

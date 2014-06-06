@@ -68,6 +68,15 @@ def plot_matrix(M, title, show = True):
     if show:
         plt.show()
 
+def local_interpolate(fnc, mapping, basis):
+    local_coeffs = np.empty((2, len(basis.nodes)))
+    for i, n in enumerate(basis.nodes):
+        node_pt = mapping.get_physical_point(n)
+        normal = mapping.get_normal(n)
+        f_val = fnc(node_pt, normal)
+        local_coeffs[0, i] = f_val[0]
+        local_coeffs[1, i] = f_val[1]
+    return local_coeffs
 
 def interpolate(fnc, mesh):
     """
@@ -78,15 +87,7 @@ def interpolate(fnc, mesh):
     result = np.empty(mesh.total_dofs)
     for k in range(mesh.n_elements):
         e = mesh.elements[k]
-        for i in range(e.basis.n_fncs):
-            dof_x = e.dofs[0, i]
-            dof_y = e.dofs[1, i]
-            ref_pt = e.basis.nodes[i]
-            node_pt = e.mapping.get_physical_point(ref_pt)
-            normal = e.mapping.get_normal(ref_pt)
-            f_val = fnc(node_pt, normal)
-            result[dof_x] = f_val[0]
-            result[dof_y] = f_val[1]
+        result[e.dofs] = local_interpolate(fnc, e.mapping, e.basis)
     return result
 
 def evaluate_boundary_solution(points_per_element, soln, mesh):
@@ -112,7 +113,6 @@ def evaluate_boundary_solution(points_per_element, soln, mesh):
     return x, y
 
 def evaluate_solution_on_element(element, reference_point, soln):
-    phys_pt = element.mapping.get_physical_point(reference_point)
     soln_x = 0.0
     soln_y = 0.0
     # The value is the sum over all the basis functions.
@@ -120,7 +120,7 @@ def evaluate_solution_on_element(element, reference_point, soln):
         dof_x = element.dofs[0, i]
         dof_y = element.dofs[1, i]
         # TODO: remove element_idx from basis_funcs!
-        soln_x += soln[dof_x] * element.basis.evaluate(i, reference_point, phys_pt)[0]
-        soln_y += soln[dof_y] * element.basis.evaluate(i, reference_point, phys_pt)[1]
+        soln_x += soln[dof_x] * element.basis.evaluate(i, reference_point)[0]
+        soln_y += soln[dof_y] * element.basis.evaluate(i, reference_point)[1]
     return np.array([soln_x, soln_y])
 

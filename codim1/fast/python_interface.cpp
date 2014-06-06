@@ -54,6 +54,7 @@ BOOST_PYTHON_MODULE(fast_ext)
         .def("chain_rule", &Basis::chain_rule)
         .def("evaluate", pure_virtual(&Basis::evaluate_vector))
         .def("get_gradient_basis", &Basis::get_gradient_basis)
+        .def_readonly("point_sources", &Basis::point_sources)
         .def_readonly("n_fncs", &Basis::n_fncs);
     class_<PolyBasis, bases<Basis> >("PolyBasis", 
             init<std::vector<std::vector<double> >,
@@ -64,23 +65,18 @@ BOOST_PYTHON_MODULE(fast_ext)
         .def_readonly("basis_coeffs", &PolyBasis::basis_coeffs)
         .def_readonly("nodes", &PolyBasis::nodes)
         .enable_pickling();
-    class_<SolutionBasis, bases<Basis> >("SolutionBasis", 
+    class_<CoeffBasis, bases<Basis> >("CoeffBasis", 
             init<PolyBasis&, std::vector<std::vector<double> > >())
-        .def("chain_rule", &SolutionBasis::chain_rule)
-        .def("evaluate", &SolutionBasis::evaluate_vector)
-        .def_readonly("coeffs", &SolutionBasis::coeffs)
-        .def_readonly("basis", &SolutionBasis::basis)
+        .def("chain_rule", &CoeffBasis::chain_rule)
+        .def("evaluate", &CoeffBasis::evaluate_vector)
+        .def_readonly("coeffs", &CoeffBasis::coeffs)
+        .def_readonly("basis", &CoeffBasis::basis)
         .enable_pickling();
     class_<GradientBasis, bases<PolyBasis> >("GradientBasis", 
             init<std::vector<std::vector<double> >,
                  std::vector<double> >())
         .def("chain_rule", &GradientBasis::chain_rule)
         .def("evaluate", &GradientBasis::evaluate_vector)
-        .enable_pickling();
-    class_<SingleFunctionBasis, bases<Basis> >
-        ("SingleFunctionBasis", init<object>())
-        .def("chain_rule", &SingleFunctionBasis::chain_rule)
-        .def("evaluate", &SingleFunctionBasis::evaluate_vector)
         .enable_pickling();
     class_<ConstantBasis, bases<Basis> >("ConstantBasis",
             init<std::vector<double> >())
