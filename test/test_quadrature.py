@@ -58,7 +58,7 @@ def test_rl_quad():
               (1.2, 4.0, 0.04976184140700821),
               (1.5, 1.5, 0.1216505480495554)]
     for (ay, by, exact) in values:
-        qi = rl_quad(N+1, ay, by, 1)
+        qi = rl_quad(N + 1, ay, by)
         qx = np.array(qi.x)
         qw = np.array(qi.w)
 
@@ -76,7 +76,7 @@ def test_rl_quad_more_difficult():
               (1.2, 4.0, 0.003080702117),
               (1.5, 1.5, 0.04518013019)]
     for (ay, by, exact) in values:
-        qi = rl_quad(N, ay, by, 1)
+        qi = rl_quad(N, ay, by)
         qx = np.array(qi.x)
         qw = np.array(qi.w)
         f = lambda x: x ** 4 / (np.sqrt((x - ay) ** 2 + by ** 2) ** 3)

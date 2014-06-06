@@ -11,10 +11,10 @@ struct KernelData
     double dist2;
     double drdn;
     double drdm;
-    double r[2];
-    double dr[2];
-    double n[2];
-    double m[2];
+    std::vector<double> r;
+    std::vector<double> dr;
+    std::vector<double> n;
+    std::vector<double> m;
 };
 
 class Kernel

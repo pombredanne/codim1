@@ -2,7 +2,7 @@ import numpy as np
 import scipy.interpolate as spi
 import scipy.special
 from codim1.fast_lib import PolyBasis, SolutionBasis
-from quadracheer import gaussxw, lobatto_quad, map_nonsing
+from quadracheer import gaussxw, lobatto_quad, map_pts_wts
 
 def get_equispaced_nodes(element_deg):
     """
@@ -42,7 +42,8 @@ def basis_from_nodes(nodes):
 
 def gll_basis(degree):
     """ A basis from the Gauss-Lobatto-Lagrange nodes """
-    nodes, w = map_nonsing(lobatto_quad, degree + 1, 0, 1)
+    x, w = lobatto_quad(degree + 1)
+    nodes, w = map_pts_wts(x, w, 0, 1)
     return basis_from_nodes(nodes)
 
 def apply_solution(elements, solution_coeffs):
