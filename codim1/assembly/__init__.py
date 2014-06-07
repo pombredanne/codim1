@@ -4,4 +4,4 @@ from matrix_assembler import simple_matrix_assemble
 from interior_point import interior_pt
 from point_source_rhs import point_source_rhs
 from constraints import apply_average_constraint, pin_ends_constraint
-from sgbem import sgbem_assemble
+from sgbem import sgbem_assemble, evaluate_sgbem_solution

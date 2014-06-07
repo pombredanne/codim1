@@ -1,6 +1,8 @@
 import numpy as np
 from codim1.fast_lib import double_integral, single_integral,\
-    MassMatrixKernel, ZeroBasis
+    MassMatrixKernel, ZeroBasis, ConstantBasis
+from itertools import product
+from functools import partial
 
 """
 These functions traverse the mesh and form the symmetric galerkin
@@ -13,11 +15,11 @@ This assumes that all the boundary conditions have already been attached to
 the relevant element in the mesh.
 """
 def sgbem_assemble(mesh, kernel_set):
-
     # Form the empty linear system
     total_dofs = mesh.total_dofs
     matrix = np.zeros((total_dofs, total_dofs))
-    rhs = np.zeros(total_dofs)
+    rhs_matrix = np.zeros((total_dofs, total_dofs))
+    mass_matrix = np.zeros((total_dofs, total_dofs))
 
     # Set the kernels for each type of boundary condition.
     which_kernels = _make_which_kernels(kernel_set)
@@ -25,16 +27,22 @@ def sgbem_assemble(mesh, kernel_set):
     # Traverse the mesh and assemble the relevant terms
     for e_k in mesh:
         # Add the mass matrix term to the right hand side.
-        _compute_element_mass_rhs(rhs, e_k)
+        _element_mass_rhs(mass_matrix, e_k)
         for e_l in mesh:
             # Compute and add the RHS and matrix terms to the system.
-            _compute_element_pair_rhs(rhs, e_k, e_l, which_kernels)
-            _compute_element_pair_matrix(matrix, e_k, e_l, which_kernels)
+            _element_pair(matrix, e_k, e_l, which_kernels, "matrix")
+            _element_pair(rhs_matrix, e_k, e_l, which_kernels, "rhs")
+
+
+    # Combine the two rhs terms
+    rhs = np.sum(rhs_matrix, axis = 1)
+    mass_rhs = np.sum(mass_matrix, axis = 1)
+    rhs += mass_rhs
 
     # Return the fully assembled linear system
     return matrix, rhs
 
-def _compute_element_mass_rhs(rhs, e_k):
+def _element_mass_rhs(matrix, e_k):
     # Because the term is identical (just replace u by t) for both
     # integral equations, this function does not care about the BC type
     bc_basis = e_k.bc.basis
@@ -48,81 +56,103 @@ def _compute_element_mass_rhs(rhs, e_k):
                               bc_basis,
                               q_info,
                               i, j)
-            rhs[e_k.dofs[0, i]] += 0.5 * M_local[0][0]
-            rhs[e_k.dofs[1, i]] += 0.5 * M_local[1][1]
+            matrix[e_k.dofs[0, i], e_k.dofs[0, j]] += 0.5 * M_local[0][0]
+            matrix[e_k.dofs[1, i], e_k.dofs[1, j]] += 0.5 * M_local[1][1]
 
 def _choose_basis(basis, is_gradient):
     if is_gradient:
-        return basis.get_gradient_basis()
-    return basis
+        pt_src_info = zip(basis.point_sources, basis.point_source_dependency)
+        return basis.get_gradient_basis(), pt_src_info
+    return basis, []
 
-# TODO:
-# The element pair functions could be consolidated into one
-# uniform interface which handles the basis function loop but not
-# the basis, kernel and quadrature determination.
+def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
+    # Determine whether to use the boundary condition or the solution basis
+    # as the inner basis function
+    if rhs_or_matrix == "rhs":
+        init_e_l_basis = e_l.bc.basis
+    else:
+        init_e_l_basis = e_l.basis
 
-def _compute_element_pair_rhs(rhs, e_k, e_l, which_kernels):
+    # If either of the bases are the zero basis, then don't compute
+    # anything
+    if type(e_k.basis) is ZeroBasis or \
+       type(init_e_l_basis) is ZeroBasis:
+           return None
+
     # Determine which kernel and which bases to use
-    rhs_kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type]["rhs"]
-    e_k_basis = _choose_basis(e_k.basis, rhs_kernel.test_gradient)
-    e_l_basis = _choose_basis(e_l.bc.basis, rhs_kernel.soln_gradient)
+    kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type][rhs_or_matrix]
+
+    # Decide whether to use the basis or its gradient
+    e_k_basis, e_k_pt_srcs = _choose_basis(e_k.basis, kernel.test_gradient)
+    e_l_basis, e_l_pt_srcs = _choose_basis(init_e_l_basis, kernel.soln_gradient)
+
+    # Now that we might have taken a derivative, check for ZeroBases again.
     if type(e_k_basis) is ZeroBasis or \
        type(e_l_basis) is ZeroBasis:
-           return
+           return None
 
     # Determine what quadrature formula to use
     quad_outer, quad_inner = e_k.qs.get_quadrature(
-                            rhs_kernel.singularity_type, e_k, e_l)
+                            kernel.singularity_type, e_k, e_l)
 
     # Loop over basis function pairs and integrate!
     for i in range(e_k.basis.n_fncs):
         for j in range(e_l.basis.n_fncs):
-            # Compute the RHS term
-            # How to automate using the gradient of the boundary condition
-            # when the hypersingular kernel is to be used?
-            integral = double_integral(
-                                e_k.mapping.eval,
-                                e_l.mapping.eval,
-                                rhs_kernel,
-                                e_k_basis,
-                                e_l_basis,
-                                quad_outer, quad_inner,
-                                i, 0)
+            integral = \
+                double_integral(e_k.mapping.eval, e_l.mapping.eval,
+                                kernel, e_k_basis, e_l_basis,
+                                quad_outer, quad_inner, i, j)
+
+            # Add the integrated term in the appropriate location
             for idx1 in range(2):
                 for idx2 in range(2):
-                    rhs[e_k.dofs[idx1, i]] += factor * integral[idx1][idx2]
+                    matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] +=\
+                            factor * integral[idx1][idx2]
 
-def _compute_element_pair_matrix(matrix, e_k, e_l, which_kernels):
-    # Determine which kernel and which bases to use
-    matrix_kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type]["matrix"]
-    e_k_basis = _choose_basis(e_k.basis, matrix_kernel.test_gradient)
-    e_l_basis = _choose_basis(e_l.basis, matrix_kernel.soln_gradient)
-    if type(e_k_basis) is ZeroBasis or \
-       type(e_l_basis) is ZeroBasis:
-           return
+    # Filter out the point sources that we can safely ignore
+    # many of these will be ignored because there will be an equal and
+    # opposite point source contribution from the adjacent element.
+    # TODO!
+    # Currently, I ignore all point source on the test function side
+    # of the problem, because these should be handled by the continuity
+    # of the displacement field. I should probably think about this
+    # a bit more...
+    e_k_pt_srcs = []
 
+    # This probably explains some of the problems I was having with the
+    # constant traction crack problem.
 
-    # Determine what quadrature formula to use
-    quad_outer, quad_inner = e_k.qs.get_quadrature(
-                            matrix_kernel.singularity_type, e_k, e_l)
+    # I also ignore all point source if we are dealing
+    if rhs_or_matrix == "matrix":
+        return
 
-    # Loop over basis function pairs and integrate!
+    # Loop over point sources and integrate!
+    # All cross multiplications are necessary.
+    # the pt sources are tuples like ((node, str_x, str_y), local_dof)
+    # for e_k_pt in e_k_pt_srcs:
+    #     phys_pt_k = e_k.mapping.get_physical_point(e_k_pt[0][0])
+    #     kernel.set_interior_data(phys_pt_k,
+    #     for j in range(e_l.basis.n_fncs):
+    #         pass
+    #     for e_l_pt in e_k_pt_srcs:
+    #         phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0][0])
     for i in range(e_k.basis.n_fncs):
-        for j in range(e_l.basis.n_fncs):
-            integral = double_integral(
-                                e_k.mapping.eval,
-                                e_l.mapping.eval,
-                                matrix_kernel,
-                                e_k_basis,
-                                e_l_basis,
-                                quad_outer, quad_inner,
-                                i, j)
-
-            # Insert both integrals into the global matrix and rhs
+        for e_l_pt in e_l_pt_srcs:
+            e_l_dof = e_l_pt[1]
+            phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0][0])
+            normal_l = e_l.mapping.get_normal(e_l_pt[0][0])
+            strength = ConstantBasis([e_l_pt[0][1], e_l_pt[0][2]])
+            kernel.set_interior_data(phys_pt_l, normal_l)
+            integral = single_integral(e_k.mapping.eval,
+                                   kernel,
+                                   e_k_basis,
+                                   strength,
+                                   quad_inner[e_l_dof],
+                                   i, 0)
             for idx1 in range(2):
                 for idx2 in range(2):
-                    matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] += \
-                        integral[idx1][idx2] * factor
+                    matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, e_l_dof]] += \
+                        factor * integral[idx1][idx2]
 
 def _make_which_kernels(kernel_set):
     """
@@ -168,3 +198,37 @@ def _make_which_kernels(kernel_set):
             }
         }
     return which_kernels
+
+def evaluate_sgbem_solution(points_per_element, mesh, soln):
+    x, u, t = ([], [], [])
+    for e_k in mesh:
+        for pt in np.linspace(0.0, 1.0, points_per_element):
+            x.append(e_k.mapping.get_physical_point(pt))
+            local_u, local_t = evaluate_solution_on_element(e_k, pt, soln)
+            u.append(local_u)
+            t.append(local_t)
+    return np.array(x).T, np.array(u).T, np.array(t).T
+
+def evaluate_solution_on_element(element, reference_point, soln_coeffs):
+    soln = np.zeros(2)
+    # The value is the sum over all the basis functions.
+    for i in range(element.basis.n_fncs):
+        dof_x = element.dofs[0, i]
+        dof_y = element.dofs[1, i]
+        basis_eval = element.basis.evaluate(i, reference_point)
+        soln[0] += soln_coeffs[dof_x] * basis_eval[0]
+        soln[1] += soln_coeffs[dof_y] * basis_eval[1]
+
+    bc = np.zeros(2)
+    for i in range(element.basis.n_fncs):
+        bc_eval =  element.bc.basis.evaluate(i, reference_point)
+        bc[0] += bc_eval[0]
+        bc[1] += bc_eval[1]
+
+    if element.bc.type == "displacement":
+        u = bc
+        t = soln
+    elif element.bc.type == "traction":
+        u = soln
+        t = bc
+    return u, t

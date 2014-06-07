@@ -13,7 +13,7 @@ alpha = np.cos((np.pi / 2) - alpha)
 
 def section_traction(x, n):
     # Only apply tractions over the arcs near y=1, y=-1
-    if np.abs(x[0]) < alpha:
+    if np.abs(x[0]) <= alpha:
         x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
         return (-x[0] / x_length, -x[1] / x_length)
     return (0.0, 0.0)
