@@ -126,12 +126,12 @@ def rect_mesh(n_elements_per_side, upper_left, lower_right, bc_gen):
     top = simple_line_mesh(n_elements_per_side, upper_right, upper_left)
     left = simple_line_mesh(n_elements_per_side, upper_left, lower_left)
 
-    apply_to_elements(bottom, "bc", bc_gen["bottom"])
-    apply_to_elements(right, "bc", bc_gen["right"])
+    apply_to_elements(bottom, "bc", bc_gen["bottom"], non_gen = True)
+    apply_to_elements(right, "bc", bc_gen["right"], non_gen = True)
     whole = combine_meshes(bottom, right)
-    apply_to_elements(left, "bc", bc_gen["left"])
+    apply_to_elements(left, "bc", bc_gen["left"], non_gen = True)
     whole = combine_meshes(whole, left)
-    apply_to_elements(top, "bc", bc_gen["top"])
+    apply_to_elements(top, "bc", bc_gen["top"], non_gen = True)
     whole = combine_meshes(whole, top)
     whole.condense_duplicate_vertices()
 

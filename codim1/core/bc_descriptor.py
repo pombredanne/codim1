@@ -32,7 +32,5 @@ Important:
 These seem very closely related to basis functions. An integration of the
 two modules seems to be in order. This is done!
 """
-class BC(object):
-    def __init__(self, type, basis):
-        self.type = type
-        self.basis = basis
+from collections import namedtuple
+BC = namedtuple("BC", "type,basis")
