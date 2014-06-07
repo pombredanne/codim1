@@ -6,14 +6,18 @@ from element import Element, Vertex, apply_to_elements, MisorientationException
 from mapping import apply_mapping, PolynomialMapping
 
 def correct_misorientation(element_objs):
-    for e in element_objs:
-        try:
-            e._check_for_misorientation()
-        except MisorientationException:
-            e.vertex1, e.vertex2 = e.vertex2, e.vertex1
-            e._update_left_neighbors()
-            e.update_neighbors()
-            e._update_right_neighbors()
+    done = False
+    while not done:
+        done = True
+        for e in element_objs:
+            try:
+                e._check_for_misorientation()
+            except MisorientationException:
+                e.vertex1, e.vertex2 = e.vertex2, e.vertex1
+                e._update_left_neighbors()
+                e.update_neighbors()
+                e._update_right_neighbors()
+                done = False
     return element_objs
 
 def from_vertices_and_etov(vertices, etov, flip = False):
