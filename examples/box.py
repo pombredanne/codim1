@@ -13,7 +13,7 @@ from functools import partial
 shear_modulus = 1.0
 poisson_ratio = 0.25
 n_elements_per_side = 10
-degree = 2
+degree = 1
 
 ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
@@ -32,7 +32,6 @@ mesh = rect_mesh(n_elements_per_side, (-1, 1), (1, -1),
 qs = QuadStrategy(mesh, 10, 10, 12, 12)
 bf = basis_from_degree(degree)
 apply_to_elements(mesh, "basis", bf, non_gen = True)
-apply_to_elements(mesh, "continuous", True, non_gen = True)
 apply_to_elements(mesh, "qs", qs, non_gen = True)
 
 total_dofs = init_dofs(mesh)
@@ -47,10 +46,15 @@ soln_coeffs = np.linalg.solve(matrix, rhs)
 # Need a new function here.
 x, u, t = evaluate_sgbem_solution(5, mesh, soln_coeffs)
 
-plt.figure()
-plt.plot(x[1, :], u[0, :])
-plt.figure()
-plt.plot(x[1, :], u[1, :])
-plt.show()
-
 # Make some plots
+plt.figure()
+plt.plot(x[0, :], u[0, :], '.')
+plt.ylabel(r'$u_x$', fontsize = 18)
+plt.xlabel(r'x', fontsize = 18)
+
+plt.figure()
+plt.plot(x[0, :], u[1, :], '.')
+plt.ylabel(r'$u_y$', fontsize = 18)
+plt.xlabel(r'x', fontsize = 18)
+
+plt.show()

@@ -1,5 +1,4 @@
 import numpy as np
-
 def init_dofs(mesh):
     """
     Walk over the mesh and assign dofs to each element based on the
