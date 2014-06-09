@@ -36,7 +36,9 @@ apply_to_elements(mesh, "bc",
 sgbem_dofs(mesh)
 
 matrix, rhs = sgbem_assemble(mesh, ek)
+import ipdb;ipdb.set_trace()
 soln_coeffs = np.linalg.solve(matrix, rhs)
+
 
 x, u, t = evaluate_boundary_solution(mesh, soln_coeffs, 8)
 

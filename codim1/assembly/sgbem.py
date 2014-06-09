@@ -2,7 +2,7 @@ from codim1.fast_lib import double_integral, single_integral,\
     MassMatrixKernel, ZeroBasis, ConstantBasis
 from which_kernels import _make_which_kernels
 from shared import _choose_basis
-from codim1.post.interior import sgbem_interior_matrix
+from codim1.post.interior import sgbem_interior
 
 import numpy as np
 
@@ -36,8 +36,11 @@ def sgbem_assemble(mesh, kernel_set):
                 ref_pt = e_k.basis.nodes[i]
                 normal = e_k.mapping.get_normal(ref_pt)
                 phys_pt = e_k.mapping.get_physical_point(ref_pt)
-                sgbem_interior(mesh, phys_pt,
-                    normal, kernel_set, "crack_traction")
+                interior_val = sgbem_interior(mesh, phys_pt,
+                                normal, kernel_set, "crack_traction")
+                if not np.isnan(interior_val).any():
+                    rhs_matrix[e_k.dofs[0, i], 0] = interior_val[0]
+                    rhs_matrix[e_k.dofs[1, i], 0] = interior_val[1]
             continue
 
         # Add the mass matrix term to the right hand side.
@@ -51,7 +54,7 @@ def sgbem_assemble(mesh, kernel_set):
     # Combine the two rhs terms
     rhs = np.sum(rhs_matrix, axis = 1)
     mass_rhs = np.sum(mass_matrix, axis = 1)
-    rhs += 0.5 * mass_rhs
+    rhs += mass_rhs
 
     # Return the fully assembled linear system
     return lhs_matrix, rhs
@@ -65,6 +68,9 @@ def _element_mass(matrix, e_k):
     # Because the term is identical (just replace u by t) for both
     # integral equations, this function does not care about the BC type
     bc_basis = e_k.bc.basis
+    if type(bc_basis) is ZeroBasis:
+        return
+
     q_info = e_k.qs.get_nonsingular_minpts()
     kernel = MassMatrixKernel(0, 0)
     for i in range(e_k.basis.n_fncs):
