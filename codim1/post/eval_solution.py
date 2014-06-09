@@ -12,6 +12,8 @@ def evaluate_boundary_solution(mesh, soln, points_per_element):
 
 def evaluate_solution_on_element(element, reference_point, soln_coeffs):
     soln = np.zeros(2)
+
+
     # The value is the sum over all the basis functions.
     for i in range(element.basis.n_fncs):
         dof_x = element.dofs[0, i]
@@ -20,11 +22,7 @@ def evaluate_solution_on_element(element, reference_point, soln_coeffs):
         soln[0] += soln_coeffs[dof_x] * basis_eval[0]
         soln[1] += soln_coeffs[dof_y] * basis_eval[1]
 
-    bc = np.zeros(2)
-    for i in range(element.bc.basis.n_fncs):
-        bc_eval = element.bc.basis.evaluate(i, reference_point)
-        bc[0] += bc_eval[0]
-        bc[1] += bc_eval[1]
+    bc = eval_bc(element, reference_point)
 
     if element.bc.type == "displacement":
         u = bc
@@ -39,3 +37,11 @@ def evaluate_solution_on_element(element, reference_point, soln_coeffs):
         u = bc / 2
         t = soln
     return u, t
+
+def eval_bc(element, reference_point):
+    bc = np.zeros(2)
+    for i in range(element.bc.basis.n_fncs):
+        bc_eval = element.bc.basis.evaluate(i, reference_point)
+        bc[0] += bc_eval[0]
+        bc[1] += bc_eval[1]
+    return bc

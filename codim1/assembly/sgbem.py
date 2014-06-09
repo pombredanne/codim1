@@ -1,8 +1,8 @@
-import numpy as np
 from codim1.fast_lib import double_integral, single_integral,\
     MassMatrixKernel, ZeroBasis, ConstantBasis
-from itertools import product
-from functools import partial
+from which_kernels import _make_which_kernels
+
+import numpy as np
 
 """
 These functions traverse the mesh and form the symmetric galerkin
@@ -26,8 +26,17 @@ def sgbem_assemble(mesh, kernel_set):
 
     # Traverse the mesh and assemble the relevant terms
     for e_k in mesh:
+        if e_k.bc.type == "displacement_discontinuity":
+            pass
+            # # If displacement discontinuity, we just want the identity
+            # # matrix to remove the outer un-integrable integral
+            # _identity_matrix(lhs_matrix, e_k)
+            # for i in range(e_k.basis.n_fncs):
+            #     _sgbem_interior_matrix(
+            continue
+
         # Add the mass matrix term to the right hand side.
-        _element_mass_rhs(mass_matrix, e_k)
+        _element_mass(mass_matrix, e_k)
         for e_l in mesh:
             # Compute and add the RHS and matrix terms to the system.
             _element_pair(lhs_matrix, e_k, e_l, which_kernels, "matrix")
@@ -42,7 +51,12 @@ def sgbem_assemble(mesh, kernel_set):
     # Return the fully assembled linear system
     return lhs_matrix, rhs
 
-def _element_mass_rhs(matrix, e_k):
+def _identity_matrix(matrix, e_k):
+    for i in range(e_k.basis.n_fncs):
+        matrix[e_k.dofs[0, i], e_k.dofs[0, i]] = 1.0
+        matrix[e_k.dofs[1, i], e_k.dofs[1, i]] = 1.0
+
+def _element_mass(matrix, e_k):
     # Because the term is identical (just replace u by t) for both
     # integral equations, this function does not care about the BC type
     bc_basis = e_k.bc.basis
@@ -155,66 +169,3 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
                 for idx2 in range(2):
                     matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, e_l_dof]] += \
                         factor * integral[idx1][idx2]
-
-def _make_which_kernels(kernel_set):
-    """
-    A table indicating which kernel should be used for the matrix term
-    and which kernel should be used for the RHS term given the type of
-    boundary condition on each of the elements under consideration.
-
-    The outer boundary condition type is the BC for the test function and
-    the inner boundary condition type is the BC for the solution element.
-
-    Use this like:
-    which_kernels[e_k.bc.type][e_l.bc.type]["matrix"]
-    or
-    which_kernels[e_k.bc.type][e_l.bc.type]["rhs"]
-    """
-    which_kernels = \
-        {
-            "displacement":
-            {
-                "displacement":
-                {
-                    "matrix": (kernel_set.k_d, 1),
-                    "rhs": (kernel_set.k_t, 1)
-                },
-                "traction":
-                {
-                    "matrix": (kernel_set.k_t, -1),
-                    "rhs": (kernel_set.k_d, -1)
-                }
-            },
-            "traction":
-            {
-                "displacement":
-                {
-                    "matrix": (kernel_set.k_tp, 1),
-                    "rhs": (kernel_set.k_rh, 1)
-                },
-                "traction":
-                {
-                    "matrix": (kernel_set.k_rh, -1),
-                    "rhs": (kernel_set.k_tp, -1)
-                }
-            },
-            "crack_traction":
-            {
-                "crack_traction":
-                {
-                    "matrix": (kernel_set.k_rh, -0.5),
-                    "rhs": (None, 0)
-                }
-                # "displacement":
-                # {
-                #     "matrix": (kernel_set.k_tp, 1),
-                #     "rhs": (kernel_set.k_rh, 1)
-                # },
-                # "traction":
-                # {
-                #     "matrix": (kernel_set.k_rh, -1),
-                #     "rhs": (kernel_set.k_tp, -1)
-                # }
-            }
-        }
-    return which_kernels
