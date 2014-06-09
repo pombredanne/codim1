@@ -34,7 +34,7 @@ def run(shear_mod, pr, rad, disp_distance,
     apply_to_elements(mesh, "qs", qs, non_gen = True)
     init_dofs(mesh)
 
-    apply_bc_from_coeffs(mesh, partial(compress, disp_distance),
+    apply_bc_from_fnc(mesh, partial(compress, disp_distance),
                          "displacement")
 
     ek = ElasticKernelSet(shear_mod, pr)
