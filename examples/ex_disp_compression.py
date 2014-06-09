@@ -2,6 +2,7 @@ import codim1.core.tools as tools
 from codim1.core import *
 from codim1.assembly import *
 from codim1.fast_lib import *
+from codim1.post import *
 
 import pytest
 import numpy as np
@@ -33,8 +34,8 @@ def run(shear_mod, pr, rad, disp_distance,
     apply_to_elements(mesh, "qs", qs, non_gen = True)
     init_dofs(mesh)
 
-    bc_coeffs = tools.interpolate(partial(compress, disp_distance), mesh)
-    apply_bc_from_coeffs(mesh, bc_coeffs, "displacement")
+    apply_bc_from_coeffs(mesh, partial(compress, disp_distance),
+                         "displacement")
 
     ek = ElasticKernelSet(shear_mod, pr)
     matrix, rhs = sgbem_assemble(mesh, ek)
@@ -42,7 +43,9 @@ def run(shear_mod, pr, rad, disp_distance,
     soln_coeffs = np.linalg.solve(matrix, rhs)
 
     # Evaluate that solution at 512 points around the circle
-    x, t = tools.evaluate_boundary_solution(512.0 / n_elements, soln_coeffs, mesh)
+    x, u, t = evaluate_boundary_solution(mesh,
+                                         soln_coeffs,
+                                         512.0 / n_elements)
 
     if plot:
         plt.figure(2)

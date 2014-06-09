@@ -33,15 +33,28 @@ These seem very closely related to basis functions. An integration of the
 two modules seems to be in order. This is done!
 """
 from codim1.fast_lib import CoeffBasis
+from codim1.core.tools import interpolate
 
 from collections import namedtuple
 BC = namedtuple("BC", "type,basis")
 
-def apply_bc_from_coeffs(elements, coeffs, type):
+def apply_bc_from_coeffs(mesh, coeffs, type):
     """
     Applies a BC basis to each element. This assumes that a standard
     basis is already defined on the element.
+    Only works with the full mesh because of the global indexing of the
+    dofs.
     """
-    for e in elements:
+    for e in mesh:
         values = coeffs[e.dofs]
         e.bc = BC(type, CoeffBasis(e.basis, values))
+
+def apply_bc_from_fnc(mesh, fnc, type):
+    """
+    Does the same as apply_bc_from_coeffs, but interpolates a function first
+    to get the coefficients.
+    """
+    # TODO: Rewrite me for apply only to a few elements!
+    coeffs = interpolate(fnc, mesh)
+    apply_bc_from_coeffs(mesh, coeffs, type)
+

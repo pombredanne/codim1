@@ -77,10 +77,12 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     # anything
     if type(e_k.basis) is ZeroBasis or \
        type(init_e_l_basis) is ZeroBasis:
-           return None
+        return
 
     # Determine which kernel and which bases to use
     kernel, factor = which_kernels[e_k.bc.type][e_l.bc.type][rhs_or_matrix]
+    if kernel is None:
+        return
 
     # Decide whether to use the basis or its gradient
     e_k_basis, e_k_pt_srcs = _choose_basis(e_k.basis, kernel.test_gradient)
@@ -89,7 +91,7 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     # Now that we might have taken a derivative, check for ZeroBases again.
     if type(e_k_basis) is ZeroBasis or \
        type(e_l_basis) is ZeroBasis:
-           return None
+        return
 
     # Determine what quadrature formula to use
     quad_outer, quad_inner = e_k.qs.get_quadrature(
@@ -195,6 +197,24 @@ def _make_which_kernels(kernel_set):
                     "matrix": (kernel_set.k_rh, -1),
                     "rhs": (kernel_set.k_tp, -1)
                 }
+            },
+            "crack_traction":
+            {
+                "crack_traction":
+                {
+                    "matrix": (kernel_set.k_rh, -0.5),
+                    "rhs": (None, 0)
+                }
+                # "displacement":
+                # {
+                #     "matrix": (kernel_set.k_tp, 1),
+                #     "rhs": (kernel_set.k_rh, 1)
+                # },
+                # "traction":
+                # {
+                #     "matrix": (kernel_set.k_rh, -1),
+                #     "rhs": (kernel_set.k_tp, -1)
+                # }
             }
         }
     return which_kernels

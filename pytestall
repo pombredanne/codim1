@@ -1,0 +1,3 @@
+#!/bin/bash
+py.test -m "(not slow) or slow" test/
+py.test -m "(not slow) or slow" examples/ex_*.py

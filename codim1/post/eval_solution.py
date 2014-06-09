@@ -1,6 +1,6 @@
 import numpy as np
 
-def evaluate_boundary_solution(points_per_element, mesh, soln):
+def evaluate_boundary_solution(mesh, soln, points_per_element):
     x, u, t = ([], [], [])
     for e_k in mesh:
         for pt in np.linspace(0.0, 1.0, points_per_element):
@@ -32,4 +32,10 @@ def evaluate_solution_on_element(element, reference_point, soln_coeffs):
     elif element.bc.type == "traction":
         u = soln
         t = bc
+    elif element.bc.type == "crack_traction":
+        u = soln / 2
+        t = bc
+    elif element.bc.type == "displacement_discontinuity":
+        u = bc / 2
+        t = soln
     return u, t
