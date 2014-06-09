@@ -51,29 +51,11 @@ def disk(n_elements, element_deg, plot):
     # and how many points to use.
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
 
-    # Maybe use more point for the RHS. This is because it is discontinuous
-    # at: theta = (24/50) * pi, so if there aren't enough points, I will
-    # miss that discontinuity
-    # This is not necessary if the mesh is aligned with the discontinuity
-    qs_rhs = qs#QuadStrategy(mesh, quad_max, quad_max,
-                                 #quad_logr, quad_oneoverr)
-
-    # The first two are elastic kernels for the displacement BIE,
-    # these will be used to solve the BIE
-    # The next two are elastic kernels for the traction BIE,
-    # these will be used to compute interior stresses
-    k_d = DisplacementKernel(shear_modulus, poisson_ratio)
-    k_t = TractionKernel(shear_modulus, poisson_ratio)
-    k_ta = AdjointTractionKernel(shear_modulus, poisson_ratio)
-    k_rh = RegularizedHypersingularKernel(shear_modulus, poisson_ratio)
-    k_h = HypersingularKernel(shear_modulus, poisson_ratio)
-
-    # If I am using the displacement BIE, I use a discontinuous basis
-    # If I am using the traction BIE (hypersingular), I use a continuous
-    # basis
+    # The 4 kernels of linear elastostatics.
+    ek = ElasticKernelSet(shear_mod, pr)
 
     apply_to_elements(mesh, "basis", bf, non_gen = True)
-    apply_to_elements(mesh, "continuous", False, non_gen = True)
+    apply_to_elements(mesh, "continuous", True, non_gen = True)
     apply_to_elements(mesh, "qs", qs, non_gen = True)
     init_dofs(mesh)
 
