@@ -14,6 +14,20 @@ void InteriorPoint::process_element(MappingEval& mapping, Kernel &kernel,
     }
 }
 
+void InteriorPoint::process_point_source(MappingEval& mapping,
+                                         Kernel &kernel,
+                                         double reference_point,
+                                         std::vector<double> strength)
+{
+    std::vector<double> normal = mapping.get_normal(reference_point);
+    std::vector<double> phys_pt = mapping.get_physical_point(reference_point);
+    KernelData kd = kernel.get_interior_integral_data(phys_pt, normal);
+    result[0] += kernel.call(kd, 0, 0);
+    result[0] += kernel.call(kd, 0, 1);
+    result[1] += kernel.call(kd, 1, 0);
+    result[1] += kernel.call(kd, 1, 1);
+}
+
 void AlignedInteriorPoint::process_element(MappingEval& mapping, Kernel &kernel, 
                      Basis& basis, QuadratureInfo& quad_info)
 {

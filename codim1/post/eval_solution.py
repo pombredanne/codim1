@@ -33,7 +33,7 @@ def evaluate_solution_on_element(element, reference_point, soln_coeffs):
     elif element.bc.type == "crack_traction":
         u = soln / 2
         t = bc
-    elif element.bc.type == "displacement_discontinuity":
+    elif element.bc.type == "crack_displacement":
         u = bc / 2
         t = soln
     return u, t

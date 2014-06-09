@@ -41,21 +41,27 @@ def test_constant_traction_crack():
     error = np.sqrt(np.sum((u[0, :] - correct) ** 2 * (2.0 / n_elements)))
     assert(error <= 0.016)
 
-# def plot():
-    # plt.figure(1)
-    # def plot_ux():
-    #     plt.plot(x[0, :], u[0, :])
-    #     plt.xlabel(r'X')
-    #     plt.ylabel(r'$u_x$', fontsize = 18)
-    # def plot_uy():
-    #     plt.plot(x[0, :], u[1, :])
-    #     plt.xlabel(r'X')
-    #     plt.ylabel(r'$u_y$', fontsize = 18)
-    # plot_ux()
-    # plt.plot(x[0, :], correct)
-    # plt.figure()
-    # plot_uy()
-    # plt.show()
+def plot(x, u):
+    correct = 0.75 * np.sqrt(1.0 - x[0, :] ** 2)
+    plt.figure(1)
+    def plot_ux():
+        plt.plot(x[0, :], u[0, :])
+        plt.xlabel(r'X')
+        plt.ylabel(r'$u_x$', fontsize = 18)
+    def plot_uy():
+        plt.plot(x[0, :], u[1, :])
+        plt.xlabel(r'X')
+        plt.ylabel(r'$u_y$', fontsize = 18)
+    plot_ux()
+    plt.plot(x[0, :], correct)
+    plt.figure()
+    plot_uy()
+    plt.show()
+
+if __name__ == "__main__":
+    x, u = run(40)
+    plot(x, u)
+
 
 # Compute some interior values.
 # interior_stresses((-5, -5), (5, 5), 31, mesh, dh, qs, k_ta, k_h)

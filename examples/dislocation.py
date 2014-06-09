@@ -31,12 +31,11 @@ apply_to_elements(mesh, "basis", bf, non_gen = True)
 apply_to_elements(mesh, "continuous", True, non_gen = True)
 apply_to_elements(mesh, "qs", qs, non_gen = True)
 apply_to_elements(mesh, "bc",
-    BC("displacement_discontinuity", ConstantBasis([1.0, 0.0])),
+    BC("crack_displacement", ConstantBasis([1.0, 0.0])),
     non_gen = True)
 sgbem_dofs(mesh)
 
 matrix, rhs = sgbem_assemble(mesh, ek)
-import ipdb;ipdb.set_trace()
 soln_coeffs = np.linalg.solve(matrix, rhs)
 
 x, u, t = evaluate_boundary_solution(mesh, soln_coeffs, 8)
