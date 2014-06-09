@@ -17,7 +17,7 @@ the relevant element in the mesh.
 def sgbem_assemble(mesh, kernel_set):
     # Form the empty linear system
     total_dofs = mesh.total_dofs
-    matrix = np.zeros((total_dofs, total_dofs))
+    lhs_matrix = np.zeros((total_dofs, total_dofs))
     rhs_matrix = np.zeros((total_dofs, total_dofs))
     mass_matrix = np.zeros((total_dofs, total_dofs))
 
@@ -30,17 +30,17 @@ def sgbem_assemble(mesh, kernel_set):
         _element_mass_rhs(mass_matrix, e_k)
         for e_l in mesh:
             # Compute and add the RHS and matrix terms to the system.
-            _element_pair(matrix, e_k, e_l, which_kernels, "matrix")
+            _element_pair(lhs_matrix, e_k, e_l, which_kernels, "matrix")
             _element_pair(rhs_matrix, e_k, e_l, which_kernels, "rhs")
 
 
     # Combine the two rhs terms
     rhs = np.sum(rhs_matrix, axis = 1)
     mass_rhs = np.sum(mass_matrix, axis = 1)
-    rhs += mass_rhs
+    rhs += 0.5 * mass_rhs
 
     # Return the fully assembled linear system
-    return matrix, rhs
+    return lhs_matrix, rhs
 
 def _element_mass_rhs(matrix, e_k):
     # Because the term is identical (just replace u by t) for both
@@ -56,8 +56,8 @@ def _element_mass_rhs(matrix, e_k):
                               bc_basis,
                               q_info,
                               i, j)
-            matrix[e_k.dofs[0, i], e_k.dofs[0, j]] += 0.5 * M_local[0][0]
-            matrix[e_k.dofs[1, i], e_k.dofs[1, j]] += 0.5 * M_local[1][1]
+            matrix[e_k.dofs[0, i], e_k.dofs[0, j]] += M_local[0][0]
+            matrix[e_k.dofs[1, i], e_k.dofs[1, j]] += M_local[1][1]
 
 def _choose_basis(basis, is_gradient):
     if is_gradient:
