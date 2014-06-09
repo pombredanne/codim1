@@ -8,6 +8,7 @@ import codim1.core.dof_handler as dof_handler
 from codim1.core import *
 import codim1.core.tools as tools
 import codim1.core.quad_strategy as quad_strategy
+from codim1.post import *
 
 class TDispKernel(Kernel):
     """
@@ -189,9 +190,11 @@ def test_realistic_zero_discontinuity():
     displacements = tools.interpolate(fnc, msh)
     rhs = np.dot(H, displacements)
     soln_coeffs = np.linalg.solve(G, rhs)
+    apply_to_elements(msh, "bc", BC("traction", msh.elements[0].basis),
+                      non_gen = True)
     for k in range(msh.n_elements - 1):
         e_k = msh.elements[k]
         e_kp1 = msh.elements[k + 1]
-        value_left = tools.evaluate_solution_on_element(e_k, 1.0, soln_coeffs)
-        value_right = tools.evaluate_solution_on_element(e_kp1, 0.0, soln_coeffs)
+        value_left,t = evaluate_solution_on_element(e_k, 1.0, soln_coeffs)
+        value_right,t = evaluate_solution_on_element(e_kp1, 0.0, soln_coeffs)
         np.testing.assert_almost_equal(value_left, value_right)

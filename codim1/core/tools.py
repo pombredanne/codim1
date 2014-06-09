@@ -2,25 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.collections
 
-# def plot_kernel(kernel_fnc,
-#     x = np.linspace(0.0, 1.0, 100)
-#     y = np.linspace(0.0, 1.0, 100)
-#     X, Y = np.meshgrid(x, y)
-#     a = np.zeros_like(X)
-#     b = np.zeros_like(X)
-#     for i in range(X.shape[0]):
-#         for j in range(X.shape[1]):
-#             a[i, j] = f(x[i], y[j])[1, 1]
-#             b[i, j] = ff(x[i], y[j])
-#     import matplotlib.pyplot as plt
-#     plt.figure()
-#     plt.imshow(a)
-#     plt.colorbar()
-#     plt.figure()
-#     plt.imshow(b)
-#     plt.colorbar()
-#     plt.show()
-
 def L2_error(f1, f2):
     L2_f2 = np.sqrt(np.sum((f2 ** 2)))
     L2_f1_minus_f2 = np.sqrt(np.sum(((f1 - f2) ** 2)))
@@ -85,42 +66,6 @@ def interpolate(fnc, mesh):
     basis function to be the value of fnc at the node (where phi(x) = 1).
     """
     result = np.empty(mesh.total_dofs)
-    for k in range(mesh.n_elements):
-        e = mesh.elements[k]
-        result[e.dofs] = local_interpolate(fnc, e.mapping, e.basis)
+    for e_k in mesh:
+        result[e_k.dofs] = local_interpolate(fnc, e_k.mapping, e_k.basis)
     return result
-
-def evaluate_boundary_solution(points_per_element, soln, mesh):
-    """
-    Once a solution is computed, it's often nice to know the actual value, not
-    just the coefficients of the polynomial basis! This function will
-    produce points_per_elements points of the solution per element. Whee!
-
-    This accepts a vector-valued solution and produces vector-valued point
-    evaluations. A scalar version would be simple to write with this as a
-    template.
-    """
-    x = []
-    y = []
-    for k in range(mesh.n_elements):
-        e = mesh.elements[k]
-        for pt in np.linspace(0.0, 1.0, points_per_element):
-            x.append(e.mapping.get_physical_point(pt))
-            u = evaluate_solution_on_element(e, pt, soln)
-            y.append(u)
-    x = np.array(x)
-    y = np.array(y)
-    return x, y
-
-def evaluate_solution_on_element(element, reference_point, soln):
-    soln_x = 0.0
-    soln_y = 0.0
-    # The value is the sum over all the basis functions.
-    for i in range(element.basis.n_fncs):
-        dof_x = element.dofs[0, i]
-        dof_y = element.dofs[1, i]
-        # TODO: remove element_idx from basis_funcs!
-        soln_x += soln[dof_x] * element.basis.evaluate(i, reference_point)[0]
-        soln_y += soln[dof_y] * element.basis.evaluate(i, reference_point)[1]
-    return np.array([soln_x, soln_y])
-
