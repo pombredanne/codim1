@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
-from disp_disk_compression import run
+from ex_disp_compression import run
 
 def test_linear_convergence():
     result = []

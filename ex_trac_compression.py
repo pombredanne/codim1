@@ -6,33 +6,16 @@ import codim1.core.tools as tools
 from codim1.core import *
 from codim1.assembly import *
 from codim1.fast_lib import *
-
-# The theta width over which to apply the load to our cylinder.
-alpha = (1 / 50.) * np.pi
-alpha = np.cos((np.pi / 2) - alpha)
+from codim1.post import *
 
 def section_traction(x, n):
     # Only apply tractions over the arcs near y=1, y=-1
-    if np.abs(x[0]) <= alpha:
+    if np.abs(x[0]) <= (1 / 50.) * np.pi:
         x_length = np.sqrt(x[0] ** 2 + x[1] ** 2)
-        return (-x[0] / x_length, -x[1] / x_length)
+        return -x / x_length
     return (0.0, 0.0)
 
-# Less accurate, because it doesn't scale the return value, but it's faster
-def less_accurate_section_traction(x, d):
-    # Only apply tractions over the arcs near y=1, y=-1
-    if abs(x[0]) < alpha:
-        return -x[d]
-    return 0.0
-
-# Found the exact solution in Frangi, Novati 1996 -- could copy that over to
-# do better convergence tests, etc.
-
 def disk(n_elements, element_deg, plot):
-    # Elastic parameters
-    shear_modulus = 1.0
-    poisson_ratio = 0.25
-
     # Quadrature points for the various circumstances
     quad_min = 4
     quad_max = 10
@@ -46,49 +29,26 @@ def disk(n_elements, element_deg, plot):
     mesh = circular_mesh(n_elements, 1.0)
     # tools.plot_mesh(mesh)
 
-    # This object defines what type of quadrature to use for different
-    # situations (log(r) singular, 1/r singular, adjacent elements, others)
-    # and how many points to use.
     qs = QuadStrategy(mesh, quad_max, quad_max, quad_logr, quad_oneoverr)
-
-    # The 4 kernels of linear elastostatics.
-    ek = ElasticKernelSet(shear_mod, pr)
+    ek = ElasticKernelSet(1.0, 0.25)
 
     apply_to_elements(mesh, "basis", bf, non_gen = True)
     apply_to_elements(mesh, "continuous", True, non_gen = True)
     apply_to_elements(mesh, "qs", qs, non_gen = True)
     init_dofs(mesh)
+    apply_bc_from_fnc(mesh, section_traction, "traction")
 
-    # Assemble the matrix of displacements induced by displacements at
-    # another location.
-    # Gup multiplies displacements
-    # Guu mutliplies tractions
-    print('Assembling kernel matrix, Gup')
-    Gup = simple_matrix_assemble(mesh, k_t)
+    matrix, rhs = sgbem_assemble(mesh, ek)
+    apply_average_constraint(matrix, rhs, mesh)
 
-    # This mass matrix term arises from considering the cauchy singular form
-    # of the Gup matrix.
-    Gup -= 0.5 * assemble_mass_matrix(mesh, gauss(element_deg + 1))
+    soln_coeffs = np.linalg.solve(matrix, rhs)
 
-
-    traction_function = tools.interpolate(section_traction, mesh)
-    apply_coeffs(mesh, traction_function, "trac_fnc")
-
-    # Assemble the rhs, composed of the displacements induced by the
-    # traction inputs.
-    print("Assembling RHS")
-    rhs = simple_rhs_assemble(mesh, lambda e: e.trac_fnc, k_d)
-
-    # Solve Ax = b, where x are the coefficients over the solution basis
-    soln_coeffs = np.linalg.solve(Gup, rhs)
-
-    # Create a solution object that pairs the coefficients with the basis
     print("Solving System")
     apply_coeffs(mesh, soln_coeffs, "soln")
 
     # Evaluate that solution at 400 points around the circle
-    x, u = tools.evaluate_boundary_solution(400 / n_elements,
-                                            soln_coeffs, mesh)
+    x, u, t = evaluate_boundary_solution(mesh,
+                    soln_coeffs, 400 / n_elements)
 
     # Now, compute some interior values of stress along the x axis
     print("Performing interior computations.")
@@ -99,12 +59,12 @@ def disk(n_elements, element_deg, plot):
     normal = np.array([1.0, 0.0])
     # Positive contribution of the AdjointTraction kernel
     int_strs_x = -np.array(
-            [interior_pt(mesh, [(x_v, 0.0), normal], k_ta,
-                         basis_grabber = lambda e: e.trac_fnc)
+            [interior_pt(mesh, [(x_v, 0.0), normal], ek.k_tp,
+                         basis_grabber = lambda e: e.bc.basis)
              for x_v in x_vals])
     # Negative contribution of the hypersingular kernel
     int_strs_x -= np.array(
-            [interior_pt(mesh, [(x_v, 0.0), normal], k_h,
+            [interior_pt(mesh, [(x_v, 0.0), normal], ek.k_h,
                          basis_grabber = lambda e: e.soln)
              for x_v in x_vals])
 
@@ -112,13 +72,13 @@ def disk(n_elements, element_deg, plot):
     normal = np.array([0.0, 1.0])
     # Negative contribution of the AdjointTraction kernel
     int_strs_y = -np.array(
-            [interior_pt(mesh, [(x_v, 0.0), normal], k_ta,
-                         basis_grabber = lambda e: e.trac_fnc)
+            [interior_pt(mesh, [(x_v, 0.0), normal], ek.k_tp,
+                         basis_grabber = lambda e: e.bc.basis)
              for x_v in x_vals])
 
     # Positive contribution of the hypersingular kernel
     int_strs_y -= np.array(
-            [interior_pt(mesh, [(x_v, 0.0), normal], k_h,
+            [interior_pt(mesh, [(x_v, 0.0), normal], ek.k_h,
                          basis_grabber = lambda e: e.soln)
              for x_v in x_vals])
 
@@ -129,13 +89,13 @@ def disk(n_elements, element_deg, plot):
     if plot:
         # u_x
         plt.figure(2)
-        plt.plot(x[:, 0], u[:, 0])
+        plt.plot(x[0, :], u[0, :])
         plt.xlabel(r'X')
         plt.ylabel(r'$u_x$', fontsize = 18)
 
         # u_y
         plt.figure(3)
-        plt.plot(x[:, 0], u[:, 1])
+        plt.plot(x[0, :], u[1, :])
         plt.xlabel(r'X')
         plt.ylabel(r'$u_y$', fontsize = 18)
 #
@@ -169,7 +129,7 @@ def disk(n_elements, element_deg, plot):
                     continue
                 traction_effect = interior_pt(mesh,
                                 [(x_val, y_val), np.zeros(2)], k_d,
-                                basis_grabber = lambda e: e.trac_fnc)
+                                basis_grabber = lambda e: e.bc.basis)
                 displacement_effect = -interior_pt(mesh,
                                 [(x_val, y_val), np.zeros(2)], k_t,
                                 basis_grabber = lambda e: e.soln)
