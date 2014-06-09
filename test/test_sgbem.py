@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from functools import partial
 from codim1.assembly.sgbem import _make_which_kernels, sgbem_assemble,\
-    _element_mass_rhs
+    _element_mass
 from codim1.assembly import simple_matrix_assemble, simple_rhs_assemble,\
     mass_matrix_for_rhs, assemble_mass_matrix
 from codim1.core import *
@@ -31,8 +31,9 @@ def make_mesh():
 def test_sgbem_mass_rhs():
     mesh = make_mesh()
     rhs_matrix = np.zeros((mesh.total_dofs, mesh.total_dofs))
-    _element_mass_rhs(rhs_matrix, mesh.elements[0])
-    _element_mass_rhs(rhs_matrix, mesh.elements[1])
+    kernels = _make_which_kernels(ElasticKernelSet(1.0, 0.25))
+    _element_mass(rhs_matrix, mesh.elements[0])
+    _element_mass(rhs_matrix, mesh.elements[1])
     np.testing.assert_almost_equal(0.5 * np.sum(rhs_matrix, axis = 1),
                                    [0.25,0.5,0.25,0.25,0.5,0.25])
 

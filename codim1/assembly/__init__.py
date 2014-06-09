@@ -5,3 +5,4 @@ from interior_point import interior_pt
 from point_source_rhs import point_source_rhs
 from constraints import apply_average_constraint, pin_ends_constraint
 from sgbem import sgbem_assemble
+from sgbem_dofs import sgbem_dofs
