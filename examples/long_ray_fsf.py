@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 from codim1.core import *
 from codim1.assembly import *
 from codim1.fast_lib import *
+from codim1.post import *
 import codim1.core.tools as tools
 import matplotlib as mpl
 mpl.rcParams['lines.linewidth'] = 2
@@ -22,12 +23,11 @@ interior_quad_pts = 13
 
 di = 1.0
 df = 1.0
-x_di = 0.0
-x_df = 1.0
+x_di = -0.5
+x_df = 0.5
 
 # Determine fault parameters
 # fault angle
-delta = np.arctan((df - di) / (x_df - x_di))
 left_end = np.array((x_di, -di))
 right_end = np.array((x_df, -df))
 fault_vector = left_end - right_end
@@ -43,7 +43,7 @@ mesh1 = simple_line_mesh(n_elements_surface,
                         main_surface_right)
 
 per_step = 5
-steps = 5
+steps = 10
 ray_lengths = [1.0] * per_step
 for i in range(1, steps):
     ray_lengths.extend([2.0 ** float(i)] * per_step)
@@ -52,8 +52,20 @@ ray_left_dir = (-1.0, 0.0)
 mesh2 = ray_mesh(main_surface_left, ray_left_dir, ray_lengths, flip = True)
 ray_right_dir = (1.0, 0.0)
 mesh3 = ray_mesh(main_surface_right, ray_right_dir, ray_lengths)
-mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
+surface_mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                       ensure_continuity = True)
+apply_to_elements(surface_mesh, "bc",
+                BC("traction", ZeroBasis()), non_gen = True)
+
+# Mesh the fault
+fault_elements = 20
+fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
+apply_to_elements(fault_mesh, "bc", BC("crack_displacement",
+                                 ConstantBasis(-fault_tangential)),
+                                 non_gen = True)
+
+# Combine and apply pieces
+mesh = combine_meshes(surface_mesh, fault_mesh)
 
 bf = gll_basis(degree)
 qs = QuadStrategy(mesh, quad_min, quad_max, quad_logr, quad_oneoverr)
@@ -62,38 +74,23 @@ apply_to_elements(mesh, "basis", bf, non_gen = True)
 apply_to_elements(mesh, "continuous", True, non_gen = True)
 init_dofs(mesh)
 
-# Mesh the fault
-fault_elements = 20
-fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
-apply_to_elements(fault_mesh, "qs", qs, non_gen = True)
-apply_to_elements(fault_mesh, "basis", bf, non_gen = True)
-apply_to_elements(fault_mesh, "continuous", True, non_gen = True)
-init_dofs(fault_mesh)
-
 ek = ElasticKernelSet(shear_modulus, poisson_ratio)
 
-load = False
-if load:
-    file = np.load("data/long_ray_fsf/data.npz")
-    soln_coeffs = file["soln_coeffs"]
-else:
-    print "Assembling RHS"
-    str_loc_norm = [(-fault_tangential, left_end, fault_normal),
-                   (fault_tangential, right_end, fault_normal)]
-    rhs = -point_source_rhs(mesh, str_loc_norm, ek.k_rh)
+matrix, rhs = sgbem_assemble(mesh, ek)
+apply_average_constraint(matrix, rhs, surface_mesh)
+# for e_k in surface_mesh:
+#     e_k.dofs_initialized = False
+# init_dofs(surface_mesh)
+# matrix2 = simple_matrix_assemble(surface_mesh, ek.k_rh)
 
-    print "Assembling Matrix"
-    matrix = simple_matrix_assemble(mesh, ek.k_rh)
 
-    # The matrix produced by the hypersingular kernel is singular, so I need
-    # to provide some further constraint in order to remove rigid body motions.
-    # I impose a constraint that forces the average displacement to be zero.
-    apply_average_constraint(matrix, rhs, mesh)
+# The matrix produced by the hypersingular kernel is singular, so I need
+# to provide some further constraint in order to remove rigid body motions.
+# I impose a constraint that forces the average displacement to be zero.
+# apply_average_constraint(matrix, rhs, mesh)
+soln_coeffs = np.linalg.solve(matrix, rhs)
 
-    print "Solving system"
-    soln_coeffs = np.linalg.solve(matrix, rhs)
-
-x, u_soln = tools.evaluate_boundary_solution(4, soln_coeffs, mesh)
+x, u, t = evaluate_boundary_solution(surface_mesh, soln_coeffs, 8)
 
 
 def analytical_free_surface(x, x_d, d, delta, s):
@@ -114,7 +111,8 @@ def analytical_free_surface(x, x_d, d, delta, s):
     return ux, uy
 
 # Compute the exact solution
-x_e = x[:, 0]
+x_e = x[0, :]
+delta = np.arctan((df - di) / (x_df - x_di))
 ux_exact1, uy_exact1 = analytical_free_surface(x_e, x_di, di, delta, -1.0)
 ux_exact2, uy_exact2 = analytical_free_surface(x_e, x_df, df, delta, 1.0)
 ux_exact = ux_exact1 + ux_exact2
@@ -123,17 +121,17 @@ uy_exact = uy_exact1 + uy_exact2
 def comparison_plot():
     plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
     plt.plot(x_e, uy_exact, '*', label = 'Exact Y Displacement')
-    plt.plot(x[:, 0],
-             u_soln[:, 0], '8',
+    plt.plot(x_e, u[0, :], '8',
              linewidth = 2, label = 'Estimated X displacement')
-    plt.plot(x[:, 0],
-             u_soln[:, 1], '8',
+    plt.plot(x_e, u[1, :], '8',
              linewidth = 2, label = 'Estimated Y displacement')
-    plt.axis([-30, 30, -1, 1])
+    plt.axis([-5, 5, -0.2, 0.2])
     plt.xlabel(r'$x/d$', fontsize = 18)
     plt.ylabel(r'$u/s$', fontsize = 18)
     plt.legend()
     plt.show()
+
+comparison_plot()
 
 def error_plot():
     x_error = np.abs(ux_exact - u_soln[:, 0]) / np.abs(ux_exact)

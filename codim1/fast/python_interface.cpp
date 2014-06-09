@@ -139,6 +139,7 @@ BOOST_PYTHON_MODULE(fast_ext)
 
     class_<InteriorPoint, boost::noncopyable>("InteriorPoint", init<>())
         .def("process_element", &InteriorPoint::process_element)
+        .def("process_point_source", &InteriorPoint::process_point_source)
         .def_readonly("result", &InteriorPoint::result);
     class_<AlignedInteriorPoint, bases<InteriorPoint>, boost::noncopyable>
         ("AlignedInteriorPoint", init<>());

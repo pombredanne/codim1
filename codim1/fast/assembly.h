@@ -15,6 +15,10 @@ class InteriorPoint
 
         virtual void process_element(MappingEval& mapping, Kernel &kernel, 
                              Basis& basis, QuadratureInfo& quad_info);
+        virtual void process_point_source(MappingEval& mapping,
+                                         Kernel &kernel,
+                                         double reference_point,
+                                         std::vector<double> strength);
         std::vector<double> result;
         ConstantBasis one;
 };

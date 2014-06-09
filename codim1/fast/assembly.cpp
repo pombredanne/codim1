@@ -1,4 +1,5 @@
 #include "assembly.h"
+#include "mapping.h"
 
 void InteriorPoint::process_element(MappingEval& mapping, Kernel &kernel, 
                      Basis& basis, QuadratureInfo& quad_info)
