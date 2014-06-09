@@ -32,5 +32,16 @@ Important:
 These seem very closely related to basis functions. An integration of the
 two modules seems to be in order. This is done!
 """
+from codim1.fast_lib import CoeffBasis
+
 from collections import namedtuple
 BC = namedtuple("BC", "type,basis")
+
+def apply_bc_from_coeffs(elements, coeffs, type):
+    """
+    Applies a BC basis to each element. This assumes that a standard
+    basis is already defined on the element.
+    """
+    for e in elements:
+        values = coeffs[e.dofs]
+        e.bc = BC(type, CoeffBasis(e.basis, values))
