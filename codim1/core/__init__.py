@@ -10,5 +10,5 @@ from basis_funcs import apply_coeffs
 from quad_strategy import QuadStrategy, GLLQuadStrategy, TellesQuadStrategy
 from mesh_gen import combine_meshes, simple_line_mesh, circular_mesh
 from mesh_gen import from_vertices_and_etov, rect_mesh, ray_mesh
-from bc_descriptor import BC, apply_bc_from_coeffs
+from bc_descriptor import BC, apply_bc_from_coeffs, apply_bc_from_fnc
 from kernel_set import ElasticKernelSet
