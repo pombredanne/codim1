@@ -8,8 +8,6 @@ def sgbem_dofs(mesh):
     next_dof = 0
     for e in mesh:
         n_bfs = e.basis.n_fncs
-        if e.bc.type == "displacement_discontinuity":
-            continue
         e.dofs = np.zeros((2, n_bfs), dtype = np.int64)
         if e.continuous:
             next_dof = _process_continuous_element(e, next_dof)
@@ -18,8 +16,6 @@ def sgbem_dofs(mesh):
         e.dofs_initialized = True
     total_x_dofs = next_dof
     for e in mesh:
-        if e.bc.type == "displacement_discontinuity":
-            continue
         e.dofs[1, :] = e.dofs[0, :] + total_x_dofs
     total_dofs = 2 * total_x_dofs
     mesh.total_dofs = total_dofs

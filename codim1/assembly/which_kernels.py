@@ -17,6 +17,7 @@ def _make_which_kernels(kernel_set):
         {
             "displacement":
             {
+                "opposite": "traction",
                 "displacement":
                 {
                     "matrix": (kernel_set.k_d, 1),
@@ -32,6 +33,7 @@ def _make_which_kernels(kernel_set):
             },
             "traction":
             {
+                "opposite": "displacement",
                 "displacement":
                 {
                     "matrix": (kernel_set.k_tp, 1),
@@ -47,11 +49,17 @@ def _make_which_kernels(kernel_set):
             },
             "crack_traction":
             {
+                "opposite": "crack_displacement",
                 "crack_traction":
                 {
                     "matrix": (kernel_set.k_rh, -0.5),
-                    "rhs": (None, 0)
-                }
+                    "rhs": (None, 0),
+                    "interior": (None, 0)
+                },
+                "crack_displacement":
+                {
+                    "interior": (kernel_set.k_rh, 0.5)
+                },
                 # "displacement":
                 # {
                 #     "matrix": (kernel_set.k_tp, 1),
@@ -63,9 +71,14 @@ def _make_which_kernels(kernel_set):
                 #     "rhs": (kernel_set.k_tp, -1)
                 # }
             },
-            "displacement_discontinuity":
+            "crack_displacement":
             {
-
+                "opposite": "crack_traction",
+                "crack_displacement":
+                {
+                    "matrix": (None, 0),
+                    "rhs": (kernel_set.k_rh, 0.5)
+                }
             }
         }
     return which_kernels

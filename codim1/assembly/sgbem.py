@@ -1,6 +1,8 @@
 from codim1.fast_lib import double_integral, single_integral,\
     MassMatrixKernel, ZeroBasis, ConstantBasis
 from which_kernels import _make_which_kernels
+from shared import _choose_basis
+from codim1.post.interior import sgbem_interior_matrix
 
 import numpy as np
 
@@ -26,13 +28,16 @@ def sgbem_assemble(mesh, kernel_set):
 
     # Traverse the mesh and assemble the relevant terms
     for e_k in mesh:
-        if e_k.bc.type == "displacement_discontinuity":
-            pass
+        if e_k.bc.type == "crack_displacement":
             # # If displacement discontinuity, we just want the identity
             # # matrix to remove the outer un-integrable integral
-            # _identity_matrix(lhs_matrix, e_k)
-            # for i in range(e_k.basis.n_fncs):
-            #     _sgbem_interior_matrix(
+            _identity_matrix(lhs_matrix, e_k)
+            for i in range(e_k.basis.n_fncs):
+                ref_pt = e_k.basis.nodes[i]
+                normal = e_k.mapping.get_normal(ref_pt)
+                phys_pt = e_k.mapping.get_physical_point(ref_pt)
+                sgbem_interior(mesh, phys_pt,
+                    normal, kernel_set, "crack_traction")
             continue
 
         # Add the mass matrix term to the right hand side.
@@ -73,11 +78,6 @@ def _element_mass(matrix, e_k):
             matrix[e_k.dofs[0, i], e_k.dofs[0, j]] += M_local[0][0]
             matrix[e_k.dofs[1, i], e_k.dofs[1, j]] += M_local[1][1]
 
-def _choose_basis(basis, is_gradient):
-    if is_gradient:
-        pt_src_info = zip(basis.point_sources, basis.point_source_dependency)
-        return basis.get_gradient_basis(), pt_src_info
-    return basis, []
 
 def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     # Determine whether to use the boundary condition or the solution basis
@@ -103,28 +103,15 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     e_l_basis, e_l_pt_srcs = _choose_basis(init_e_l_basis, kernel.soln_gradient)
 
     # Now that we might have taken a derivative, check for ZeroBases again.
-    if type(e_k_basis) is ZeroBasis or \
-       type(e_l_basis) is ZeroBasis:
+    if type(e_k_basis) is ZeroBasis:
         return
 
     # Determine what quadrature formula to use
     quad_outer, quad_inner = e_k.qs.get_quadrature(
                             kernel.singularity_type, e_k, e_l)
 
-    # Loop over basis function pairs and integrate!
-    for i in range(e_k.basis.n_fncs):
-        for j in range(e_l.basis.n_fncs):
-            integral = \
-                double_integral(e_k.mapping.eval, e_l.mapping.eval,
-                                kernel, e_k_basis, e_l_basis,
-                                quad_outer, quad_inner, i, j)
 
-            # Add the integrated term in the appropriate location
-            for idx1 in range(2):
-                for idx2 in range(2):
-                    matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] +=\
-                            factor * integral[idx1][idx2]
-
+    # Handle point sources
     # Filter out the point sources that we can safely ignore
     # many of these will be ignored because there will be an equal and
     # opposite point source contribution from the adjacent element.
@@ -140,7 +127,7 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
 
     # I also ignore all point source if we are dealing
     if rhs_or_matrix == "matrix":
-        return
+        e_l_pt_srcs = []
 
     # Loop over point sources and integrate!
     # All cross multiplications are necessary.
@@ -169,3 +156,21 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
                 for idx2 in range(2):
                     matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, e_l_dof]] += \
                         factor * integral[idx1][idx2]
+
+    if type(e_l_basis) is ZeroBasis:
+        return
+
+    # Handle the integration of pairs of basis functions
+    for i in range(e_k.basis.n_fncs):
+        for j in range(e_l.basis.n_fncs):
+            integral = \
+                double_integral(e_k.mapping.eval, e_l.mapping.eval,
+                                kernel, e_k_basis, e_l_basis,
+                                quad_outer, quad_inner, i, j)
+
+            # Add the integrated term in the appropriate location
+            for idx1 in range(2):
+                for idx2 in range(2):
+                    matrix[e_k.dofs[idx1, i], e_l.dofs[idx2, j]] +=\
+                            factor * integral[idx1][idx2]
+
