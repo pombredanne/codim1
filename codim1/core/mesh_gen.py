@@ -4,6 +4,7 @@ import numpy as np
 from mesh import Mesh
 from element import Element, Vertex, apply_to_elements, MisorientationException
 from mapping import apply_mapping, PolynomialMapping
+import copy
 
 def correct_misorientation(element_objs):
     done = False
@@ -92,15 +93,12 @@ def combine_meshes(mesh1, mesh2, ensure_continuity = False):
     sure what would happen if they do! Also, I assume that all
     the meshes are linear (linear mapping from real to reference space).
 
-    Note that this function destroys the internals of mesh1 and mesh2.
-    Should this be fixed?
-
     Also, this function does not apply any mappings -- it assumes they have
     already been applied to the elements of the subordinate meshes.
     """
-    vertices = mesh1.vertices
+    vertices = copy.copy(mesh1.vertices)
     vertices.extend(mesh2.vertices)
-    elements = mesh1.elements
+    elements = copy.copy(mesh1.elements)
     elements.extend(mesh2.elements)
 
     result =  Mesh(vertices, elements)
