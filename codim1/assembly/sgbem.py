@@ -126,14 +126,14 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     # of the problem, because these should be handled by the continuity
     # of the displacement field. I should probably think about this
     # a bit more...
-    e_k_pt_srcs = []
+    e_k_pt_srcs = [[],[]]
 
     # This probably explains some of the problems I was having with the
     # constant traction crack problem.
 
     # I also ignore all point source if we are dealing
     if rhs_or_matrix == "matrix":
-        e_l_pt_srcs = []
+        e_l_pt_srcs = [[],[]]
 
     # Loop over point sources and integrate!
     # All cross multiplications are necessary.
@@ -146,11 +146,11 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     #     for e_l_pt in e_k_pt_srcs:
     #         phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0][0])
     for i in range(e_k.basis.n_fncs):
-        for e_l_pt in e_l_pt_srcs:
-            e_l_dof = e_l_pt[1]
-            phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0][0])
-            normal_l = e_l.mapping.get_normal(e_l_pt[0][0])
-            strength = ConstantBasis([e_l_pt[0][1], e_l_pt[0][2]])
+        for pt_src_idx, e_l_pt in enumerate(e_l_pt_srcs[0]):
+            e_l_dof = e_l_pt_srcs[1][pt_src_idx]
+            phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0])
+            normal_l = e_l.mapping.get_normal(e_l_pt[0])
+            strength = ConstantBasis([e_l_pt[1], e_l_pt[2]])
             kernel.set_interior_data(phys_pt_l, normal_l)
             integral = single_integral(e_k.mapping.eval,
                                    kernel,

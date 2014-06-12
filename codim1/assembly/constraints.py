@@ -20,7 +20,7 @@ def apply_average_constraint(matrix, rhs, mesh):
             # TODO: Either pass in a quad_strategy object or make sure this
             # behaves like a flyweight
             quad_info = gauss(e_k.basis.n_fncs)
-            dof_x = e_k.dofs[0,i]
+            dof_x = e_k.dofs[0, i]
             dof_y = e_k.dofs[1, i]
             integral = single_integral(e_k.mapping.eval,
                                        kernel,
