@@ -18,5 +18,5 @@ def interior_pt(mesh, pt_normal, kernel,
             quad_info = e_k.qs.get_interior_quadrature(e_k, pt_normal[0])
         else:
             quad_info = override_qs.get_interior_quadrature(e_k, pt_normal[0])
-        i.process_element(map, kernel, basis, quad_info);
+        i.process_element(map, kernel, basis, quad_info, 1.0);
     return np.array(i.result)
