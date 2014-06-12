@@ -41,11 +41,11 @@ def _interior_element(integrator, pt, normal, bc_type,
         cancel[1] = True
 
     # Handle the integration of point sources
-    for i, e_l_pt in enumerate(e_l_pt_srcs):
+    for i, e_l_pt in enumerate(e_l_pt_srcs[0]):
         if cancel[i]:
             continue
-        strength = [e_l_pt[0][1], e_l_pt[0][2]]
-        ref_pt = e_l_pt[0][0]
+        strength = [e_l_pt[1], e_l_pt[2]]
+        ref_pt = e_l_pt[0]
         integrator.process_point_source(e_l.mapping.eval,
                                         kernel, ref_pt, strength)
 

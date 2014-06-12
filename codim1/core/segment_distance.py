@@ -42,7 +42,6 @@ def segments_intersect(x11, y11, x12, y12, x21, y21, x22, y22):
     return (0 <= s <= 1) and (0 <= t <= 1)
 
 
-
 def point_segment_distance(px, py, x1, y1, x2, y2):
     dx = x2 - x1
     dy = y2 - y1
