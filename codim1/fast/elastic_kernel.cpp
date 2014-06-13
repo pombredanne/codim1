@@ -171,8 +171,7 @@ double SemiRegularizedHypersingularKernel::call(KernelData d, int p, int q)
          e[1][0] * d.dr[0] + e[1][1] * d.dr[1]};
     double e_n[]{e[0][0] * d.n[0] + e[0][1] * d.n[1],
          e[1][0] * d.n[0] + e[1][1] * d.n[1]};
-    return 
-        -(const6 / d.dist) * (
+    return -(const6 / d.dist) * (
             2 * const1 * e_dr[p] * d.n[q] 
             + 2 * poisson_ratio * e_n[p] * d.dr[q]
             - 4 * e_dr[p] * d.dr[q] * d.drdn

@@ -53,8 +53,9 @@ class Mesh(object):
         # Determine which elements touch.
         for e in self.elements:
             e.update_neighbors()
-        # Don't check for misorientation until all neighbors have been
-        # calculated
+
+    def check_misorientation(self):
+        # TODO: This should be moved to occur during the dof assignment.
         for e in self.elements:
             e._check_for_misorientation()
 
@@ -79,6 +80,7 @@ class Mesh(object):
                     element.reinit(v0, element.vertex2)
                 if v1 is element.vertex2:
                     element.reinit(element.vertex1, v0)
+            self.vertices.remove(v1)
         self.compute_connectivity()
 
     def _find_equivalent_pairs(self, epsilon):

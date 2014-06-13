@@ -78,13 +78,16 @@ def test_complicated_mesh_problem():
     with raises(MisorientationException):
         mesh = combine_meshes(mesh2, combine_meshes(mesh1, mesh3),
                               ensure_continuity = True)
+        mesh.check_misorientation()
 
 def test_misorientation_correct_simple():
     v = np.array([[0, 1], [0, 2], [0, 3]])
     e = np.array([[0, 1],[2, 1]])
     mesh = from_vertices_and_etov(v, e, flip = True)
+    mesh.check_misorientation()
 
 def test_misorientation_correct_harder():
     v = np.array([[0, 1], [0, 2], [0, 3], [0, 4]])
     e = np.array([[0, 1],[2, 1],[2, 3]])
     mesh = from_vertices_and_etov(v, e, flip = True)
+    mesh.check_misorientation()

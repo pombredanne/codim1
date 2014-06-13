@@ -20,15 +20,15 @@ def _make_which_kernels(kernel_set):
                 "opposite": "traction",
                 "displacement":
                 {
-                    "matrix": (kernel_set.k_d, 1.0),
-                    "rhs": (kernel_set.k_t, 1.0),
-                    "interior": (kernel_set.k_t, 1.0)
+                    "matrix": (kernel_set.k_d, 1),
+                    "rhs": (kernel_set.k_t, 1),
+                    "interior": (kernel_set.k_t, 1)
                 },
                 "traction":
                 {
-                    "matrix": (kernel_set.k_t, -1.0),
-                    "rhs": (kernel_set.k_d, -1.0),
-                    "interior": (kernel_set.k_d, -1.0)
+                    "matrix": (kernel_set.k_t, -1),
+                    "rhs": (kernel_set.k_d, -1),
+                    "interior": (kernel_set.k_d, -1)
                 },
                 "crack_displacement":
                 {
@@ -44,15 +44,15 @@ def _make_which_kernels(kernel_set):
                 "opposite": "displacement",
                 "displacement":
                 {
-                    "matrix": (kernel_set.k_tp, 1.0),
-                    "rhs": (kernel_set.k_rh, 1.0),
-                    "interior": (kernel_set.k_sh, 1.0)
+                    "matrix": (kernel_set.k_tp, 1),
+                    "rhs": (kernel_set.k_rh, 1),
+                    "interior": (kernel_set.k_sh, 1)
                 },
                 "traction":
                 {
-                    "matrix": (kernel_set.k_rh, -1.0),
-                    "rhs": (kernel_set.k_tp, -1.0),
-                    "interior": (kernel_set.k_tp, -1.0)
+                    "matrix": (kernel_set.k_rh, -1),
+                    "rhs": (kernel_set.k_tp, -1),
+                    "interior": (kernel_set.k_tp, -1)
                 },
                 "crack_displacement":
                 {
