@@ -162,7 +162,6 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
                 continue
             e_l_dof = e_l_pt_srcs[1][pt_src_idx]
             phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0])
-            print phys_pt_l
             normal_l = e_l.mapping.get_normal(e_l_pt[0])
             strength = ConstantBasis([e_l_pt[1], e_l_pt[2]])
             kernel.set_interior_data(phys_pt_l, normal_l)
