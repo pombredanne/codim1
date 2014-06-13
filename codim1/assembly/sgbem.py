@@ -3,8 +3,11 @@ from codim1.fast_lib import double_integral, single_integral,\
 from which_kernels import _make_which_kernels
 from shared import _choose_basis
 from codim1.post.interior import sgbem_interior
+from codim1.core.quadrature import gauss
 
 import numpy as np
+
+gauss40 = gauss(40)
 
 """
 These functions traverse the mesh and form the symmetric galerkin
@@ -37,7 +40,7 @@ def sgbem_assemble(mesh, kernel_set):
                 normal = e_k.mapping.get_normal(ref_pt)
                 phys_pt = e_k.mapping.get_physical_point(ref_pt)
                 interior_val = sgbem_interior(mesh, phys_pt,
-                                normal, kernel_set, "crack_traction")
+                                normal, kernel_set, "basis", "crack_traction")
                 if not np.isnan(interior_val).any():
                     rhs_matrix[e_k.dofs[0, i], 0] = interior_val[0]
                     rhs_matrix[e_k.dofs[1, i], 0] = interior_val[1]
@@ -145,10 +148,21 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
     #         pass
     #     for e_l_pt in e_k_pt_srcs:
     #         phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0][0])
+
+    e_l_pt_left = None
+    e_l_pt_right = None
+    if e_l_pt_srcs != [[],[]] and e_l.neighbors_left == []:
+        e_l_pt_left = e_l_pt_srcs[0][0]
+    if e_l_pt_srcs != [[],[]] and e_l.neighbors_right == []:
+        e_l_pt_right = e_l_pt_srcs[0][1]
+
     for i in range(e_k.basis.n_fncs):
-        for pt_src_idx, e_l_pt in enumerate(e_l_pt_srcs[0]):
+        for pt_src_idx, e_l_pt in enumerate([e_l_pt_left, e_l_pt_right]):
+            if e_l_pt is None:
+                continue
             e_l_dof = e_l_pt_srcs[1][pt_src_idx]
             phys_pt_l = e_l.mapping.get_physical_point(e_l_pt[0])
+            print phys_pt_l
             normal_l = e_l.mapping.get_normal(e_l_pt[0])
             strength = ConstantBasis([e_l_pt[1], e_l_pt[2]])
             kernel.set_interior_data(phys_pt_l, normal_l)
@@ -156,7 +170,7 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
                                    kernel,
                                    e_k_basis,
                                    strength,
-                                   quad_inner[e_l_dof],
+                                   quad_outer,
                                    i, 0)
             for idx1 in range(2):
                 for idx2 in range(2):

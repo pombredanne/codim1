@@ -1,8 +1,11 @@
 #include "assembly.h"
 #include "mapping.h"
 
-void InteriorPoint::process_element(MappingEval& mapping, Kernel &kernel, 
-                     Basis& basis, QuadratureInfo& quad_info, double factor)
+void InteriorPoint::process_element(MappingEval& mapping,
+                                    Kernel &kernel, 
+                                    Basis& basis,
+                                    QuadratureInfo& quad_info,
+                                    double factor)
 {
     std::vector<std::vector<double> > integral;
     for(int i = 0; i < basis.n_fncs; i++)
@@ -30,8 +33,11 @@ void InteriorPoint::process_point_source(MappingEval& mapping,
     result[1] += factor * kernel.call(kd, 1, 1);
 }
 
-void AlignedInteriorPoint::process_element(MappingEval& mapping, Kernel &kernel, 
-                     Basis& basis, QuadratureInfo& quad_info, double factor)
+void AlignedInteriorPoint::process_element(MappingEval& mapping, 
+                                           Kernel &kernel, 
+                                           Basis& basis,
+                                           QuadratureInfo& quad_info,
+                                           double factor)
 {
     std::vector<std::vector<double> > integral;
     for(int i = 0; i < basis.n_fncs; i++)

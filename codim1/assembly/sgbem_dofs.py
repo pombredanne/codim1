@@ -6,60 +6,78 @@ def sgbem_dofs(mesh):
     number of basis functions.
     """
     next_dof = 0
-    for e in mesh:
-        n_bfs = e.basis.n_fncs
-        e.dofs = np.zeros((2, n_bfs), dtype = np.int64)
-        if e.continuous:
-            next_dof = _process_continuous_element(e, next_dof)
-        else:
-            next_dof = _process_discontinuous_element(e, next_dof)
-        e.dofs_initialized = True
+    for e_k in mesh:
+        n_bfs = e_k.basis.n_fncs
+        e_k.dofs = np.zeros((2, n_bfs), dtype = np.int32)
+
+        next_dof = handle_left_neighbors(e_k, next_dof)
+
+        for i in range(1, e_k.basis.n_fncs - 1):
+            next_dof = set_next_dof(e_k, i, next_dof)
+
+        next_dof = handle_right_neighbors(e_k, next_dof)
+
+        e_k.dofs_initialized = True
     total_x_dofs = next_dof
-    for e in mesh:
-        e.dofs[1, :] = e.dofs[0, :] + total_x_dofs
+    for e_k in mesh:
+        e_k.dofs[1, :] = e_k.dofs[0, :] + total_x_dofs
     total_dofs = 2 * total_x_dofs
     mesh.total_dofs = total_dofs
     return total_dofs
 
-def _process_discontinuous_element(e, next_dof):
-    for i in range(e.basis.n_fncs):
-        e.dofs[0, i] = next_dof
-        next_dof += 1
-    return next_dof
+def handle_left_neighbors(e_k, next_dof):
+    return handle_neighbors(e_k, 0,
+                            e_k.neighbors_left, next_dof)
 
-def _process_continuous_element(e, next_dof):
-    """
-    Compute the dofs for a continuous element. The left and right sides
-    should match the dofs of the neighboring element on that side.
-    """
-    # Handle left boundary
-    nghbrs_left = e.neighbors_left
-    processed_from_neighbor = False
-    for nl in nghbrs_left:
-        if nl.dofs_initialized and nl.continuous:
-            # Rightmost dof of the element to the left is dof -1.
-            e.dofs[0, 0] = nl.dofs[0, -1]
-            processed_from_neighbor = True
-            break
-    if not processed_from_neighbor:
-        e.dofs[0, 0] = next_dof
-        next_dof += 1
+def handle_right_neighbors(e_k, next_dof):
+    return handle_neighbors(e_k, e_k.basis.n_fncs - 1,
+                            e_k.neighbors_right, next_dof)
 
-    # Handle internal dofs.
-    for i in range(1, e.basis.n_fncs - 1):
-        e.dofs[0, i] = next_dof
-        next_dof += 1
+def set_next_dof(e_k, local_dof, next):
+    e_k.dofs[0, local_dof] = next
+    return next + 1
 
-    # Handle right boundary
-    nghbrs_right = e.neighbors_right
-    processed_from_neighbor = False
-    for nr in nghbrs_right:
-        if nr.dofs_initialized and nr.continuous:
-            # Leftmost dof of the element to the right is dof 0.
-            e.dofs[0, -1] = nr.dofs[0, 0]
-            processed_from_neighbor = True
-            break
-    if not processed_from_neighbor:
-        e.dofs[0, -1] = next_dof
-        next_dof += 1
-    return next_dof
+def handle_neighbors(e_k, local_dof, nghbrs, next_dof):
+    # Logic:
+    # If this element is a displacement element (traction boundary condition)
+    # , then it should be continuous
+    # with any neighboring displacement element unless a neighboring element
+    # is a displacement_discontinuity element
+    # A traction element (displacement boundary condition should not be
+    # continuous with any neighbor
+    any_disc = any([e.bc.type == "crack_displacement"
+                    for e in ([e_k] + nghbrs)])
+    if any_disc:
+        return set_next_dof(e_k, local_dof, next_dof)
+
+    if e_k.bc.type == "displacement" or\
+       e_k.bc.type == "crack_displacement":
+        any_disp = any([e.bc.type == "traction"
+                        for e in ([e_k] + nghbrs)])
+        if any_disp:
+            return set_next_dof(e_k, local_dof, next_dof)
+
+    # if disp_or_disc:
+    #     return set_next_dof(e, local_dof, next_dof)
+
+    # If we get here, the node is meant to be continuous
+    # Check if any of the neighboring nodes are initialized. If they
+    # are, use the same dof idx.
+    for n in nghbrs:
+        if n.dofs_initialized:
+            nghbr_dof = find_neighbor_dof(e_k, n)
+            e_k.dofs[0, local_dof] = nghbr_dof
+            return next_dof
+
+    # If we get here, no neighbors have set their dofs yet.
+    return set_next_dof(e_k, local_dof, next_dof)
+
+def find_neighbor_dof(e_k, n):
+    for nghbr in n.neighbors_left:
+        if nghbr is e_k:
+            return n.dofs[0, 0]
+    for nghbr in n.neighbors_right:
+        if nghbr is e_k:
+            highest_bf = n.basis.n_fncs - 1
+            return n.dofs[0, highest_bf]
+    assert(False)

@@ -179,10 +179,10 @@ class QuadStrategy(object):
                                     in_element = False,
                                     reference_loc = 0.0):
         if singularity_type == 'logr' and in_element:
-            quad = quadrature.QuadSingularTelles(self.quad_points_logr,
+            quad = telles_singular(self.quad_points_logr,
                                                  reference_loc)
         elif singularity_type == 'oneoverr' and in_element:
-            quad = quadrature.QuadOneOverR(self.quad_points_oneoverr,
+            quad = piessens(self.quad_points_oneoverr,
                                                reference_loc,
                                                self.max_points)
         else:

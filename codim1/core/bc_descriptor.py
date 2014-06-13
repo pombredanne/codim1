@@ -32,6 +32,7 @@ Important:
 These seem very closely related to basis functions. An integration of the
 two modules seems to be in order. This is done!
 """
+from codim1.core.basis_funcs import basis_from_func
 from codim1.fast_lib import CoeffBasis
 from codim1.core.tools import interpolate
 
@@ -54,7 +55,6 @@ def apply_bc_from_fnc(mesh, fnc, type):
     Does the same as apply_bc_from_coeffs, but interpolates a function first
     to get the coefficients.
     """
-    # TODO: Rewrite me for apply only to a few elements!
-    coeffs = interpolate(fnc, mesh)
-    apply_bc_from_coeffs(mesh, coeffs, type)
-
+    for e in mesh:
+        basis = basis_from_func(e.basis, fnc, e)
+        e.bc = BC(type, basis)

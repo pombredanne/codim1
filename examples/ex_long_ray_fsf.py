@@ -59,7 +59,7 @@ def test_long_ray_fsf():
                     BC("traction", ZeroBasis()), non_gen = True)
 
     # Mesh the fault
-    fault_elements = 20
+    fault_elements = 50
     fault_mesh = simple_line_mesh(fault_elements, left_end, right_end)
     apply_to_elements(fault_mesh, "bc", BC("crack_displacement",
                                      ConstantBasis(-fault_tangential)),
@@ -90,6 +90,7 @@ def test_long_ray_fsf():
     # I impose a constraint that forces the average displacement to be zero.
     # apply_average_constraint(matrix, rhs, mesh)
     soln_coeffs = np.linalg.solve(matrix, rhs)
+    apply_coeffs(mesh, soln_coeffs, "soln")
 
     x, u, t = evaluate_boundary_solution(surface_mesh, soln_coeffs, 8)
 
@@ -118,6 +119,7 @@ def test_long_ray_fsf():
     ux_exact2, uy_exact2 = analytical_free_surface(x_e, x_df, df, delta, 1.0)
     ux_exact = ux_exact1 + ux_exact2
     uy_exact = uy_exact1 + uy_exact2
+    assert(np.sum(np.abs(ux_exact - u[0,:])) < 0.1)
 
     def comparison_plot():
         plt.plot(x_e, ux_exact, '*', label = 'Exact X Displacement')
@@ -160,7 +162,8 @@ def test_long_ray_fsf():
         for i in range(x_pts):
             print i
             for j in range(y_pts):
-                u = sgbem_interior(mesh, (x[i], y[j]), np.zeros(2), ek, "displacement")
+                u = sgbem_interior(mesh, (x[i], y[j]), np.zeros(2),
+                                   ek, "soln", "displacement")
                 int_ux[j, i] = u[0]
                 int_uy[j, i] = u[1]
 
@@ -171,7 +174,8 @@ def test_long_ray_fsf():
             levels = np.linspace(-0.5, 0.5, 21)
             tools.plot_mesh(fault_mesh, show = False, fig_ax = (fig, ax))
             im = ax.contourf(X, Y, data, levels)
-            ax.contour(X, Y, data, levels, colors = ('k',), linestyles=['solid'])
+            ax.contour(X, Y, data, levels,
+                       colors = ('k',), linestyles=['solid'])
             ax.set_ylabel(r'$x/d$', fontsize = 18)
             ax.set_xlabel(r'$y/d$', fontsize = 18)
             ax.set_title(type + ' displacement contours.')
@@ -182,11 +186,11 @@ def test_long_ray_fsf():
         contf_plot('Horizontal', int_ux)
         plt.show()
 
-    # comparison_plot()
+    comparison_plot()
 
     # error_plot()
     # Forming interior plot
-    interior_plot()
+    # interior_plot()
 
 
 if __name__ == "__main__":

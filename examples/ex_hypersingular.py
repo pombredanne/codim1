@@ -12,7 +12,7 @@ from codim1.post import *
 
 def run(n_elements):
     degree = 2
-    mesh = simple_line_mesh(50, left_edge = (-1.0, 0.0),
+    mesh = simple_line_mesh(60, left_edge = (-1.0, 0.0),
                                         right_edge = (1.0, 0.0))
     bf = basis_from_degree(degree)
     qs = QuadStrategy(mesh, 4, 12, 12, 12)
