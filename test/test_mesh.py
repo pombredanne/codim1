@@ -32,7 +32,7 @@ def test_multisegment_mesh():
     assert(m.elements[0].vertex1 == m.vertices[0])
     assert(m.elements[0].vertex2 == m.vertices[1])
     assert(m.elements[1].vertex1 == m.vertices[1])
-    assert(m.elements[1].vertex2 == m.vertices[3])
+    assert(m.elements[1].vertex2 == m.vertices[2])
     assert(m.is_neighbor(0, 1, 'right'))
     assert(m.is_neighbor(1, 0, 'left'))
 
