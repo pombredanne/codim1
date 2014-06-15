@@ -2,7 +2,6 @@
 #include "mapping.h"
 #include "elastic_kernel.h"
 #include "integrator.h"
-/* x86_64-linux-gnu-gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -Icodim1/fast -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -I/usr/include/python2.7 -c codim1/fast/elastic_kernel.cpp -o build/temp.linux-x86_64-2.7/codim1/fast/elastic_kernel.o -g -O3 -std=c++0x */
 
 void InteriorPoint::process_element(MappingEval& mapping,
                                     Kernel &kernel, 

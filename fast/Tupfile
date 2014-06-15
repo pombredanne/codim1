@@ -1,9 +1,18 @@
-CFLAGS += -g
 CFLAGS += -Wall
-CFLAGS += -O
 CFLAGS += -std=c++11
-CFLAGS += -I./src
+CFLAGS += -I./src -I./lib
 CFLAGS += -lm
-: foreach src/*.cpp |> g++ $(CFLAGS) -c %f -o %o |> %B.o
-: main.cpp |> g++ $(CFLAGS) -c %f -o %o |> %B.o
-: *.o |> g++ %f -o %o |> codim1fast
+CFLAGS += -Winvalid-pch
+CFLAGS += -ffast-math
+DEBUGFLAGS += -g -DDEBUG=1
+RELEASEFLAGS += -DNDEBUG=1 -O3
+CFLAGS += $(DEBUGFLAGS)
+LIBFLAGS += $(CFLAGS) -fPIC
+LIBLINKFLAGS += -shared
+TESTFLAGS += -H
+: lib/catch_with_main.hpp |> g++ $(CFLAGS) -c %f -o %o |> lib/%B.hpp.gch
+: foreach src/*.cpp |> g++ $(LIBFLAGS) -c %f -o %o |> src/%B.o
+: src/*.o |> g++ $(LIBLINKFLAGS) %f -o %o |> codim1fast
+: foreach test/*.cpp | lib/catch_with_main.hpp.gch |> g++ $(CFLAGS) -H -c %f -o %o |> test/%B.o
+: test/*.o |> g++  %f -o %o |> run_tests
+: ./run_tests |> ./run_tests |>
