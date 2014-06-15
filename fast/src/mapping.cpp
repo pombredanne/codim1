@@ -1,4 +1,5 @@
 #include "mapping.h"
+#include <cmath>
 
 MappingEval::MappingEval(PolyBasis& basis,
             std::vector<std::vector<double> > coeffs):

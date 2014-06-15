@@ -1,9 +1,10 @@
 #ifndef __codim1_assembly_h
 #define __codim1_assembly_h
-#include <boost/python/object.hpp>
-#include "elastic_kernel.h"
-#include "integrator.h"
 #include "basis.h"
+
+class Kernel;
+class MappingEval;
+class QuadratureInfo;
 
 class InteriorPoint
 {

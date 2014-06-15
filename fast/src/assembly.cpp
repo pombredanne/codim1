@@ -1,5 +1,8 @@
 #include "assembly.h"
 #include "mapping.h"
+#include "elastic_kernel.h"
+#include "integrator.h"
+#include "basis.h"
 
 void InteriorPoint::process_element(MappingEval& mapping,
                                     Kernel &kernel, 
