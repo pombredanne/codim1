@@ -8,3 +8,5 @@ build
 .vagrant
 *.so
 *.html
+*.o
+fast/codim1fast

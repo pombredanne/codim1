@@ -2,10 +2,8 @@ CFLAGS += -g
 CFLAGS += -Wall
 CFLAGS += -O
 CFLAGS += -std=c++11
-cFLAGS += -I./src
-: foreach src/*.cpp |> gcc $(CFLAGS) -c %f -o %o |> %B.o
-: *.o |> gcc %f -o %o |> hello
-
-
-x86_64-linux-gnu-gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC -Icodim1/fast -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -I/usr/include/python2.7 -c codim1/fast/elastic_kernel.cpp -o build/temp.linux-x86_64-2.7/codim1/fast/elastic_kernel.o -g -O3 -std=c++0x
-
+CFLAGS += -I./src
+CFLAGS += -lm
+: foreach src/*.cpp |> g++ $(CFLAGS) -c %f -o %o |> %B.o
+: main.cpp |> g++ $(CFLAGS) -c %f -o %o |> %B.o
+: *.o |> g++ %f -o %o |> codim1fast
