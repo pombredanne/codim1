@@ -10,3 +10,4 @@ build
 *.html
 *.o
 fast/codim1fast
+fast/run_tests
