@@ -2,11 +2,7 @@
 #define __codim1_basis_eval_h
 
 #include <vector>
-#include <boost/shared_ptr.hpp>
-#include <boost/python/object.hpp>
-#include <boost/python/extract.hpp>
-
-namespace bp = boost::python;
+#include <memory>
 
 /*
 Bases exists elementwise.
@@ -37,14 +33,14 @@ class Basis
         virtual inline double chain_rule(double jacobian) {return 1.0;}
         virtual std::vector<double> evaluate_vector(int i, double x_hat) = 0;
 
-        boost::shared_ptr<Basis> get_gradient_basis()
+        std::shared_ptr<Basis> get_gradient_basis()
         {
             return gradient_basis;
         }
 
         std::vector<std::vector<double> > point_sources;
         std::vector<int> point_source_dependency;
-        boost::shared_ptr<Basis> gradient_basis;
+        std::shared_ptr<Basis> gradient_basis;
         int n_fncs;
 };
 
