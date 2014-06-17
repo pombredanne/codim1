@@ -1,5 +1,5 @@
-#ifndef __codim1_mesh_eval_h
-#define __codim1_mesh_eval_h
+#ifndef __codim1_mapping_h
+#define __codim1_mapping_h
 
 #include "basis.h"
 #include <vector>

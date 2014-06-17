@@ -2,10 +2,10 @@
  * Added the do {} while(0) construct for safety.
  */
 
-#define DBGVAR( os, var ) \
-  (os) << "DBG: " << __FILE__ << "(" << __LINE__ << ") "\
-       << #var << " = [" << (var) << "]" << std::endl
+#define DBGVAR( outstream, var ) \
+  do {(outstream) << "DBG: " << __FILE__ << "(" << __LINE__ << ") "\
+       << #var << " = [" << (var) << "]" << std::endl} while(0)
 
-#define DBGMSG( os, msg ) \
-  (os) << "DBG: " << __FILE__ << "(" << __LINE__ << ") " \
-       << msg << std::endl
+#define DBGMSG( outstream, msg ) \
+  do {(outstream) << "DBG: " << __FILE__ << "(" << __LINE__ << ") " \
+       << msg << std::endl} while(0)
