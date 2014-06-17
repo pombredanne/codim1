@@ -1,6 +1,9 @@
 the cost of a kernel evaluation is concentrated in the sqrt
 intel mkl and intel vml allow vectorization of certain operations.
 floats are faster than doubles by a decent margin.
+using exact integration methods makes single precision floating
+point more attractive.
 how much do i need the extra digits of precision?
 gpu computing should be straightforward and very fast
 python mpi4py
+avx and sse vectorization should give a decent speedup
