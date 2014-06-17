@@ -1,18 +1,44 @@
-CFLAGS += -Wall
-CFLAGS += -std=c++11
-CFLAGS += -I./src -I./lib
-CFLAGS += -lm
-CFLAGS += -Winvalid-pch
-CFLAGS += -ffast-math
-DEBUGFLAGS += -g -DDEBUG=1
-RELEASEFLAGS += -DNDEBUG=1 -O3
-CFLAGS += $(DEBUGFLAGS)
-LIBFLAGS += $(CFLAGS) -fPIC
+INCLUDE += -I./src
+INCLUDE += -I./lib 
+INCLUDE += -I./lib/yaml-cpp-0.5.1/include
+CPPFLAGS += -Wall
+CPPFLAGS += -std=c++11
+CPPFLAGS += -Winvalid-pch
+CPPFLAGS += -pipe
+CPPFLAGS += -Og
+CPPFLAGS += $(INCLUDE)
+
+DEBUGFLAGS += -g 
+DEBUGFLAGS += -DDEBUG=1
+
+RELEASEFLAGS += -DNDEBUG=1 
+RELEASEFLAGS += -O3
+# -ffast-math could cause floating point issues, but until I notice any
+# I'm leaving it on.
+RELEASEFLAGS += -ffast-math
+
+# Currently a debug build.
+CPPFLAGS += $(DEBUGFLAGS)
+
+SHAREDLIBFLAGS += $(CPPFLAGS) 
+SHAREDLIBFLAGS += -fPIC
+
+LINKFLAGS += -Wl,-rpath=./lib/yaml-cpp-0.5.1
+LINKFLAGS += -L./lib/yaml-cpp-0.5.1
+LINKFLAGS += -lm
+LINKFLAGS += -l:libyaml-cpp.so.0.5
 LIBLINKFLAGS += -shared
-TESTFLAGS += -H
-: lib/catch_with_main.hpp |> g++ $(CFLAGS) -c %f -o %o |> lib/%B.hpp.gch
-: foreach src/*.cpp |> g++ $(LIBFLAGS) -c %f -o %o |> src/%B.o
-: src/*.o |> g++ $(LIBLINKFLAGS) %f -o %o |> codim1fast
-: foreach test/*.cpp | lib/catch_with_main.hpp.gch |> g++ $(CFLAGS) -H -c %f -o %o |> test/%B.o
-: test/*.o |> g++  %f -o %o |> run_tests
-: ./run_tests |> ./run_tests |>
+LIBLINKFLAGS += $(LINKFLAGS)
+
+LIBNAME = codim1fast.so
+
+TESTLINKFLAGS += -Wl,-rpath=.
+TESTLINKFLAGS += -l:$(LIBNAME)
+TESTLINKFLAGS += $(LINKFLAGS)
+
+: lib/catch_with_main.hpp |> g++ $(CPPFLAGS) -c %f -o %o |> lib/%B.hpp.gch
+: foreach src/*.cpp |> g++ $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
+: src/*.o |> g++ $(LIBLINKFLAGS) %f -o %o |> $(LIBNAME)
+: foreach test/*.cpp | lib/catch_with_main.hpp.gch |> g++ $(CPPFLAGS) -c %f -o %o |> test/%B.o
+: foreach test/*.o | $(LIBNAME) |> g++ %f -o %o $(TESTLINKFLAGS) |> test/%B.test
+: foreach test/*.test |> ./%f |>
