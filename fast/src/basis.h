@@ -44,36 +44,6 @@ class Basis
         int n_fncs;
 };
 
-/* Always return a constant value...*/
-class ConstantBasis: public Basis
-{
-    public:
-        ConstantBasis() {}
-        ConstantBasis(std::vector<double> values);
-
-        virtual double evaluate_internal(int i, double x_hat,
-                                int d);
-        virtual std::vector<double> evaluate_vector(int i, 
-                                double x_hat);
-
-        std::vector<double> values;
-};
-
-/* Always return zero. Distinguished from ConstantBasis so that
- * functions can check type and not perform any computation at all in the 
- * special case of zero.  */
-class ZeroBasis: public ConstantBasis
-{
-    public:
-        ZeroBasis()
-        {
-            this->n_fncs = 1;
-            this->values.reserve(2);
-            this->values[0] = 0.0;
-            this->values[1] = 0.0;
-        }
-};
-
 /*
 *   This class handles interactions with Lagrange polynomials defined on
 *   the unit reference interval [0, 1].
@@ -101,6 +71,8 @@ class PolyBasis: public Basis
 
         std::vector<std::vector<double> > basis_coeffs;
         std::vector<double> nodes;
+
+        static const PolyBasis one = PolyBasis({{1.0}, {1.0}}, {0.5});
 };
 
 /*
