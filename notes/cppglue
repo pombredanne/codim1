@@ -20,8 +20,6 @@ Old:
 
 I ended up using std::vector and a converter to a python visible array type.
 
-
-
 Consider using CodePy for JIT of c code.
 
 Templates are faster than polymorphism. Try it out...

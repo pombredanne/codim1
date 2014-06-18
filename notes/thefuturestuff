@@ -1,0 +1,64 @@
+The new way: constraints.
+Assemble everything as if nothing was known. So, the matrix will be much 
+bigger than necessary, because no boundary conditions will have been 
+applied. Then, apply boundary conditions, by using constraints to 
+In order for this to be fully successful, I think I need to allow different
+orders of approximation for the two different quantities -- traction and
+displacement. I may be able to even allow different orders of approximation
+for each dimension of the quantity.
+Constraints can also be used for continuity at element
+boundaries and element boundary jumps from displacement discontinuity
+elements. Although, conceptually constraints could be condensed after
+all computation of matrix elements is done, it probably makes more sense
+to do it as the computation progresses. This is an efficiency issue though and
+should probably be left until speed is critical. Maybe even then other
+techniques should be used to leave the beautiful clarity of this method.
+
+
+How to do boundary conditions? 
+I'd like to decouple the x and y boundary conditions. 
+The most immediate use cases are fault boundary conditions where I constrain
+the normal displacement to be zero and the shear traction to be zero. Another
+potential use case would be something like a prescribed slip and a lithostatic
+normal traction. It seems like any reasonable case would be interested in 
+normal and tangential boundary conditions. So, I don't think I need to 
+implement anything beyond those cases.
+So, in summary, I think I should decouple normal and tangential boundary 
+conditions. Implement these as constraints and it all flows easily down the
+river of jolly good fun.
+
+
+fast multipole method:
+black box fmm looks worthwhile.
+i should explore how to extend it to the high order case with just lumping
+elements. maybe a two tiered iteraction list and M2L...
+interaction between the element nodes and the fmm nodes is complex and
+interesting
+http://www.mrl.nyu.edu/~harper/kifmm3d/documentation/publications.html
+tree code options:
+exafmm extraction
+write my own
+p4est?
+need a way to separate element subdivision in refinement from the fmm tree
+a guy = cecka http://crisco.seas.harvard.edu/research/ at harvard is working
+on developing new fast multipole methods, especially in the kernel independ
+and black box world. Looks very exciting!
+
+efficiency:
+the cost of a kernel evaluation is concentrated in the sqrt
+intel mkl and intel vml allow vectorization of certain operations.
+floats are faster than doubles by a decent margin.
+using exact integration methods makes single precision floating
+point more attractive.
+how much do i need the extra digits of precision?
+gpu computing should be straightforward and very fast
+python mpi4py
+avx and sse vectorization should give a decent speedup
+
+matrix solution:
+ use schur complement approach -- results in a positive definite symmetric matrix
+ also easy to couple to a finite element discretization
+ smaller system to solve
+ also, improved conditioning (according to some sources)
+it's okay to compute the entire schur complement unlike in the 
+finite element case because the matrix is already dense.
