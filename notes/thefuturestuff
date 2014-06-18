@@ -13,6 +13,8 @@ all computation of matrix elements is done, it probably makes more sense
 to do it as the computation progresses. This is an efficiency issue though and
 should probably be left until speed is critical. Maybe even then other
 techniques should be used to leave the beautiful clarity of this method.
+By convention, the first dof specified in a constraint should be the one
+for which the row is deleted. 
 
 
 How to do boundary conditions? 
@@ -42,7 +44,14 @@ p4est?
 need a way to separate element subdivision in refinement from the fmm tree
 a guy = cecka http://crisco.seas.harvard.edu/research/ at harvard is working
 on developing new fast multipole methods, especially in the kernel independ
-and black box world. Looks very exciting!
+and black box world. Looks very exciting! Could get in touch with him?
+three existing implementations of black box fast multipole:
+https://github.com/sivaramambikasaran/BBFMM2D
+http://sourceforge.net/projects/bbfmmgpu/files/120416/
+http://scalfmm-public.gforge.inria.fr/doc/
+ExaFMM has a lot of nice implementation of key algorithms
+Hybrid Tree Traversal seems like a really nice method. Check out the Yokota, 
+Barba paper.
 
 efficiency:
 the cost of a kernel evaluation is concentrated in the sqrt
