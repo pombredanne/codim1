@@ -1,7 +1,0 @@
-http://nbviewer.ipython.org/github/Unidata/tds-python-workshop/blob/master/ipython-notebook-server.ipynb
-https://github.com/UnataInc/ipydra
-https://github.com/ryankanno/ansible-roles/tree/master/ipython-notebook#ipython-notebook
-
-It looks like multi-user support will natively be a part of ipython notebook
-soon:
-https://github.com/ipython/ipython/wiki/Roadmap:-IPython
