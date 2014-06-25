@@ -1,32 +1,10 @@
 #include "basis.h"
 
 using namespace codim1;
-PolyBasis::PolyBasis(unsigned int degree) {
-    this->degree = degree;
-}
+BasisImpl::BasisImpl(unsigned int degree):
+    degree(degree)
+{}
 
-// 
-// PolyBasis::PolyBasis(std::vector<std::vector<double> > basis_coeffs,
-//                      std::vector<double> nodes)
-// {
-//     this->n_fncs = basis_coeffs.size();
-//     this->basis_coeffs = basis_coeffs;
-//     this->nodes = nodes;
-// }
-// 
-// PolyBasis::PolyBasis(std::vector<std::vector<double> > basis_coeffs,
-//                      std::vector<std::vector<double> > basis_derivs,
-//                      std::vector<std::vector<double> > point_sources,
-//                      std::vector<int> point_source_dependency,
-//                      std::vector<double> nodes)
-// {
-//     this->n_fncs = basis_coeffs.size();
-//     this->basis_coeffs = basis_coeffs;
-//     this->gradient_basis.reset(new GradientBasis(basis_derivs, nodes));
-//     this->point_sources = point_sources;
-//     this->point_source_dependency = point_source_dependency;
-//     this->nodes = nodes;
-// }
 // std::vector<double> PolyBasis::evaluate_vector(int i, 
 //                                 double x_hat)
 // {

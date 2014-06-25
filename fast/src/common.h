@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 /* Two macros for debugging found on http://latedev.wordpress.com/2012/08/09/c-debug-macros/
  * Added the do {} while(0) construct for safety.
  */
@@ -9,3 +11,8 @@
 #define DBGMSG( outstream, msg ) \
   do {(outstream) << "DBG: " << __FILE__ << "(" << __LINE__ << ") " \
        << msg << std::endl;} while(0)
+
+
+inline bool AE(double a, double b, double eps = 1e-7) {
+    return abs(a - b) < eps; 
+}

@@ -1,6 +1,7 @@
 INCLUDE += -I./src
 INCLUDE += -I./lib 
 INCLUDE += -I./lib/yaml-cpp-0.5.1/include
+INCLUDE += -I./usr/include/armadillo_bits
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
 CPPFLAGS += -Winvalid-pch
@@ -26,7 +27,9 @@ SHAREDLIBFLAGS += -fPIC
 LINKFLAGS += -Wl,-rpath=./lib/yaml-cpp-0.5.1
 LINKFLAGS += -L./lib/yaml-cpp-0.5.1
 LINKFLAGS += -lm
+LINKFLAGS += -lpthread
 LINKFLAGS += -l:libyaml-cpp.so.0.5
+LINKFLAGS += -larmadillo
 LIBLINKFLAGS += -shared
 LIBLINKFLAGS += $(LINKFLAGS)
 

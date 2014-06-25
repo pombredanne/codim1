@@ -1,13 +1,15 @@
 #ifndef __codim1_constraint_h
 #define __codim1_constraint_h
 
+#include "linalg.h"
 #include <utility>
 #include <vector>
+#include <unordered_map>
 
 /* A list of matrix constraints is generated from the mesh
  * connectivity and boundary conditions. These constraints
  * are represented by an integer referring to the relevant
- * degree of freedom and a float that multiplies that 
+ * degree of freedom and a double that multiplies that 
  * dofs value in the linear system. A rhs value is represented
  * by a dof id of -1. 
  * So, for example:
@@ -30,16 +32,20 @@ namespace codim1
 {
     extern const int RHS = -1;
 
-    typedef std::pair<int, float> DOFWeight;
-    typedef std::vector<DOFWeight> Constraint;
-    typedef std::vector<Constraint> ConstraintList;
+    typedef std::pair<int, double> DOFWeight;
 
-    Constraint continuity_constraint(int dof1, int dof2) {
-        return {
-            DOFWeight(dof1, 1.0),
-            DOFWeight(dof2, -1.0)
-        };
-    }
+    /* A constraint is stored as a list of DOFs and weights, where the
+     * first dof is implicitly the constrained dof.
+     */
+    typedef std::vector<DOFWeight> Constraint;
+
+    /* I store a constraint matrix as a map from the constrained dof to
+     * the constraint on that dof.
+     */
+    typedef std::unordered_map<int, Constraint> ConstraintMatrix;
+
+    /* Constrain two degrees of freedom to be identical. */
+    Constraint continuity_constraint(int dof1, int dof2);
 
     /* This creates a constraint representing the offset between the value
      * of two DOFs. Primarily useful for imposing a fault slip as the 
@@ -47,11 +53,17 @@ namespace codim1
      * The direction of offset is from dof1 to dof2. So,
      * value[dof1] + offset = value[dof2]
      */
-    Constraint offset_constraint(int dof1, int dof2, float offset) {
-        Constraint c = continuity_constraint(dof1, dof2);
-        c.push_back(DOFWeight(RHS, offset));
-        return c;
-    }
+    Constraint offset_constraint(int dof1, int dof2, double offset);
+
+    void add_constraint(ConstraintMatrix& cm, Constraint c);
+
+    void add_mat_with_constraints(MatrixEntry entry,
+                                  mat& mat, vec& rhs,
+                                  ConstraintMatrix cm);
+
+    void add_rhs_with_constraints(DOFWeight entry, 
+                                  vec& rhs,
+                                  ConstraintMatrix cm);
 }
 
 #endif
