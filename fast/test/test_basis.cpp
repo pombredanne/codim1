@@ -1,5 +1,6 @@
 #include "catch_with_main.hpp"
 #include "common.h"
+#include "linalg.h"
 #include "basis.h"
 
 using namespace codim1;
