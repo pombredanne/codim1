@@ -15,7 +15,5 @@ namespace codim1 {
     };
     typedef arma::Mat<double> mat;
     typedef arma::Col<double> vec;
-
-    std::vector<double> linspace(double a, double b, int n);
 }
 #endif

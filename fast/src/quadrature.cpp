@@ -13,6 +13,20 @@ namespace codim1 {
         return retval;
     }
 
+    std::pair<double, double> legendre_and_n_minus_1(unsigned int n, 
+                                                     double x) {
+        double p_cur = 1.;
+        double p_last = 0.;
+        double p_temp;
+        for (unsigned int j=0; j<n; ++j)
+        {
+            p_temp = p_last;
+            p_last = p_cur;
+            p_cur = ((2.*j+1.)*x*p_last-j*p_temp)/(j+1);
+        }
+        return std::make_pair(p_cur, p_last);
+    }
+
     QuadratureRule gauss(unsigned int n) {
         QuadratureRule retval;
         const double tolerance = 1e-14;
@@ -25,22 +39,17 @@ namespace codim1 {
 
             double dp = 0;
             double dx = 10;
-            double p1, p2, p3;
 
             // Perform newton iterations until the quadrature points
             // have converged.
             while (std::fabs(dx) > tolerance)
             {
-                p1 = 1.;
-                p2 = 0.;
-                for (unsigned int j=0; j<n; ++j)
-                {
-                    p3 = p2;
-                    p2 = p1;
-                    p1 = ((2.*j+1.)*x*p2-j*p3)/(j+1);
-                }
-                dp = (n + 1) * (x*p1-p2)/(x*x-1);
-                dx = p1 / dp;
+                std::pair<double, double> p_n_and_nm1 =
+                    legendre_and_n_minus_1(n, x);
+                double p_n = p_n_and_nm1.first;
+                double p_nm1 = p_n_and_nm1.second;
+                dp = (n + 1) * (x * p_n - p_nm1) / (x * x - 1);
+                dx = p_n / dp;
                 x = x - dx;
             }
 
