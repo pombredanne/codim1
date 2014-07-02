@@ -13,13 +13,15 @@
   do {(outstream) << "DBG: " << __FILE__ << "(" << __LINE__ << ") " \
        << msg << std::endl;} while(0)
 
+/* A function and a macro for testing comparisons of floating point values. */
 inline bool AE(double a, double b, double eps = 1e-7) {
     return std::fabs(a - b) < eps; 
 }
 
 #define REQUIREAE(a, b, eps) \
     do {\
-        std::cout << "ASsert: " << a << "  almost equal to: " << b <<\
-                  "  with precision: " << eps << std::endl;\
+        DBGMSG(std::cout, "Assert: " << a << "  almost equal to: " << b <<\
+                  "  with precision: " << eps);\
+        DBGMSG(std::cout, "Difference is: " << (a - b));\
         REQUIRE(AE(a, b, eps));\
     } while(0)
