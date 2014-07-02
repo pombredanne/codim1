@@ -28,7 +28,7 @@ namespace codim1 {
     }
 
     QuadratureRule gauss(unsigned int n) {
-        QuadratureRule retval;
+        QuadratureRule retval(n);
         const double tolerance = 1e-14;
         //Because gaussian quadrature rules are symmetric, I only 
         const unsigned int m = (n+1)/2;
@@ -54,13 +54,13 @@ namespace codim1 {
             }
 
             double w = 2 * (n + 1) * (n + 1) / (n * n * (1 - x * x) * dp * dp);
-            retval.push_back(std::make_pair(x, w));
-            retval.push_back(std::make_pair(-x, w));
+            retval[i] = std::make_pair(x, w);
+            retval[n - i - 1] = std::make_pair(-x, w);
         }
 
         return retval;
     }
-    
+
     double integrate(QuadratureRule qr, Integrable fnc) {
         double integral_val = 0;
         for (auto xw: qr) {

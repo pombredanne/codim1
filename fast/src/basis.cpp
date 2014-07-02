@@ -1,28 +1,26 @@
 #include "basis.h"
+#include "quadrature.h"
+#include <cmath>
 
-using namespace codim1;
-BasisImpl::BasisImpl(unsigned int degree):
-    degree(degree)
-{}
+namespace codim1 {
 
-// std::vector<double> PolyBasis::evaluate_vector(int i, 
-//                                 double x_hat)
-// {
-//     std::vector<double> retval(2);
-//     retval[0] = evaluate_internal(i, x_hat, 0);
-//     retval[1] = retval[0];
-//     return retval;
-// }
-// 
-// double PolyBasis::evaluate_internal(int i, double x_hat, int d)
-// {
-//     assert(i < n_fncs);
-//     double running_mult = 1.0;
-//     double retval = basis_coeffs[i][n_fncs - 1];
-//     for(int coeff_idx = n_fncs - 2; coeff_idx >= 0; coeff_idx--)
-//     {
-//         running_mult *= x_hat;
-//         retval += basis_coeffs[i][coeff_idx] * running_mult;
-//     }
-//     return retval;
-// }
+    std::vector<double> chebyshev_lobatto_points(unsigned int degree) {
+        std::vector<double> x(degree + 1);
+        for (unsigned int i = 0; i <= degree; i++) {
+            x[i] = std::cos(i * M_PI / degree);
+        }
+        return x;
+    }
+
+    BasisImpl::BasisImpl(unsigned int degree):
+        degree(degree)
+    {
+        
+        if (degree == 0) {
+            nodes = {0.0};
+        } else {
+            nodes = chebyshev_lobatto_points(degree); 
+        }
+    }
+
+}

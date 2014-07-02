@@ -7,7 +7,11 @@
 #include <boost/flyweight/key_value.hpp>
 
 /* Lagrange polynomial basis over the interval [-1, 1]. Lagrange polynomials
- * are
+ * are the unique polynomials that are 1 at a single interpolation node and
+ * zero at all other nodes. 
+ * For the nodes, I currently use the Lobatto-Chebyshev nodes. If 
+ * Gauss-Lobatto-Lagrange quadrature is ever desired, this could be switched
+ * to the Lobatto-Lagrange nodes.
  */
 namespace codim1 
 {
@@ -21,6 +25,7 @@ namespace codim1
             BasisImpl(unsigned int degree);
             unsigned int nFncs() {return degree + 1;}
             const unsigned int degree;
+            std::vector<double> nodes;
     };
 
     typedef boost::flyweights::flyweight<

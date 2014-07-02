@@ -18,6 +18,7 @@ TEST_CASE("Double exponential works.", "[quadrature]") {
 
 TEST_CASE("Gauss quadrature works.", "[quadrature]") {
     auto qr = gauss(4);
+    REQUIRE(qr.size() == 4);
 
     //Check that the weights are in the right range
     for (auto xw: qr) {
@@ -29,6 +30,10 @@ TEST_CASE("Gauss quadrature works.", "[quadrature]") {
     REQUIREAE(2.0, result, 1e-12);
 
     auto qr_high_order = gauss(50);
+    REQUIRE(qr_high_order.size() == 50);
     result = integrate(qr_high_order, [](double x) {return 101 * std::pow(x, 100);});
     REQUIREAE(2.0, result, 1e-11);
+
+    auto qr_odd = gauss(5);
+    REQUIRE(qr_odd.size() == 5);
 }
