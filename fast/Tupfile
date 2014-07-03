@@ -30,6 +30,8 @@ LINKFLAGS += -lm
 LINKFLAGS += -lpthread
 LINKFLAGS += -l:libyaml-cpp.so.0.5
 LINKFLAGS += -larmadillo
+LINKFLAGS += -lgsl
+LINKFLAGS += -lgslcblas
 LIBLINKFLAGS += -shared
 LIBLINKFLAGS += $(LINKFLAGS)
 

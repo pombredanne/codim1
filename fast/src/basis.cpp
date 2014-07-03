@@ -15,7 +15,6 @@ namespace codim1 {
     BasisImpl::BasisImpl(unsigned int degree):
         degree(degree)
     {
-        
         if (degree == 0) {
             nodes = {0.0};
         } else {
