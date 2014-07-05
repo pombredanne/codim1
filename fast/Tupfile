@@ -1,7 +1,9 @@
 INCLUDE += -I./src
-INCLUDE += -I./lib 
-INCLUDE += -I./lib/yaml-cpp-0.5.1/include
+INCLUDE += -I../lib 
+INCLUDE += -I../lib/yaml-cpp-0.5.1/include
 INCLUDE += -I./usr/include/armadillo_bits
+INCLUDE += -I../lib/UnitTest++/src
+
 CPPFLAGS += -Wall
 CPPFLAGS += -std=c++11
 CPPFLAGS += -Winvalid-pch
@@ -24,11 +26,11 @@ CPPFLAGS += $(DEBUGFLAGS)
 SHAREDLIBFLAGS += $(CPPFLAGS) 
 SHAREDLIBFLAGS += -fPIC
 
-LINKFLAGS += -Wl,-rpath=./lib/yaml-cpp-0.5.1
-LINKFLAGS += -L./lib/yaml-cpp-0.5.1
+LINKFLAGS += -Wl,-rpath=../lib/yaml-cpp-0.5.1
+LINKFLAGS += -L../lib/yaml-cpp-0.5.1
 LINKFLAGS += -lm
-LINKFLAGS += -lpthread
 LINKFLAGS += -l:libyaml-cpp.so.0.5
+LINKFLAGS += -lpthread
 LINKFLAGS += -larmadillo
 LINKFLAGS += -lgsl
 LINKFLAGS += -lgslcblas
@@ -37,13 +39,14 @@ LIBLINKFLAGS += $(LINKFLAGS)
 
 LIBNAME = codim1fast.so
 
+TESTLINKFLAGS += -L../lib/UnitTest++
 TESTLINKFLAGS += -Wl,-rpath=.
 TESTLINKFLAGS += -l:$(LIBNAME)
+TESTLINKFLAGS += -lUnitTest++
 TESTLINKFLAGS += $(LINKFLAGS)
 
-: lib/catch_with_main.hpp |> g++ $(CPPFLAGS) -c %f -o %o |> lib/%B.hpp.gch
 : foreach src/*.cpp |> g++ $(SHAREDLIBFLAGS) -c %f -o %o |> src/%B.o
-: src/*.o |> g++ $(LIBLINKFLAGS) %f -o %o |> $(LIBNAME)
-: foreach test/*.cpp | lib/catch_with_main.hpp.gch |> g++ $(CPPFLAGS) -c %f -o %o |> test/%B.o
-: foreach test/*.o | $(LIBNAME) |> g++ %f -o %o $(TESTLINKFLAGS) |> test/%B.test
-: foreach test/*.test |> ./%f |>
+: src/*.o |> g++ %f -o %o $(LIBLINKFLAGS) |> $(LIBNAME)
+: foreach test/*.cpp |> g++ $(CPPFLAGS) -c %f -o %o |> test/%B.o
+: test/*.o | $(LIBNAME) |> g++ %f -o %o $(TESTLINKFLAGS) |> test/run_tests
+: test/run_tests |> ./%f |>

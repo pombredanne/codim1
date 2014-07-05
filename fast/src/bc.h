@@ -26,7 +26,7 @@ namespace codim1 {
              * set. I should use the appropriate abstractions. And, modify the
              * basis functions as necessary.
              */
-            int degree;
+            unsigned int degree;
             PolyCoeffs coeffs;
     };
 }
