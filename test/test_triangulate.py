@@ -1,7 +1,7 @@
 import numpy as np
 from math import sqrt
 import random
-from codim1.post.points_algorithm import *
+from codim1.post.triangulate import *
 
 def test_in_rect():
     p = Point(1,2,True, False)
@@ -24,7 +24,16 @@ def random_points(count):
 
 def test_plot():
     pts = random_points(40)
-    plot(*triangulate(pts))
+    mesh, t_pts = triangulate(pts)
+    changed = True
+    i = 0
+    while changed is True:
+        mesh, t_pts, changed = refine_step(mesh, t_pts, lambda x: x > 0.5)
+        i += 1
+        if i > 3:
+            changed = False
+    plot(mesh, t_pts)
+    plt.show()
 
 def test_edge_length():
     points = [Point(0.0, 0.0, False, False),
@@ -32,16 +41,28 @@ def test_edge_length():
               Point(0.0, 1.0, False, False),
               Point(1.0, 1.0, False, False)]
     t, t_pts = triangulate(points)
-    edge_len = edge_lengths(t_pts, t[0, :])
+    edge_len = edge_lengths(t[0, :], t_pts)
     np.testing.assert_almost_equal(edge_len, [1.0, 1.0, sqrt(2)])
 
 def test_refine():
     points = [Point(0.0, 0.0, False, False),
               Point(1.0, 0.0, False, False),
-              Point(0.0, 1.0, False, False),
-              Point(1.0, 1.0, False, False)]
+              Point(0.0, 0.01, False, False),
+              Point(1.0, 0.01, False, False)]
     t, t_pts = triangulate(points)
-    t_pts, t = refine_tri(t_pts, t[0, :], lambda x: x > 0.1)
-    np.testing.assert_almost_equal(t_pts[4, :], [0.5, 1.0])
+    t, t_pts = refine_tri(t[0, :], t_pts, lambda x: x > 0.5)
+    print t
+    print t_pts
+    np.testing.assert_almost_equal(t_pts[4, :], [0.5, 0.01])
     assert(t == [[3,4,0],[4,2,0]])
+
+def test_refine():
+    points = [Point(0.0, 0.0, False, False),
+              Point(1.0, 0.0, False, False),
+              Point(0.0, 0.01, False, False),
+              Point(1.0, 0.01, False, False)]
+    t, t_pts = triangulate(points)
+    t, t_pts, changed = refine_step(t, t_pts, lambda x: x > 0.5)
+    print t
+    print t_pts
 

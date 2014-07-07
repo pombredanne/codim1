@@ -28,26 +28,37 @@ def triangulate(points):
 
 edges = [[1, 0], [2, 1], [0, 2]]
 
-def edge_lengths(points, triangle):
+def edge_lengths(triangle, points):
     return [np.linalg.norm(points[triangle[e[0]], :] -
                            points[triangle[e[1]], :])
             for e in edges]
 
-def refine_tri(points, triangle, criteria):
-    edge_len = edge_lengths(points, triangle)
+def refine_tri(triangle, points, criteria):
+    edge_len = edge_lengths(triangle, points)
     new_points = points
     new_triangles = triangle
     for i, e in enumerate(edges):
-        if criteria(edge_len):
-            new_pt = (points[triangle[e[0]], :] + \
-                      points[triangle[e[1]], :]) / 2.0
-            new_idx = new_points.shape[0]
-            new_points = np.vstack((new_points, new_pt))
-            new_triangles = [[triangle[0], triangle[1], triangle[2]],
-                             [triangle[0], triangle[1], triangle[2]]]
-            new_triangles[0][e[0]] = new_idx
-            new_triangles[1][e[1]] = new_idx
-            break
-    return new_points, new_triangles
+        if not criteria(edge_len):
+            continue
+        new_pt = (points[triangle[e[0]], :] + \
+                  points[triangle[e[1]], :]) / 2.0
+        new_idx = new_points.shape[0]
+        new_points = np.vstack((new_points, new_pt))
+        new_triangles = [[triangle[0], triangle[1], triangle[2]],
+                         [triangle[0], triangle[1], triangle[2]]]
+        new_triangles[0][e[0]] = new_idx
+        new_triangles[1][e[1]] = new_idx
+        break
+    return new_triangles, new_points
+
+def refine_step(mesh, points, criteria):
+    new_mesh = []
+    changed = False
+    for t in mesh:
+        new_t, points = refine_tri(t, points, lambda x: x > 0.1)
+        new_mesh.extend(new_t)
+        if len(new_t) > 1:
+            changed = True
+    return np.array(new_mesh), points, changed
 
 #use scipy kdtree for fast near neighbors
