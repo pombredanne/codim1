@@ -4,19 +4,21 @@ from codim1.assembly.which_kernels import _make_which_kernels
 import numpy as np
 
 one = ConstantBasis([1.0, 1.0])
-def sgbem_interior(mesh, pt, normal, kernel_set, soln_basis, int_type):
-    i = InteriorPoint()
+def sgbem_interior(mesh, pt, normal, kernel_set, soln_basis, interior_type,
+                   integrator = InteriorPoint, quad_strategy = None):
+    i = integrator()
     which_kernels = _make_which_kernels(kernel_set)
     for e_l in mesh:
         # Handle the boundary condition first
-        _interior_element(i, pt, normal, int_type,
-                          e_l, which_kernels, soln_basis, "bc")
-        _interior_element(i, pt, normal, int_type,
-                          e_l, which_kernels, soln_basis, "soln")
+        _interior_element(i, pt, normal, interior_type,
+                          e_l, which_kernels, soln_basis, "bc", quad_strategy)
+        _interior_element(i, pt, normal, interior_type,
+                          e_l, which_kernels, soln_basis, "soln", quad_strategy)
     return np.array(i.result)
 
-def _interior_element(integrator, pt, normal, int_type,
-                      e_l, which_kernels, soln_basis, bc_or_soln):
+def _interior_element(integrator, pt, normal, interior_type,
+                      e_l, which_kernels, soln_basis, bc_or_soln,
+                      quad_strategy):
     if bc_or_soln == "bc":
         init_e_l_basis = e_l.bc.basis
         e_l_type = e_l.bc.type
@@ -27,7 +29,7 @@ def _interior_element(integrator, pt, normal, int_type,
     if type(init_e_l_basis) is ZeroBasis:
         return
 
-    kernel, factor = which_kernels[int_type][e_l_type]["interior"]
+    kernel, factor = which_kernels[interior_type][e_l_type]["interior"]
     if kernel is None:
         return
     assert(kernel.test_gradient == False)
@@ -47,7 +49,9 @@ def _interior_element(integrator, pt, normal, int_type,
         return
 
     # Handle the integration of basis functions
-    quad_info = e_l.qs.get_point_source_quadrature(
+    if quad_strategy is None:
+        quad_strategy = e_l.qs
+    quad_info = quad_strategy.get_point_source_quadrature(
                     kernel.singularity_type, pt, e_l)
     integrator.process_element(e_l.mapping.eval,
                                  kernel,

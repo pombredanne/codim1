@@ -151,9 +151,9 @@ def _element_pair(matrix, e_k, e_l, which_kernels, rhs_or_matrix):
 
     e_l_pt_left = None
     e_l_pt_right = None
-    if e_l_pt_srcs != [[],[]] and e_l.neighbors_left == []:
+    if e_l_pt_srcs != [[],[]] and (e_l.neighbors_left == [] or e_l.neighbors_left[0].bc.type != 'traction'):
         e_l_pt_left = e_l_pt_srcs[0][0]
-    if e_l_pt_srcs != [[],[]] and e_l.neighbors_right == []:
+    if e_l_pt_srcs != [[],[]] and (e_l.neighbors_right == [] or e_l.neighbors_right[0].bc.type != 'traction'):
         e_l_pt_right = e_l_pt_srcs[0][1]
 
     for i in range(e_k.basis.n_fncs):
