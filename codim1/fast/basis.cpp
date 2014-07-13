@@ -111,8 +111,7 @@ double CoeffBasis::evaluate_internal(int i,
     return basis_val * this->coeffs[d][i];
 }
 
-std::vector<double> CoeffBasis::evaluate_vector(int i, 
-                                                   double x_hat)
+std::vector<double> CoeffBasis::evaluate_vector(int i, double x_hat)
 {
     std::vector<double> retval(2);
     retval[0] = evaluate_internal(i, x_hat, 0);

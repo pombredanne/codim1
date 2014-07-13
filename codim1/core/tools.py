@@ -7,22 +7,43 @@ def L2_error(f1, f2):
     L2_f1_minus_f2 = np.sqrt(np.sum(((f1 - f2) ** 2)))
     return L2_f1_minus_f2 / L2_f2
 
-def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None):
-    points = []
-    x_hat = np.linspace(0, 1, points_per_element)
+def default_preprocess(ref_pts, pts, e):
+    return pts, dict()
+
+def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None,
+        preprocess = default_preprocess):
+    """
+    This function walks over the edges of a mesh and produces plotted lines from
+    each of those edges.
+    preprocess = a function can be specified to handle the reference and
+    physical coordinates before actually plotting them. This allows
+    more flexibility like changing the width or color of lines.
+    """
+    # Get the figure and axes on which to actually plot the mesh
     if fig_ax is None:
         fig, ax = plt.subplots()
     else:
         fig = fig_ax[0]
         ax = fig_ax[1]
+
+    # We need points_per_element local points.
+    x_hat = np.linspace(0, 1, points_per_element)
+
     for k in range(msh.n_elements):
-        points = []
         e = msh.elements[k]
-        for i in range(points_per_element):
-            points.append(e.mapping.get_physical_point(x_hat[i]))
-        lc = matplotlib.collections.LineCollection(
-                            zip(points[:-1], points[1:]))
+
+        # We want to plot physical points
+        points = map(e.mapping.get_physical_point, x_hat)
+
+        # Process points into the desired form
+        # (for example, convert from m to km)
+        lc_info = preprocess(x_hat, points, e)
+        lines = zip(lc_info[0][:-1], lc_info[0][1:])
+
+        # Create and add the line collection
+        lc = matplotlib.collections.LineCollection(lines, **lc_info[1])
         ax.add_collection(lc)
+
     ax.autoscale()
     ax.margins(0.1)
     if show:

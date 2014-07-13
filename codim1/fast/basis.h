@@ -141,7 +141,7 @@ class CoeffBasis: public Basis
 {
     public:
         CoeffBasis(Basis& basis,
-                      std::vector<std::vector<double> > coeffs);
+                   std::vector<std::vector<double> > coeffs);
 
         virtual double evaluate_internal(int i, 
                                 double x_hat,

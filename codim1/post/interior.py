@@ -4,7 +4,7 @@ from codim1.assembly.which_kernels import _make_which_kernels
 import numpy as np
 
 one = ConstantBasis([1.0, 1.0])
-def sgbem_interior(mesh, pt, normal, kernel_set, soln_basis, interior_type,
+def interior(mesh, pt, normal, kernel_set, soln_basis, interior_type,
                    integrator = InteriorPoint, quad_strategy = None):
     i = integrator()
     which_kernels = _make_which_kernels(kernel_set)

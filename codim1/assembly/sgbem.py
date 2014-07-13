@@ -2,7 +2,7 @@ from codim1.fast_lib import double_integral, single_integral,\
     MassMatrixKernel, ZeroBasis, ConstantBasis
 from which_kernels import _make_which_kernels
 from shared import _choose_basis
-from codim1.post.interior import sgbem_interior
+from codim1.post.interior import interior
 from codim1.core.quadrature import gauss
 
 import numpy as np
