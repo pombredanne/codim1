@@ -18,8 +18,11 @@ paper very closely.
 
 This assumes that all the boundary conditions have already been attached to
 the relevant element in the mesh.
+
+Traction values on a crack_displacement boundary are computed by simply
+evaluating like as if the point were in the interior.
 """
-def sgbem_assemble(mesh, kernel_set):
+def assemble(mesh, kernel_set):
     # Form the empty linear system
     total_dofs = mesh.total_dofs
     lhs_matrix = np.zeros((total_dofs, total_dofs))
@@ -32,18 +35,7 @@ def sgbem_assemble(mesh, kernel_set):
     # Traverse the mesh and assemble the relevant terms
     for e_k in mesh:
         if e_k.bc.type == "crack_displacement":
-            # # If displacement discontinuity, we just want the identity
-            # # matrix to remove the outer un-integrable integral
-            _identity_matrix(lhs_matrix, e_k)
-            for i in range(e_k.basis.n_fncs):
-                ref_pt = e_k.basis.nodes[i]
-                normal = e_k.mapping.get_normal(ref_pt)
-                phys_pt = e_k.mapping.get_physical_point(ref_pt)
-                interior_val = sgbem_interior(mesh, phys_pt,
-                                normal, kernel_set, "basis", "crack_traction")
-                if not np.isnan(interior_val).any():
-                    rhs_matrix[e_k.dofs[0, i], 0] = interior_val[0]
-                    rhs_matrix[e_k.dofs[1, i], 0] = interior_val[1]
+            _handle_crack_displacement(lhs_matrix, rhs_matrix, e_k)
             continue
 
         # Add the mass matrix term to the right hand side.
@@ -61,6 +53,20 @@ def sgbem_assemble(mesh, kernel_set):
 
     # Return the fully assembled linear system
     return lhs_matrix, rhs
+
+def _handle_crack_displacement(lhs_matrix, rhs_matrix, e_k):
+    # # If displacement discontinuity, we just want the identity
+    # # matrix to remove the outer un-integrable integral
+    _identity_matrix(lhs_matrix, e_k)
+    for i in range(e_k.basis.n_fncs):
+        ref_pt = e_k.basis.nodes[i]
+        normal = e_k.mapping.get_normal(ref_pt)
+        phys_pt = e_k.mapping.get_physical_point(ref_pt)
+        interior_val = sgbem_interior(mesh, phys_pt,
+                        normal, kernel_set, "basis", "crack_traction")
+        if not np.isnan(interior_val).any():
+            rhs_matrix[e_k.dofs[0, i], 0] = interior_val[0]
+            rhs_matrix[e_k.dofs[1, i], 0] = interior_val[1]
 
 def _identity_matrix(matrix, e_k):
     for i in range(e_k.basis.n_fncs):

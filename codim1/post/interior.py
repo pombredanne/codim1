@@ -10,13 +10,13 @@ def interior(mesh, pt, normal, kernel_set, soln_basis, interior_type,
     which_kernels = _make_which_kernels(kernel_set)
     for e_l in mesh:
         # Handle the boundary condition first
-        _interior_element(i, pt, normal, interior_type,
+        interior_element(i, pt, normal, interior_type,
                           e_l, which_kernels, soln_basis, "bc", quad_strategy)
-        _interior_element(i, pt, normal, interior_type,
+        interior_element(i, pt, normal, interior_type,
                           e_l, which_kernels, soln_basis, "soln", quad_strategy)
     return np.array(i.result)
 
-def _interior_element(integrator, pt, normal, interior_type,
+def interior_element(integrator, pt, normal, interior_type,
                       e_l, which_kernels, soln_basis, bc_or_soln,
                       quad_strategy):
     if bc_or_soln == "bc":
