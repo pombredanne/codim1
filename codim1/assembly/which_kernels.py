@@ -32,7 +32,7 @@ def _make_which_kernels(kernel_set):
                 },
                 "crack_displacement":
                 {
-                    "interior": (kernel_set.k_t, -1.0)
+                    "interior": (kernel_set.k_t, 1.0)
                 },
                 "crack_traction":
                 {

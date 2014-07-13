@@ -186,8 +186,7 @@ class QuadStrategy(object):
                                                reference_loc,
                                                self.max_points)
         else:
-            which = self.choose_nonsingular_interior(e_k, singular_pt)
-            quad = self.quad_nonsingular[which]
+            quad = self.get_interior_quadrature(e_k, singular_pt)
         return quad
 
 
@@ -224,7 +223,7 @@ class GLLQuadStrategy(QuadStrategy):
     def get_nonsingular_ptswts(self, n_pts):
         return lobatto(n_pts)
 
-class TellesQuadStrategy(object):
+class TellesQuadStrategy(QuadStrategy):
     """
     Use a Telles quadrature method to compute interior point integrals.
     Just a warning.

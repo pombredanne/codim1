@@ -10,38 +10,39 @@ def evaluate_boundary_solution(mesh, soln, points_per_element):
             t.append(local_t)
     return np.array(x).T, np.array(u).T, np.array(t).T
 
-def evaluate_solution_on_element(element, reference_point, soln_coeffs):
-    soln = np.zeros(2)
+def evaluate_solution_on_element(element,
+                                 reference_point,
+                                 soln_coeffs,
+                                 side = 'positive'):
 
 
-    # The value is the sum over all the basis functions.
-    for i in range(element.basis.n_fncs):
-        dof_x = element.dofs[0, i]
-        dof_y = element.dofs[1, i]
-        basis_eval = element.basis.evaluate(i, reference_point)
-        soln[0] += soln_coeffs[dof_x] * basis_eval[0]
-        soln[1] += soln_coeffs[dof_y] * basis_eval[1]
-
-    bc = eval_bc(element, reference_point)
+    mult = 1.0
+    if side == 'negative':
+        mult = -1.0
 
     if element.bc.type == "displacement":
-        u = bc
-        t = soln
+        u_info = (element.bc.basis, np.ones((2, element.bc.basis.n_fncs)), 1.0)
+        t_info = (element.basis, soln_coeffs[element.dofs], mult)
     elif element.bc.type == "traction":
-        u = soln
-        t = bc
+        u_info = (element.basis, soln_coeffs[element.dofs], 1.0)
+        t_info = (element.bc.basis, np.ones((2, element.bc.basis.n_fncs)), mult)
     elif element.bc.type == "crack_traction":
-        u = soln / 2
-        t = bc
+        u_info = (element.basis, soln_coeffs[element.dofs], 0.5 * mult)
+        t_info = (element.bc.basis, np.ones((2, element.bc.basis.n_fncs)), mult)
     elif element.bc.type == "crack_displacement":
-        u = bc / 2
-        t = soln
+        u_info = (element.bc.basis, np.ones((2, element.bc.basis.n_fncs)), 0.5 * mult)
+        t_info = (element.basis, soln_coeffs[element.dofs], mult)
+
+    u = eval_basis(element, u_info[0], reference_point, u_info[1]) * u_info[2]
+    d_u = eval_basis(element, u_info[0].get_gradient_basis(),
+                     reference_point, u_info[1]) * u_info[2]
+    t = eval_basis(element, t_info[0], reference_point, t_info[1]) * t_info[2]
     return u, t
 
-def eval_bc(element, reference_point):
-    bc = np.zeros(2)
-    for i in range(element.bc.basis.n_fncs):
-        bc_eval = element.bc.basis.evaluate(i, reference_point)
-        bc[0] += bc_eval[0]
-        bc[1] += bc_eval[1]
-    return bc
+def eval_basis(element, basis, reference_point, coeffs):
+    y = np.zeros(2)
+    for i in range(basis.n_fncs):
+        basis_eval = basis.evaluate(i, reference_point)
+        y[0] += coeffs[0, i] * basis_eval[0]
+        y[1] += coeffs[1, i] * basis_eval[1]
+    return y
