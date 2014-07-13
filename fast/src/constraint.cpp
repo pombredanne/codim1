@@ -60,6 +60,9 @@ void add_mat_with_constraints(MatrixEntry entry,
     DBGMSG(std::cout, "Add to matrix with row dof: " << entry.row <<
                       " and col dof: " << entry.col << 
                       " and value: " << entry.value);
+
+    // The only way that entry.row == RHS is if this function is called
+    // after recursively applying 
     if (entry.row == RHS) {
         return;
     }
