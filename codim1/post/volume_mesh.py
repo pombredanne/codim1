@@ -1,6 +1,6 @@
 from math import ceil
 import numpy as np
-from codim1.core.element import Vertex
+from codim1.core import Vertex, Element, PolynomialMapping
 from collections import namedtuple
 import meshpy.triangle as triangle
 from copy import copy
@@ -22,9 +22,23 @@ class VolumeMesh(object):
         self.refine_length = refine_length
         self.refine_area = refine_area
 
-        self.collect()
+        self.elements = copy(self.mesh.elements)
         self.add_boundaries()
+
+        # Build the meshpy structures
+        self.v_mapping = dict()
+        self.marker_to_e = dict()
+        self.meshpy_es = []
+        self.meshpy_vs = []
+        self.meshpy_markers = []
+        self.es = []
+        self.vs = []
+        self.collect()
+
+        # Calculate the meshpy triangulation
         self.meshpy()
+
+        # Separate the disjoint subregions
         self.calc_subregions()
         self.identify_regions()
 
@@ -46,13 +60,7 @@ class VolumeMesh(object):
         Collect vertices and facets for building an interior mesh from the
         out in.
         """
-        self.v_mapping = dict()
-        self.meshpy_es = []
-        self.meshpy_vs = []
-        self.meshpy_markers = []
-        self.es = []
-        self.vs = []
-        for e in self.mesh.elements:
+        for e in self.elements:
             factor = self.refine_factor(e.length)
             added_verts = self.check_add_vertices(e)
             if added_verts is None:
@@ -76,8 +84,7 @@ class VolumeMesh(object):
             new_v = Vertex(v_x)
             vs.append(new_v)
             other_vert = self.v_mapping.get(new_v.id, None)
-            if other_vert is not None:
-                raise Exception("YIKES!")
+            assert(other_vert is None)
             self.add_vertex(new_v)
         vs.append(e.vertex2)
 
@@ -90,10 +97,8 @@ class VolumeMesh(object):
         meshpy_indices = [self.v_mapping[v_id] for v_id in v_indices]
         self.es.append(Edge(meshpy_indices, True, len(self.meshpy_es)))
         self.meshpy_es.append(meshpy_indices)
-        if e is not None:
-            self.meshpy_markers.append(self.marker_from_e_idx(e.id))
-        else:
-            self.meshpy_markers.append(self.marker_from_e_idx(-1000))
+        self.meshpy_markers.append(self.marker_from_e_idx(new_e_idx))
+        self.marker_to_e[new_e_idx] = e
 
     def check_add_vertices(self, e):
         # If either of the vertices is in the viewing area, we want the edge
@@ -123,20 +128,20 @@ class VolumeMesh(object):
         return self.min_x() <= x[0] <= self.max_x()\
            and self.min_y() <= x[1] <= self.max_y()
 
+    def create_view_edge(self, e):
+        e.mapping = PolynomialMapping(e)
+        self.elements.append(e)
+
     def add_boundaries(self):
         # Add the rectangular outer boundary of the viewing area.
         lower_left = Vertex(np.array((self.min_x(), self.min_y())))
         upper_left = Vertex(np.array((self.min_x(), self.max_y())))
         upper_right = Vertex(np.array((self.max_x(), self.max_y())))
         lower_right = Vertex(np.array((self.max_x(), self.min_y())))
-        self.add_vertex(lower_left)
-        self.add_vertex(upper_left)
-        self.add_vertex(upper_right)
-        self.add_vertex(lower_right)
-        self.add_edge_from_indices([lower_left.id, upper_left.id], None)
-        self.add_edge_from_indices([upper_left.id, upper_right.id], None)
-        self.add_edge_from_indices([upper_right.id, lower_right.id], None)
-        self.add_edge_from_indices([lower_right.id, lower_left.id], None)
+        self.create_view_edge(Element(lower_left, upper_left))
+        self.create_view_edge(Element(upper_left, upper_right))
+        self.create_view_edge(Element(upper_right, lower_right))
+        self.create_view_edge(Element(lower_right, lower_left))
 
     def meshpy(self):
         # Call meshpy and create the delaunay triangulation.
@@ -158,9 +163,9 @@ class VolumeMesh(object):
         # the code easier for now...
         mesh = triangle.build(info,
                               refinement_func = refine_func,
-                              generate_faces = True)
-                              # allow_boundary_steiner = False,
-                              # allow_volume_steiner = False)
+                              generate_faces = True,
+                              allow_boundary_steiner = False,
+                              allow_volume_steiner = False)
         self.meshpy = mesh
 
         self.meshpy_pts = np.array(mesh.points)
@@ -195,10 +200,26 @@ class VolumeMesh(object):
         for r in self.regions:
             loc = self.region_label_loc(r)
             plt.text(loc[0], loc[1], r, fontsize = 24, bbox=dict(facecolor='red', alpha=0.5))
+        special_tris = []
+        for t in self.meshpy_tris:
+            # I WAS WORKING ON HOW TO PLOT THE COMPONENT OF THE MESH
+            # CORRESPONDING TO A CERTAIN COMPONENT
+            if self.has_marker(t, 157):
+                special_tris.append(t)
+                print "HI"
+        plt.triplot(self.meshpy_pts[:, 0], self.meshpy_pts[:, 1], special_tris, linewidth = 6)
         plt.show()
+
+    def has_marker(self, tri, marker):
+        for i in range(len(tri)):
+            p_mark = self.meshpy.point_markers[tri[i]]
+            if p_mark == marker:
+                return True
+        return False
 
     def region_label_loc(self, r):
         # Here, I just use the location of the first vertex.
+        # I should use some median or mean location. It'd be a bit nicer.
         first_loc = self.components.index(r)
 
 
@@ -206,10 +227,9 @@ class VolumeMesh(object):
 
     def on_boundary(self, f):
         # Boundary markers are all greater than 2.
-        for i in range(2):
+        for i in range(len(f)):
             marker = self.meshpy.point_markers[f[i]]
             if marker >= 2:
-                vert = self.es[self.marker_to_e_idx(marker)]
                 return True
         return False
 
@@ -231,7 +251,6 @@ class VolumeMesh(object):
         n_comp, self.components = csgraph.connected_components(connectivity,
                                               directed = False,
                                               return_labels = True)
-        assert(n_comp == 2)
 
     def identify_regions(self):
         self.components = list(self.components)
