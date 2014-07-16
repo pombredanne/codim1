@@ -39,7 +39,7 @@ def sgbem_assemble(mesh, kernel_set):
                 ref_pt = e_k.basis.nodes[i]
                 normal = e_k.mapping.get_normal(ref_pt)
                 phys_pt = e_k.mapping.get_physical_point(ref_pt)
-                interior_val = sgbem_interior(mesh, phys_pt,
+                interior_val = interior(mesh, phys_pt,
                                 normal, kernel_set, "basis", "crack_traction")
                 if not np.isnan(interior_val).any():
                     rhs_matrix[e_k.dofs[0, i], 0] = interior_val[0]

@@ -14,11 +14,20 @@ This will massively simplify most of the assembly routines.
 """
 
 class Vertex(object):
+    # Don't mess with this next_id! It will be bad. It is used for global
+    # indexing of the vertices
+    next_id = 1
     """Very simple class to allow avoiding some repeated math on vertices."""
     def __init__(self, loc, param = 0):
+        self.id = Vertex.next_id
+        Vertex.next_id += 1
         self.loc = np.array(loc)
         self.param = param
         self.connected_to = []
+
+    def __setstate__(self, state):
+        self.__dict__ = state
+        Vertex.next_id = max(Vertex.next_id, self.id) + 1
 
     def connect_to_element(self, elem):
         if elem not in self.connected_to:
