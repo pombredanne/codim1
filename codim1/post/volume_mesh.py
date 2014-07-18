@@ -190,30 +190,25 @@ class VolumeMesh(object):
                          arrowprops = dict(arrowstyle = '->',
                                            connectionstyle = 'arc3,rad=0'))
 
-    def viz_mesh(self):
-        plt.triplot(self.meshpy_pts[:, 0], self.meshpy_pts[:, 1], self.meshpy_tris)
-        for e in self.es:
-            pt1 = self.vs[e.v_indices[0]].loc
-            pt2 = self.vs[e.v_indices[1]].loc
-            plt.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], 'k-', linewidth = 6)
+    def viz_mesh(self, selected = False):
+        plot_tris = self.meshpy_tris
+        if selected:
+            plot_tris = self.selected_tris
+        plt.triplot(self.meshpy_pts[:, 0], self.meshpy_pts[:, 1], plot_tris)
+        # for e in self.es:
+        #     pt1 = self.vs[e.v_indices[0]].loc
+        #     pt2 = self.vs[e.v_indices[1]].loc
+        #     plt.plot([pt1[0], pt2[0]], [pt1[1], pt2[1]], 'k-', linewidth = 6)
         # self.viz_vertex_labels()
-        for r in self.regions:
-            loc = self.region_label_loc(r)
-            plt.text(loc[0], loc[1], r, fontsize = 24, bbox=dict(facecolor='red', alpha=0.5))
-        special_tris = []
-        for t in self.meshpy_tris:
-            # I WAS WORKING ON HOW TO PLOT THE COMPONENT OF THE MESH
-            # CORRESPONDING TO A CERTAIN COMPONENT
-            if self.has_marker(t, 157):
-                special_tris.append(t)
-                print "HI"
-        plt.triplot(self.meshpy_pts[:, 0], self.meshpy_pts[:, 1], special_tris, linewidth = 6)
-        plt.show()
+        # for r in self.regions:
+        #     loc = self.region_label_loc(r)
+        #     plt.text(loc[0], loc[1], r, fontsize = 24, bbox=dict(facecolor='red', alpha=0.5))
+        plt.show(block = False)
 
-    def has_marker(self, tri, marker):
+    def in_component(self, tri, comp):
         for i in range(len(tri)):
-            p_mark = self.meshpy.point_markers[tri[i]]
-            if p_mark == marker:
+            p_comp = self.components[tri[i]]
+            if p_comp == comp:
                 return True
         return False
 
@@ -221,8 +216,6 @@ class VolumeMesh(object):
         # Here, I just use the location of the first vertex.
         # I should use some median or mean location. It'd be a bit nicer.
         first_loc = self.components.index(r)
-
-
         return self.meshpy_pts[first_loc, :]
 
     def on_boundary(self, f):
@@ -248,12 +241,13 @@ class VolumeMesh(object):
             connectivity[f[0], f[1]] = 1
         # Connected components are computed using a matrix-based approach in
         # scipy.
-        n_comp, self.components = csgraph.connected_components(connectivity,
-                                              directed = False,
-                                              return_labels = True)
+        self.n_components, self.components =\
+            csgraph.connected_components(connectivity,
+                    directed = False,
+                    return_labels = True)
 
-    def identify_regions(self):
-        self.components = list(self.components)
+            def identify_regions(self):
+                self.components = list(self.components)
         self.regions = []
         for r in self.components:
             if self.components.count(r) <= 1:
@@ -269,5 +263,9 @@ class VolumeMesh(object):
         # self.regions = [r - min_region for r in self.regions]
         # self.components = [map(lambda c: c - min_region, self.components)
 
-    def choose_subregion(self):
-        raise Exception("WHOA! NOT YET BUDDY")
+    def choose_subregion(self, which_component):
+        if not (0 <= which_component <= self.n_components):
+            raise Exception("for choose_subregion, which_component must be" +
+                    " a valid component of the interior triangulation")
+        self.selected_tris = [t for t in self.meshpy_tris
+                              if self.in_component(t, which_component)]
