@@ -27,8 +27,11 @@ def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None,
         ax = fig_ax[1]
 
     # We need points_per_element local points.
-    x_hat = np.linspace(0, 1, points_per_element)
+    x_hat = np.linspace(0.0, 1.0, points_per_element)
 
+    all_lc_info = dict()
+    all_pts = []
+    all_lines = []
     for k in range(msh.n_elements):
         e = msh.elements[k]
 
@@ -38,11 +41,18 @@ def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None,
         # Process points into the desired form
         # (for example, convert from m to km)
         lc_info = preprocess(x_hat, points, e)
+        for k,v in lc_info[1].iteritems():
+            if k not in all_lc_info:
+                all_lc_info[k] = v
+            else:
+                all_lc_info[k].extend(v)
         lines = zip(lc_info[0][:-1], lc_info[0][1:])
+        all_pts.extend(lc_info[0])
+        all_lines.extend(lines)
 
-        # Create and add the line collection
-        lc = matplotlib.collections.LineCollection(lines, **lc_info[1])
-        ax.add_collection(lc)
+    # Create and add the line collection
+    lc = matplotlib.collections.LineCollection(all_lines, **all_lc_info)
+    ax.add_collection(lc)
 
     ax.autoscale()
     ax.margins(0.1)

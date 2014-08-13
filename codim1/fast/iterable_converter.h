@@ -1,6 +1,6 @@
 #ifndef __codim1_iterable_converter_h
 #define __codim1_iterable_converter_h
-/// I (Ben took this from 
+/// I (Ben) took this from 
 // http://stackoverflow.com/questions/15842126/feeding-a-python-list-into-a-function-taking-in-a-vector-with-boost-python
 #include <boost/python.hpp>
 #include <boost/python/stl_iterator.hpp>
@@ -61,6 +61,7 @@ struct iterable_converter
         // its handle to the converter's convertible variable.  The C++
         // container is populated by passing the begin and end iterators of
         // the python object to the container's constructor.
+        // TODO: POSSIBLE MEMORY LEAK?
         data->convertible = new (storage) Container(
             iterator(bp::object(handle)), // begin
             iterator());                      // end
