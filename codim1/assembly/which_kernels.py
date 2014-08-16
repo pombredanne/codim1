@@ -28,7 +28,7 @@ def _make_which_kernels(kernel_set):
                 {
                     "matrix": (kernel_set.k_t, -1),
                     "rhs": (kernel_set.k_d, -1),
-                    "interior": (kernel_set.k_d, -1)
+                    "interior": (kernel_set.k_d, 1)
                 },
                 "crack_displacement":
                 {
@@ -46,7 +46,7 @@ def _make_which_kernels(kernel_set):
                 {
                     "matrix": (kernel_set.k_tp, 1),
                     "rhs": (kernel_set.k_rh, 1),
-                    "interior": (kernel_set.k_sh, 1)
+                    "interior": (kernel_set.k_h, 1)
                 },
                 "traction":
                 {
@@ -58,7 +58,11 @@ def _make_which_kernels(kernel_set):
                 {
                     "matrix": (None, 0),
                     "rhs": (kernel_set.k_rh, 1.0),
-                    "interior": (kernel_set.k_sh, 1.0)
+                    "interior": (kernel_set.k_h, 1.0)
+                },
+                "crack_traction":
+                {
+                    "interior": (None, 0)
                 }
             },
             "crack_traction":

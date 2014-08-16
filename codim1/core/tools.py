@@ -51,6 +51,7 @@ def plot_mesh(msh, show = True, points_per_element = 5, fig_ax = None,
         all_lines.extend(lines)
 
     # Create and add the line collection
+    all_lc_info['alpha'] = 1.0
     lc = matplotlib.collections.LineCollection(all_lines, **all_lc_info)
     ax.add_collection(lc)
 

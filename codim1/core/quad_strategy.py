@@ -5,6 +5,8 @@ from codim1.fast_lib import ConstantBasis,\
                             aligned_single_integral
 from mapping import distance_between_mappings
 import numpy as np
+from codim1.core.segment_distance import point_segment_distance
+from math import floor
 
 """
 This whole QuadStrategy stuff is a bit of a mess.
@@ -223,6 +225,43 @@ class GLLQuadStrategy(QuadStrategy):
     def get_nonsingular_ptswts(self, n_pts):
         return lobatto(n_pts)
 
+
+class AdaptiveInteriorQuad(QuadStrategy):
+    def __init__(self,
+                 step_size,
+                 min_points,
+                 unit_points,
+                 max_points):
+        self.step_size = int(step_size)
+        self.min_points = int(min_points)
+        self.unit_points = int(unit_points)
+        self.max_points = int(max_points)
+        if (self.unit_points - self.min_points) % self.step_size != 0:
+            raise Exception("Point range not divisible by step size.")
+        if (self.max_points - self.min_points) % self.step_size != 0:
+            raise Exception("Point range not divisible by step size.")
+        N = np.arange(self.min_points,
+                      self.max_points + self.step_size,
+                      self.step_size)
+        self.quad_rules = {n: gauss(n) for n in N}
+
+    def get_interior_quadrature(self, e_k, pt):
+        l = e_k.length
+        d = point_segment_distance(pt[0], pt[1],
+                                   e_k.vertex1.loc[0],
+                                   e_k.vertex1.loc[1],
+                                   e_k.vertex2.loc[0],
+                                   e_k.vertex2.loc[1])
+        ratio = d / l
+        if ratio < 1:
+            ratio = -l / d
+
+        int_ratio = int(floor(ratio))
+        points = self.unit_points - int_ratio * self.step_size
+        points = max(min(points, self.max_points), self.min_points)
+        # print l, d, points
+        return self.quad_rules[points]
+
 class TellesQuadStrategy(QuadStrategy):
     """
     Use a Telles quadrature method to compute interior point integrals.
@@ -234,6 +273,8 @@ class TellesQuadStrategy(QuadStrategy):
     def __init__(self,
                  n_points):
         self.n_points = n_points
+        self.quad_points_oneoverr = n_points
+        self.max_points = n_points
 
     def get_interior_quadrature(self, e_k, pt):
         D, x0 = telles_distance(pt[0], pt[1],
