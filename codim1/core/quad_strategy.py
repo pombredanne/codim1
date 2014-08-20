@@ -6,27 +6,27 @@ from codim1.fast_lib import ConstantBasis,\
 from mapping import distance_between_mappings
 import numpy as np
 from codim1.core.segment_distance import point_segment_distance
-from math import floor
+from math import floor, ceil, exp, log
 
-"""
+'''
 This whole QuadStrategy stuff is a bit of a mess.
 Organize! Maybe wait until after the SGBEM stuff is implemented properly.
-"""
+'''
 
 one = ConstantBasis(np.ones(2))
 def single_integral_wrapper(map_eval, kernel, basis, quad_info, which_fnc):
-    """
+    '''
     A wrapper so that single integral has the interface expected by the
     interior point computation functions.
-    """
+    '''
     return single_integral(map_eval, kernel, one,
                            basis, quad_info, 0, which_fnc)
 
 class QuadStrategy(object):
-    """
+    '''
     This class determines what type and order of quadrature should be used
     for each integration.
-    """
+    '''
     def __init__(self,
                  mesh,
                  quad_points_min,
@@ -42,17 +42,17 @@ class QuadStrategy(object):
         self.compute_element_distances()
 
     def compute_element_distances(self):
-        """
+        '''
         Compute the pairwise distance between all the elements. In
         2D, this is just the pairwise line segment distances. Moving to 3D,
-        this shouldn't be hard if the polygons are "reasonable", but handling
+        this shouldn't be hard if the polygons are 'reasonable', but handling
         outliers may be harder. Because this distance is only used for
         selecting the quadrature strategy, I should be conservative. Using too
         many quadrature points is not as bad as using too few. Using a
         bounding box method might be highly effective.
         This might be unnecessary in a future implementation using a fast
         multipole expansion or other fast BEM method.
-        """
+        '''
         self.element_distances = np.zeros((self.mesh.n_elements,
                                            self.mesh.n_elements))
         for k in range(self.mesh.n_elements):
@@ -66,10 +66,10 @@ class QuadStrategy(object):
         return gauss(n_pts)
 
     def setup_quadrature(self):
-        """
+        '''
         The quadrature rules can be defined once on the reference element
         and then a change of variables allows integration on any element.
-        """
+        '''
         self.quad_nonsingular = dict()
         for n_q in range(self.min_points - 1, self.max_points):
             self.quad_nonsingular[n_q + 1] = \
@@ -96,20 +96,20 @@ class QuadStrategy(object):
             self.quad_oneoverr.append(oneoverr)
 
     def get_simple(self):
-        """Get whatever quadrature rule is used for a non singular case."""
+        '''Get whatever quadrature rule is used for a non singular case.'''
         return self.highest_nonsingular
 
     def get_nonsingular_minpts(self):
         return self.quad_nonsingular[self.min_points]
 
     def get_quadrature(self, singularity_type, e_k, e_l):
-        """
+        '''
         This function computes which quadrature formula should be used in
         which case.
         We use a Telles integration formula for log(r) singular cases
         and all edges
         A Piessen method is used for 1/r singularities.
-        """
+        '''
         k = e_k.id
         l = e_l.id
 
@@ -163,11 +163,11 @@ class QuadStrategy(object):
 
 
     def _choose_nonsingular(self, e_k, dist):
-        """
+        '''
         Simple algorithm to choose how many points are necessary for good
         accuracy of the integration. Better algorithms are available in the
         literature. Try Sauter, Schwab 1998 or Telles 1987.
-        """
+        '''
         source_width = e_k.length
         ratio = dist / source_width
         how_far = np.floor(ratio)
@@ -193,7 +193,7 @@ class QuadStrategy(object):
 
 
 class GLLQuadStrategy(QuadStrategy):
-    """
+    '''
     This QuadStrategy simply changes the Gaussian quadrature method to a
     Gauss-Lobatto quadrature method. The points for this quadrature method
     are aligned with the interpolation nodes of a Gauss-Lobatto-Lagrange
@@ -205,7 +205,7 @@ class GLLQuadStrategy(QuadStrategy):
     point is non-singular and can be well approximated by a Gauss-Lobatto
     quadrature rule with a number of points equal to the number of nodes
     of the basis. This may not be true for interior points near the boundary.
-    """
+    '''
     def __init__(self,
                  mesh,
                  n_basis_nodes,
@@ -237,9 +237,9 @@ class AdaptiveInteriorQuad(QuadStrategy):
         self.unit_points = int(unit_points)
         self.max_points = int(max_points)
         if (self.unit_points - self.min_points) % self.step_size != 0:
-            raise Exception("Point range not divisible by step size.")
+            raise Exception('Point range not divisible by step size.')
         if (self.max_points - self.min_points) % self.step_size != 0:
-            raise Exception("Point range not divisible by step size.")
+            raise Exception('Point range not divisible by step size.')
         N = np.arange(self.min_points,
                       self.max_points + self.step_size,
                       self.step_size)
@@ -259,16 +259,53 @@ class AdaptiveInteriorQuad(QuadStrategy):
         int_ratio = int(floor(ratio))
         points = self.unit_points - int_ratio * self.step_size
         points = max(min(points, self.max_points), self.min_points)
+        # print('Using: ' + str(points))
         # print l, d, points
         return self.quad_rules[points]
 
+class AdaptiveInteriorQuad2(QuadStrategy):
+    '''
+    Experimentation. Assumes exponential form for the error:
+    E = L * A * exp(h * q)
+    '''
+    def __init__(self, min_order, error_ratio):
+        # error_ratio is voodoo parameter
+        self.min_order = min_order
+        self.unit_points = min_order * 4
+        self.error_ratio = error_ratio
+        self.quad_rules = dict()
+
+    def grab_quad_rule(self, N):
+        if N not in self.quad_rules:
+            self.quad_rules[N] = gauss(N)
+        return self.quad_rules[N]
+
+    def get_dist(self, e_k, pt):
+        return point_segment_distance(pt[0], pt[1],
+                                   e_k.vertex1.loc[0],
+                                   e_k.vertex1.loc[1],
+                                   e_k.vertex2.loc[0],
+                                   e_k.vertex2.loc[1])
+
+    def get_interior_quadrature(self, e_k, pt):
+        l = e_k.length
+        d = self.get_dist(e_k, pt)
+        order = log(self.error_ratio) / (d / l)
+        # print "Estimate: " + str(order)
+        order = int(ceil(max(self.min_order, order)))
+        if order > 1000:
+            order = 1000
+        return self.grab_quad_rule(order)
+
+
+
 class TellesQuadStrategy(QuadStrategy):
-    """
+    '''
     Use a Telles quadrature method to compute interior point integrals.
     Just a warning.
     This quadrature strategy can only be used for interior points.
-    """
-    #TODO: I should refactor out a difference between "interior point"
+    '''
+    #TODO: I should refactor out a difference between 'interior point'
     # quad strategies and boundary quad strategies
     def __init__(self,
                  n_points):
@@ -290,10 +327,10 @@ class TellesQuadStrategy(QuadStrategy):
 
 import math
 def telles_distance(px, py, x1, y1, x2, y2):
-    """
+    '''
     This is just a copy of segment_distance.point_segment_distance
     that also returns the nearest point
-    """
+    '''
     dx = x2 - x1
     dy = y2 - y1
     # Calculate the t that minimizes the distance.
