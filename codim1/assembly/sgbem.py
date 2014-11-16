@@ -19,7 +19,7 @@ paper very closely.
 This assumes that all the boundary conditions have already been attached to
 the relevant element in the mesh.
 """
-def sgbem_assemble(mesh, kernel_set):
+def sgbem_assemble(mesh, kernel_set, just_rhs = False):
     # Form the empty linear system
     total_dofs = mesh.total_dofs
     lhs_matrix = np.zeros((total_dofs, total_dofs))
@@ -30,6 +30,7 @@ def sgbem_assemble(mesh, kernel_set):
     which_kernels = _make_which_kernels(kernel_set)
 
     # Traverse the mesh and assemble the relevant terms
+    print mesh.n_elements
     for e_k in mesh:
         if e_k.bc.type == "crack_displacement":
             # # If displacement discontinuity, we just want the identity
@@ -50,7 +51,8 @@ def sgbem_assemble(mesh, kernel_set):
         _element_mass(mass_matrix, e_k)
         for e_l in mesh:
             # Compute and add the RHS and matrix terms to the system.
-            _element_pair(lhs_matrix, e_k, e_l, which_kernels, "matrix")
+            if not just_rhs:
+                _element_pair(lhs_matrix, e_k, e_l, which_kernels, "matrix")
             _element_pair(rhs_matrix, e_k, e_l, which_kernels, "rhs")
 
 
